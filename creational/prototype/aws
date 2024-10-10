@@ -1,0 +1,38 @@
+// Prototype interface
+interface VMInstance extends Cloneable {
+    VMInstance clone();
+    void showConfiguration();
+}
+
+// Concrete class
+class AWSInstance implements VMInstance {
+    private String instanceType;
+    private int storage;
+
+    public AWSInstance(String instanceType, int storage) {
+        this.instanceType = instanceType;
+        this.storage = storage;
+    }
+
+    @Override
+    public VMInstance clone() {
+        return new AWSInstance(this.instanceType, this.storage);
+    }
+
+    @Override
+    public void showConfiguration() {
+        System.out.println("AWS Instance Type: " + instanceType + ", Storage: " + storage + "GB");
+    }
+}
+
+// Usage
+public class Main {
+    public static void main(String[] args) {
+        AWSInstance instance1 = new AWSInstance("t2.medium", 100);
+        instance1.showConfiguration();
+
+        // Cloning the VM instance for a new deployment
+        VMInstance instance2 = instance1.clone();
+        instance2.showConfiguration();
+    }
+}
