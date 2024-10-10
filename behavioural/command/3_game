@@ -1,0 +1,132 @@
+// Command Interface
+interface Command {
+    void execute();
+    void undo();
+}
+
+// Receiver Class
+class Player {
+    private String name;
+
+    public Player(String name) {
+        this.name = name;
+    }
+
+    public void move(String direction) {
+        System.out.println(name + " moves " + direction);
+    }
+
+    public void attack() {
+        System.out.println(name + " attacks!");
+    }
+
+    public void jump() {
+        System.out.println(name + " jumps!");
+    }
+}
+
+// Concrete Commands
+class MoveCommand implements Command {
+    private Player player;
+    private String direction;
+
+    public MoveCommand(Player player, String direction) {
+        this.player = player;
+        this.direction = direction;
+    }
+
+    @Override
+    public void execute() {
+        player.move(direction);
+    }
+
+    @Override
+    public void undo() {
+        System.out.println(player + " undoes move " + direction);
+    }
+}
+
+class AttackCommand implements Command {
+    private Player player;
+
+    public AttackCommand(Player player) {
+        this.player = player;
+    }
+
+    @Override
+    public void execute() {
+        player.attack();
+    }
+
+    @Override
+    public void undo() {
+        System.out.println(player + " undoes attack");
+    }
+}
+
+class JumpCommand implements Command {
+    private Player player;
+
+    public JumpCommand(Player player) {
+        this.player = player;
+    }
+
+    @Override
+    public void execute() {
+        player.jump();
+    }
+
+    @Override
+    public void undo() {
+        System.out.println(player + " undoes jump");
+    }
+}
+
+// Invoker
+class GameController {
+    private Command command;
+
+    public void setCommand(Command command) {
+        this.command = command;
+    }
+
+    public void pressButton() {
+        command.execute();
+    }
+
+    public void pressUndo() {
+        command.undo();
+    }
+}
+
+// Client Code
+public class GameCommandPattern {
+    public static void main(String[] args) {
+        Player player = new Player("Hero");
+
+        // Create commands
+        Command moveLeft = new MoveCommand(player, "left");
+        Command moveRight = new MoveCommand(player, "right");
+        Command attack = new AttackCommand(player);
+        Command jump = new JumpCommand(player);
+
+        // Game controller as invoker
+        GameController controller = new GameController();
+
+        // Execute commands
+        controller.setCommand(moveLeft);
+        controller.pressButton();  // Output: Hero moves left
+
+        controller.setCommand(attack);
+        controller.pressButton();  // Output: Hero attacks!
+
+        controller.setCommand(jump);
+        controller.pressButton();  // Output: Hero jumps!
+
+        // Undo commands
+        controller.pressUndo();    // Output: Hero undoes jump
+        controller.setCommand(moveRight);
+        controller.pressButton();  // Output: Hero moves right
+        controller.pressUndo();    // Output: Hero undoes move right
+    }
+}
