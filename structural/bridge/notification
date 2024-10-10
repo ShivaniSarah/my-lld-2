@@ -1,0 +1,68 @@
+// The "Implementation" interface for notification channels.
+interface NotificationChannel {
+    void send(String message);
+}
+
+// Concrete implementation for Email notification.
+class EmailNotification implements NotificationChannel {
+    @Override
+    public void send(String message) {
+        System.out.println("Sending Email: " + message);
+    }
+}
+
+// Concrete implementation for SMS notification.
+class SMSNotification implements NotificationChannel {
+    @Override
+    public void send(String message) {
+        System.out.println("Sending SMS: " + message);
+    }
+}
+
+// The "Abstraction" for notifications.
+abstract class Notification {
+    protected NotificationChannel notificationChannel;
+
+    protected Notification(NotificationChannel notificationChannel) {
+        this.notificationChannel = notificationChannel;
+    }
+
+    public abstract void notifyUser(String message); // High-level operation
+}
+
+// Refined abstraction for Alert notification.
+class AlertNotification extends Notification {
+    public AlertNotification(NotificationChannel notificationChannel) {
+        super(notificationChannel);
+    }
+
+    @Override
+    public void notifyUser(String message) {
+        System.out.print("Alert Notification: ");
+        notificationChannel.send(message);
+    }
+}
+
+// Refined abstraction for Reminder notification.
+class ReminderNotification extends Notification {
+    public ReminderNotification(NotificationChannel notificationChannel) {
+        super(notificationChannel);
+    }
+
+    @Override
+    public void notifyUser(String message) {
+        System.out.print("Reminder Notification: ");
+        notificationChannel.send(message);
+    }
+}
+
+// Client code
+public class Main {
+    public static void main(String[] args) {
+        Notification alertNotification = new AlertNotification(new EmailNotification());
+        alertNotification.notifyUser("Server is down!"); // Alert Notification: Sending Email: Server is down!
+
+        Notification reminderNotification = new ReminderNotification(new SMSNotification());
+        reminderNotification.notifyUser("Meeting at 10 AM."); // Reminder Notification: Sending SMS: Meeting at 10 AM.
+    }
+}
