@@ -170,3 +170,15 @@ public class Main {
         radioRemote.togglePower();
     }
 }
+// output
+
+TV is now ON.
+TV volume set to 40.
+TV channel set to 2.
+TV is now OFF.
+
+Radio is now ON.
+Radio volume set to 40.
+Muting the device.
+Radio volume set to 0.
+Radio is now OFF.
