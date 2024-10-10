@@ -1,0 +1,61 @@
+bill pugh
+
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
+// Logger class using Bill Pugh Singleton pattern
+public class Logger {
+
+    // Private constructor to prevent instantiation
+    private Logger() {
+        // Optional: Initialize resources like file writers
+    }
+
+    // Static inner helper class responsible for holding the Singleton instance
+    private static class LoggerHelper {
+        private static final Logger INSTANCE = new Logger();
+    }
+
+    // Public method to provide access to the singleton instance
+    public static Logger getInstance() {
+        return LoggerHelper.INSTANCE;
+    }
+
+    // Log levels
+    public enum LogLevel {
+        INFO, DEBUG, ERROR
+    }
+
+    // Method to log messages with a timestamp and log level
+    public synchronized void log(LogLevel level, String message) {
+        String formattedMessage = String.format("%s [%s] %s", 
+            LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
+            level.name(), message);
+        writeToFile(formattedMessage);
+    }
+
+    // Helper method to write log messages to a file
+    private void writeToFile(String message) {
+        try (FileWriter fw = new FileWriter("application.log", true);
+             PrintWriter out = new PrintWriter(fw)) {
+            out.println(message);
+        } catch (IOException e) {
+            System.err.println("Error writing to log file: " + e.getMessage());
+        }
+    }
+}
+
+// Usage Example
+public class Main {
+    public static void main(String[] args) {
+        Logger logger = Logger.getInstance();
+        
+        // Log some messages
+        logger.log(Logger.LogLevel.INFO, "Application started");
+        logger.log(Logger.LogLevel.DEBUG, "Debugging application");
+        logger.log(Logger.LogLevel.ERROR, "An error occurred");
+    }
+}
