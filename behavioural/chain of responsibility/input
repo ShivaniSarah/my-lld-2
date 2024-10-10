@@ -1,0 +1,47 @@
+// Abstract handler
+abstract class EventHandler {
+    protected EventHandler nextHandler;
+
+    public void setNextHandler(EventHandler nextHandler) {
+        this.nextHandler = nextHandler;
+    }
+
+    public abstract void handleEvent(String event);
+}
+
+// Concrete handlers
+class MouseClickHandler extends EventHandler {
+    @Override
+    public void handleEvent(String event) {
+        if (event.equalsIgnoreCase("click")) {
+            System.out.println("Mouse click handled.");
+        } else if (nextHandler != null) {
+            nextHandler.handleEvent(event);
+        }
+    }
+}
+
+class KeyPressHandler extends EventHandler {
+    @Override
+    public void handleEvent(String event) {
+        if (event.equalsIgnoreCase("keyPress")) {
+            System.out.println("Key press handled.");
+        } else if (nextHandler != null) {
+            nextHandler.handleEvent(event);
+        }
+    }
+}
+
+// Usage
+public class Main {
+    public static void main(String[] args) {
+        EventHandler mouseClickHandler = new MouseClickHandler();
+        EventHandler keyPressHandler = new KeyPressHandler();
+
+        mouseClickHandler.setNextHandler(keyPressHandler);
+
+        mouseClickHandler.handleEvent("click");    // Output: Mouse click handled.
+        mouseClickHandler.handleEvent("keyPress");  // Output: Key press handled.
+        mouseClickHandler.handleEvent("scroll");     // No output, as no handler for scroll event.
+    }
+}
