@@ -1,0 +1,61 @@
+// Subject interface
+interface Image {
+    void display();
+}
+
+// Real Subject
+class RealImage implements Image {
+    private String filename;
+
+    public RealImage(String filename) {
+        this.filename = filename;
+        loadImageFromDisk();
+    }
+
+    private void loadImageFromDisk() {
+        System.out.println("Loading " + filename);
+    }
+
+    @Override
+    public void display() {
+        System.out.println("Displaying " + filename);
+    }
+}
+
+// Proxy
+class ProxyImage implements Image {
+    private RealImage realImage;
+    private String filename;
+    private String userRole;
+
+    public ProxyImage(String filename, String userRole) {
+        this.filename = filename;
+        this.userRole = userRole;
+    }
+
+    @Override
+    public void display() {
+        if (userRole.equals("admin")) {
+            if (realImage == null) {
+                realImage = new RealImage(filename);
+            }
+            realImage.display();
+        } else {
+            System.out.println("Access denied: You do not have permission to view this image.");
+        }
+    }
+}
+
+// Usage
+public class Main {
+    public static void main(String[] args) {
+        Image image1 = new ProxyImage("image1.jpg", "admin");
+        Image image2 = new ProxyImage("image2.jpg", "guest");
+
+        // Access granted for admin
+        image1.display(); // Loading image1.jpg, then displaying it
+        
+        // Access denied for guest
+        image2.display(); // Access denied: You do not have permission to view this image.
+    }
+}
