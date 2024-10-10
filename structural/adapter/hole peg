@@ -1,0 +1,74 @@
+// RoundPeg class (Target interface)
+class RoundPeg {
+    private double radius;
+
+    public RoundPeg(double radius) {
+        this.radius = radius;
+    }
+
+    public double getRadius() {
+        return radius;
+    }
+}
+
+// SquarePeg class (Adaptee)
+class SquarePeg {
+    private double width;
+
+    public SquarePeg(double width) {
+        this.width = width;
+    }
+
+    public double getWidth() {
+        return width;
+    }
+}
+
+// RoundHole class (The client that only accepts RoundPegs)
+class RoundHole {
+    private double radius;
+
+    public RoundHole(double radius) {
+        this.radius = radius;
+    }
+
+    public boolean fits(RoundPeg peg) {
+        return this.radius >= peg.getRadius();
+    }
+}
+
+// Adapter class (Adapts SquarePeg to RoundPeg)
+class SquarePegAdapter extends RoundPeg {
+    private SquarePeg squarePeg;
+
+    public SquarePegAdapter(SquarePeg squarePeg) {
+        super(calculateRadius(squarePeg));
+        this.squarePeg = squarePeg;
+    }
+
+    // Calculate the radius of the smallest circle that can fit around the square peg
+    private static double calculateRadius(SquarePeg peg) {
+        // Diagonal of the square = width * sqrt(2) -> radius is half the diagonal
+        return (peg.getWidth() * Math.sqrt(2)) / 2;
+    }
+}
+
+// Usage example
+public class Main {
+    public static void main(String[] args) {
+        RoundHole hole = new RoundHole(5.0); // Round hole with radius 5
+
+        RoundPeg roundPeg = new RoundPeg(5.0);
+        System.out.println("Round peg fits: " + hole.fits(roundPeg)); // true
+
+        SquarePeg smallSquarePeg = new SquarePeg(5.0);
+        SquarePeg largeSquarePeg = new SquarePeg(10.0);
+
+        // Use adapter to fit square pegs into round hole
+        SquarePegAdapter smallSquarePegAdapter = new SquarePegAdapter(smallSquarePeg);
+        SquarePegAdapter largeSquarePegAdapter = new SquarePegAdapter(largeSquarePeg);
+
+        System.out.println("Small square peg fits: " + hole.fits(smallSquarePegAdapter)); // true
+        System.out.println("Large square peg fits: " + hole.fits(largeSquarePegAdapter)); // false
+    }
+}
