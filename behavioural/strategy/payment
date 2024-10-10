@@ -1,0 +1,80 @@
+public interface PaymentStrategy {
+    void pay(int amount); // Method to process payment
+}
+// Credit Card payment implementation
+public class CreditCardPayment implements PaymentStrategy {
+    private String cardNumber;
+
+    public CreditCardPayment(String cardNumber) {
+        this.cardNumber = cardNumber;
+    }
+
+    @Override
+    public void pay(int amount) {
+        System.out.println("Paid " + amount + " using Credit Card: " + cardNumber);
+    }
+}
+
+// PayPal payment implementation
+public class PayPalPayment implements PaymentStrategy {
+    private String email;
+
+    public PayPalPayment(String email) {
+        this.email = email;
+    }
+
+    @Override
+    public void pay(int amount) {
+        System.out.println("Paid " + amount + " using PayPal: " + email);
+    }
+}
+
+// Bitcoin payment implementation
+public class BitcoinPayment implements PaymentStrategy {
+    private String walletAddress;
+
+    public BitcoinPayment(String walletAddress) {
+        this.walletAddress = walletAddress;
+    }
+
+    @Override
+    public void pay(int amount) {
+        System.out.println("Paid " + amount + " using Bitcoin wallet: " + walletAddress);
+    }
+}
+public class ShoppingCart {
+    private PaymentStrategy paymentStrategy; // Payment strategy
+
+    public void setPaymentStrategy(PaymentStrategy paymentStrategy) {
+        this.paymentStrategy = paymentStrategy; // Set the payment strategy
+    }
+
+    public void checkout(int amount) {
+        if (paymentStrategy == null) {
+            throw new IllegalArgumentException("Payment strategy is not set.");
+        }
+        paymentStrategy.pay(amount); // Process the payment
+    }
+}
+public class Main {
+    public static void main(String[] args) {
+        ShoppingCart cart = new ShoppingCart();
+
+        // Pay with Credit Card
+        cart.setPaymentStrategy(new CreditCardPayment("1234-5678-9012-3456"));
+        cart.checkout(150); // Output: Paid 150 using Credit Card: 1234-5678-9012-3456
+
+        // Pay with PayPal
+        cart.setPaymentStrategy(new PayPalPayment("user@example.com"));
+        cart.checkout(200); // Output: Paid 200 using PayPal: user@example.com
+
+        // Pay with Bitcoin
+        cart.setPaymentStrategy(new BitcoinPayment("1A2B3C4D5E6F"));
+        cart.checkout(300); // Output: Paid 300 using Bitcoin wallet: 1A2B3C4D5E6F
+    }
+}
+
+// output
+Paid 150 using Credit Card: 1234-5678-9012-3456
+Paid 200 using PayPal: user@example.com
+Paid 300 using Bitcoin wallet: 1A2B3C4D5E6F
