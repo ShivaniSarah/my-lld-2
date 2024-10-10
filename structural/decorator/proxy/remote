@@ -1,0 +1,36 @@
+// Subject interface
+interface RemoteService {
+    String request(String data);
+}
+
+// Real Subject
+class RealRemoteService implements RemoteService {
+    @Override
+    public String request(String data) {
+        return "Response for " + data;
+    }
+}
+
+// Proxy
+class RemoteProxy implements RemoteService {
+    private RealRemoteService realService;
+
+    public RemoteProxy() {
+        this.realService = new RealRemoteService();
+    }
+
+    @Override
+    public String request(String data) {
+        System.out.println("Proxy handling request for " + data);
+        return realService.request(data);
+    }
+}
+
+// Usage
+public class Main {
+    public static void main(String[] args) {
+        RemoteService remoteService = new RemoteProxy();
+        String response = remoteService.request("Test Data");
+        System.out.println(response); // Proxy handling request for Test Data
+    }
+}
