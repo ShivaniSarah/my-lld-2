@@ -1,0 +1,90 @@
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+// CacheManager using Bill Pugh Singleton Pattern
+public class CacheManager<K, V> {
+
+    // Maximum size of the cache
+    private final int maxSize;
+    // LinkedHashMap to maintain the order of entries and limit size
+    private final Map<K, V> cache;
+
+    // Private constructor to prevent instantiation
+    private CacheManager(int maxSize) {
+        this.maxSize = maxSize;
+        this.cache = new LinkedHashMap<K, V>(maxSize, 0.75f, true) {
+            @Override
+            protected boolean removeEldestEntry(Map.Entry<K, V> eldest) {
+                return size() > CacheManager.this.maxSize;
+            }
+        };
+    }
+
+    // Static inner helper class responsible for holding the Singleton instance
+    private static class SingletonHelper {
+        private static final CacheManager<Object, Object> INSTANCE = new CacheManager<>(100); // Example max size
+    }
+
+    // Public method to provide access to the singleton instance
+    public static CacheManager<Object, Object> getInstance() {
+        return SingletonHelper.INSTANCE;
+    }
+
+    // Put an item in the cache
+    public synchronized void put(K key, V value) {
+        cache.put(key, value);
+    }
+
+    // Get an item from the cache
+    public synchronized V get(K key) {
+        return cache.get(key);
+    }
+
+    // Remove an item from the cache
+    public synchronized void remove(K key) {
+        cache.remove(key);
+    }
+
+    // Clear the cache
+    public synchronized void clear() {
+        cache.clear();
+    }
+
+    // Display current cache contents (optional)
+    public void displayCache() {
+        cache.forEach((key, value) -> System.out.println(key + ": " + value));
+    }
+}
+
+// Usage Example
+public class Main {
+    public static void main(String[] args) {
+        CacheManager<String, String> cacheManager = CacheManager.getInstance();
+
+        // Add items to the cache
+        cacheManager.put("key1", "value1");
+        cacheManager.put("key2", "value2");
+
+        // Retrieve items from the cache
+        String value1 = cacheManager.get("key1");
+        String value2 = cacheManager.get("key2");
+
+        System.out.println("Retrieved from cache:");
+        System.out.println("key1: " + value1);
+        System.out.println("key2: " + value2);
+
+        // Display current cache contents
+        System.out.println("Current cache contents:");
+        cacheManager.displayCache();
+
+        // Remove an item from the cache
+        cacheManager.remove("key1");
+        System.out.println("After removing key1:");
+        cacheManager.displayCache();
+
+        // Clear the cache
+        cacheManager.clear();
+        System.out.println("Cache after clearing:");
+        cacheManager.displayCache();
+    }
+}
