@@ -14,7 +14,7 @@ Prototype Design Pattern
 Singleton Design Pattern 
 
 
-Structural Design patterns
+## <b>Structural Design patterns</b>
 
 
 Adaptor Design Pattern 
@@ -32,7 +32,7 @@ Flyweight Design Pattern
 Proxy Design Pattern
 
 
-Behavioural Design patterns
+## <b>Behavioural Design patterns</b>
 
 
 Chain Of Responsibility
