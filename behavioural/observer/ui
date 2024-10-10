@@ -1,0 +1,65 @@
+// Subject interface
+public interface ButtonSubject {
+    void registerListener(ButtonListener listener);
+    void notifyListeners();
+}
+
+// Observer interface
+public interface ButtonListener {
+    void onClick();
+}
+
+// Concrete Subject
+public class Button implements ButtonSubject {
+    private List<ButtonListener> listeners;
+
+    public Button() {
+        listeners = new ArrayList<>();
+    }
+
+    @Override
+    public void registerListener(ButtonListener listener) {
+        listeners.add(listener);
+    }
+
+    @Override
+    public void notifyListeners() {
+        for (ButtonListener listener : listeners) {
+            listener.onClick(); // Notify all listeners
+        }
+    }
+
+    public void click() {
+        System.out.println("Button clicked!");
+        notifyListeners(); // Notify listeners when clicked
+    }
+}
+
+// Concrete Observer
+public class ButtonClickListener implements ButtonListener {
+    private String name;
+
+    public ButtonClickListener(String name) {
+        this.name = name;
+    }
+
+    @Override
+    public void onClick() {
+        System.out.println(name + " responded to button click.");
+    }
+}
+
+// Usage
+public class Main {
+    public static void main(String[] args) {
+        Button button = new Button();
+
+        ButtonClickListener listener1 = new ButtonClickListener("Listener 1");
+        ButtonClickListener listener2 = new ButtonClickListener("Listener 2");
+
+        button.registerListener(listener1);
+        button.registerListener(listener2);
+
+        button.click(); // Simulate button click
+    }
+}
