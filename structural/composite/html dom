@@ -1,0 +1,71 @@
+// Component interface
+interface HTMLElement {
+    void render();
+}
+
+// Leaf class
+class Paragraph implements HTMLElement {
+    private String text;
+
+    public Paragraph(String text) {
+        this.text = text;
+    }
+
+    @Override
+    public void render() {
+        System.out.println("<p>" + text + "</p>");
+    }
+}
+
+// Leaf class
+class Image implements HTMLElement {
+    private String src;
+
+    public Image(String src) {
+        this.src = src;
+    }
+
+    @Override
+    public void render() {
+        System.out.println("<img src=\"" + src + "\" />");
+    }
+}
+
+// Composite class
+class Div implements HTMLElement {
+    private List<HTMLElement> elements = new ArrayList<>();
+
+    public void addElement(HTMLElement element) {
+        elements.add(element);
+    }
+
+    public void removeElement(HTMLElement element) {
+        elements.remove(element);
+    }
+
+    @Override
+    public void render() {
+        System.out.println("<div>");
+        for (HTMLElement element : elements) {
+            element.render();
+        }
+        System.out.println("</div>");
+    }
+}
+
+// Usage
+public class Main {
+    public static void main(String[] args) {
+        // Leaf nodes
+        HTMLElement paragraph = new Paragraph("Hello, World!");
+        HTMLElement image = new Image("image.png");
+
+        // Composite node
+        Div div = new Div();
+        div.addElement(paragraph);
+        div.addElement(image);
+
+        // Render the HTML structure
+        div.render();
+    }
+}
