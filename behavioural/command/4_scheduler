@@ -1,0 +1,121 @@
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+// Command Interface
+interface Command {
+    void execute();
+    void undo();
+}
+
+// Receiver Class: Represents a Task or Job
+class Job {
+    private String jobName;
+
+    public Job(String jobName) {
+        this.jobName = jobName;
+    }
+
+    public void runJob() {
+        System.out.println("Executing Job: " + jobName);
+    }
+
+    public void stopJob() {
+        System.out.println("Stopping Job: " + jobName);
+    }
+}
+
+// Concrete Commands for different job operations
+class StartJobCommand implements Command {
+    private Job job;
+
+    public StartJobCommand(Job job) {
+        this.job = job;
+    }
+
+    @Override
+    public void execute() {
+        job.runJob();
+    }
+
+    @Override
+    public void undo() {
+        job.stopJob();
+    }
+}
+
+class StopJobCommand implements Command {
+    private Job job;
+
+    public StopJobCommand(Job job) {
+        this.job = job;
+    }
+
+    @Override
+    public void execute() {
+        job.stopJob();
+    }
+
+    @Override
+    public void undo() {
+        job.runJob();
+    }
+}
+
+// Invoker Class: Job Scheduler
+class JobScheduler {
+    private List<Command> commandQueue = new ArrayList<>();
+
+    // Schedules a job to be executed
+    public void scheduleJob(Command command) {
+        commandQueue.add(command);
+        command.execute();
+    }
+
+    // Cancel or undo the last scheduled job
+    public void undoLastJob() {
+        if (!commandQueue.isEmpty()) {
+            Command lastCommand = commandQueue.remove(commandQueue.size() - 1);
+            lastCommand.undo();
+        }
+    }
+
+    // Execute all scheduled jobs
+    public void executeAllJobs() {
+        for (Command command : commandQueue) {
+            command.execute();
+        }
+    }
+}
+
+// Client Code
+public class JobSchedulerSystem {
+    public static void main(String[] args) throws InterruptedException {
+        JobScheduler scheduler = new JobScheduler();
+
+        // Create jobs
+        Job dataBackupJob = new Job("Data Backup");
+        Job dataCleanupJob = new Job("Data Cleanup");
+
+        // Create commands
+        Command startBackupJob = new StartJobCommand(dataBackupJob);
+        Command stopBackupJob = new StopJobCommand(dataBackupJob);
+
+        Command startCleanupJob = new StartJobCommand(dataCleanupJob);
+        Command stopCleanupJob = new StopJobCommand(dataCleanupJob);
+
+        // Schedule jobs in the job scheduler
+        scheduler.scheduleJob(startBackupJob);    // Output: Executing Job: Data Backup
+        TimeUnit.SECONDS.sleep(1);                // Simulate job execution time
+        scheduler.scheduleJob(startCleanupJob);   // Output: Executing Job: Data Cleanup
+
+        // Undo the last scheduled job (Data Cleanup)
+        scheduler.undoLastJob();                  // Output: Stopping Job: Data Cleanup
+
+        // Stop the backup job
+        scheduler.scheduleJob(stopBackupJob);     // Output: Stopping Job: Data Backup
+
+        // Undo stopping the backup job (re-running it)
+        scheduler.undoLastJob();                  // Output: Executing Job: Data Backup
+    }
+}
