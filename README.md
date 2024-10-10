@@ -57,3 +57,7 @@ Visitor Design Pattern
 
 
 
+todo:
+
+facade flyweight
+
