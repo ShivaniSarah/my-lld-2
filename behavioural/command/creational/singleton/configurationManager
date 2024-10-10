@@ -1,0 +1,64 @@
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
+
+// ConfigurationManager using Bill Pugh Singleton Pattern
+public class ConfigurationManager {
+
+    // Private constructor to prevent instantiation
+    private ConfigurationManager() {
+        loadConfigurations();
+    }
+
+    // Static inner helper class responsible for holding the Singleton instance
+    private static class SingletonHelper {
+        private static final ConfigurationManager INSTANCE = new ConfigurationManager();
+    }
+
+    // Public method to provide access to the singleton instance
+    public static ConfigurationManager getInstance() {
+        return SingletonHelper.INSTANCE;
+    }
+
+    // Properties to hold configuration settings
+    private Properties properties = new Properties();
+
+    // Load configurations from a properties file
+    private void loadConfigurations() {
+        String configFilePath = "config.properties"; // Path to the properties file
+        try (InputStream input = new FileInputStream(configFilePath)) {
+            properties.load(input);
+        } catch (IOException e) {
+            System.err.println("Error loading configuration file: " + e.getMessage());
+        }
+    }
+
+    // Get a configuration value by key
+    public String getConfigValue(String key) {
+        return properties.getProperty(key);
+    }
+
+    // Example method to display all configurations (optional)
+    public void displayConfigurations() {
+        properties.forEach((key, value) -> System.out.println(key + ": " + value));
+    }
+}
+
+// Usage Example
+public class Main {
+    public static void main(String[] args) {
+        ConfigurationManager configManager = ConfigurationManager.getInstance();
+
+        // Get configuration values
+        String dbUrl = configManager.getConfigValue("database.url");
+        String dbUser = configManager.getConfigValue("database.user");
+        
+        // Display configuration values
+        System.out.println("Database URL: " + dbUrl);
+        System.out.println("Database User: " + dbUser);
+        
+        // Optional: Display all configurations
+        configManager.displayConfigurations();
+    }
+}
