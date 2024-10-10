@@ -1,0 +1,80 @@
+import java.util.ArrayList;
+import java.util.List;
+
+// Command Interface
+interface Command {
+    void execute();
+    void undo();
+}
+
+// Receiver Class
+class TextEditor {
+    private StringBuilder text = new StringBuilder();
+
+    public void addText(String newText) {
+        text.append(newText);
+    }
+
+    public void removeText(int length) {
+        if (length <= text.length()) {
+            text.delete(text.length() - length, text.length());
+        }
+    }
+
+    public void showText() {
+        System.out.println(text.toString());
+    }
+}
+
+// Concrete Command
+class AddTextCommand implements Command {
+    private TextEditor editor;
+    private String textToAdd;
+
+    public AddTextCommand(TextEditor editor, String textToAdd) {
+        this.editor = editor;
+        this.textToAdd = textToAdd;
+    }
+
+    @Override
+    public void execute() {
+        editor.addText(textToAdd);
+    }
+
+    @Override
+    public void undo() {
+        editor.removeText(textToAdd.length());
+    }
+}
+
+// Invoker
+class CommandManager {
+    private List<Command> commandHistory = new ArrayList<>();
+
+    public void executeCommand(Command command) {
+        command.execute();
+        commandHistory.add(command);
+    }
+
+    public void undoLastCommand() {
+        if (!commandHistory.isEmpty()) {
+            Command lastCommand = commandHistory.remove(commandHistory.size() - 1);
+            lastCommand.undo();
+        }
+    }
+}
+
+// Client Code
+public class CommandPatternExample {
+    public static void main(String[] args) {
+        TextEditor editor = new TextEditor();
+        CommandManager manager = new CommandManager();
+
+        manager.executeCommand(new AddTextCommand(editor, "Hello, "));
+        manager.executeCommand(new AddTextCommand(editor, "World!"));
+        editor.showText(); // Output: Hello, World!
+
+        manager.undoLastCommand();
+        editor.showText(); // Output: Hello, 
+    }
+}
