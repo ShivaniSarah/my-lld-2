@@ -1,0 +1,56 @@
+// Abstract handler
+abstract class SupportHandler {
+    protected SupportHandler nextHandler;
+
+    public void setNextHandler(SupportHandler nextHandler) {
+        this.nextHandler = nextHandler;
+    }
+
+    public abstract void handleTicket(String ticket);
+}
+
+// Concrete handlers
+class LevelOneSupport extends SupportHandler {
+    @Override
+    public void handleTicket(String ticket) {
+        if (ticket.equals("simple")) {
+            System.out.println("Level 1 support handling ticket: " + ticket);
+        } else if (nextHandler != null) {
+            nextHandler.handleTicket(ticket);
+        }
+    }
+}
+
+class LevelTwoSupport extends SupportHandler {
+    @Override
+    public void handleTicket(String ticket) {
+        if (ticket.equals("intermediate")) {
+            System.out.println("Level 2 support handling ticket: " + ticket);
+        } else if (nextHandler != null) {
+            nextHandler.handleTicket(ticket);
+        }
+    }
+}
+
+class LevelThreeSupport extends SupportHandler {
+    @Override
+    public void handleTicket(String ticket) {
+        System.out.println("Level 3 support handling ticket: " + ticket);
+    }
+}
+
+// Usage
+public class Main {
+    public static void main(String[] args) {
+        SupportHandler levelOneSupport = new LevelOneSupport();
+        SupportHandler levelTwoSupport = new LevelTwoSupport();
+        SupportHandler levelThreeSupport = new LevelThreeSupport();
+
+        levelOneSupport.setNextHandler(levelTwoSupport);
+        levelTwoSupport.setNextHandler(levelThreeSupport);
+
+        levelOneSupport.handleTicket("simple");      // Level 1 support handling ticket: simple
+        levelOneSupport.handleTicket("intermediate"); // Level 2 support handling ticket: intermediate
+        levelOneSupport.handleTicket("complex");      // Level 3 support handling ticket: complex
+    }
+}
