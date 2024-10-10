@@ -1,0 +1,67 @@
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
+// ThreadPoolManager using Bill Pugh Singleton Pattern
+public class ThreadPoolManager {
+
+    // Private constructor to prevent instantiation
+    private ThreadPoolManager() {
+        // Optional: Initialize resources if needed
+    }
+
+    // Static inner helper class responsible for holding the Singleton instance
+    private static class SingletonHelper {
+        private static final ThreadPoolManager INSTANCE = new ThreadPoolManager();
+    }
+
+    // Public method to provide access to the singleton instance
+    public static ThreadPoolManager getInstance() {
+        return SingletonHelper.INSTANCE;
+    }
+
+    // Thread pool with a fixed number of threads
+    private final ExecutorService executorService = Executors.newFixedThreadPool(10); // Example: 10 threads
+
+    // Method to submit a task for execution
+    public void submitTask(Runnable task) {
+        executorService.submit(task);
+    }
+
+    // Method to shut down the thread pool gracefully
+    public void shutdown() {
+        executorService.shutdown();
+        try {
+            // Wait for existing tasks to terminate
+            if (!executorService.awaitTermination(60, TimeUnit.SECONDS)) {
+                executorService.shutdownNow(); // Cancel currently executing tasks
+            }
+        } catch (InterruptedException e) {
+            executorService.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
+    }
+}
+
+// Usage Example
+public class Main {
+    public static void main(String[] args) {
+        ThreadPoolManager threadPoolManager = ThreadPoolManager.getInstance();
+        
+        // Submit tasks to the thread pool
+        for (int i = 0; i < 20; i++) {
+            final int taskId = i;
+            threadPoolManager.submitTask(() -> {
+                System.out.println("Executing task " + taskId + " by thread " + Thread.currentThread().getName());
+                try {
+                    Thread.sleep(1000); // Simulate work
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            });
+        }
+
+        // Shut down the thread pool gracefully
+        threadPoolManager.shutdown();
+    }
+}
