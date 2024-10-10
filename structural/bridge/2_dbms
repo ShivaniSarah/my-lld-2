@@ -1,0 +1,68 @@
+// The "Implementation" interface for connection methods.
+interface ConnectionMethod {
+    void connect();
+}
+
+// Concrete implementation for JDBC connection.
+class JDBCConnection implements ConnectionMethod {
+    @Override
+    public void connect() {
+        System.out.println("Connecting using JDBC...");
+    }
+}
+
+// Concrete implementation for ODBC connection.
+class ODBCConnection implements ConnectionMethod {
+    @Override
+    public void connect() {
+        System.out.println("Connecting using ODBC...");
+    }
+}
+
+// The "Abstraction" defines the interface for databases.
+abstract class Database {
+    protected ConnectionMethod connectionMethod;
+
+    protected Database(ConnectionMethod connectionMethod) {
+        this.connectionMethod = connectionMethod;
+    }
+
+    public abstract void connect(); // High-level operation
+}
+
+// Refined abstraction for MySQL database.
+class MySQLDatabase extends Database {
+    public MySQLDatabase(ConnectionMethod connectionMethod) {
+        super(connectionMethod);
+    }
+
+    @Override
+    public void connect() {
+        System.out.print("MySQL Database: ");
+        connectionMethod.connect();
+    }
+}
+
+// Refined abstraction for PostgreSQL database.
+class PostgreSQLDatabase extends Database {
+    public PostgreSQLDatabase(ConnectionMethod connectionMethod) {
+        super(connectionMethod);
+    }
+
+    @Override
+    public void connect() {
+        System.out.print("PostgreSQL Database: ");
+        connectionMethod.connect();
+    }
+}
+
+// Client code
+public class Main {
+    public static void main(String[] args) {
+        Database mysqlDb = new MySQLDatabase(new JDBCConnection());
+        mysqlDb.connect(); // MySQL Database: Connecting using JDBC...
+
+        Database postgresDb = new PostgreSQLDatabase(new ODBCConnection());
+        postgresDb.connect(); // PostgreSQL Database: Connecting using ODBC...
+    }
+}
