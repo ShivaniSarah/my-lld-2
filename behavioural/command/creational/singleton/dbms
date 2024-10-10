@@ -1,0 +1,99 @@
+bill Pugh
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.util.LinkedList;
+import java.util.Queue;
+
+// DBConnectionManager using Bill Pugh Singleton Pattern
+public class DBConnectionManager {
+
+    // Private constructor to prevent instantiation
+    private DBConnectionManager() {
+        initializeConnectionPool();
+    }
+
+    // Static inner helper class responsible for holding the Singleton instance
+    private static class SingletonHelper {
+        private static final DBConnectionManager INSTANCE = new DBConnectionManager();
+    }
+
+    // Public method to provide access to the singleton instance
+    public static DBConnectionManager getInstance() {
+        return SingletonHelper.INSTANCE;
+    }
+
+    // Pool to store connections
+    private final Queue<Connection> connectionPool = new LinkedList<>();
+    private static final int MAX_CONNECTIONS = 5;  // Example connection pool size
+
+    // Initialize the connection pool
+    private void initializeConnectionPool() {
+        try {
+            for (int i = 0; i < MAX_CONNECTIONS; i++) {
+                connectionPool.add(createNewConnection());
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error initializing the connection pool", e);
+        }
+    }
+
+    // Method to create a new database connection
+    private Connection createNewConnection() throws SQLException {
+        // Replace with actual DB connection URL, username, and password
+        String url = "jdbc:mysql://localhost:3306/db_name";
+        String user = "username";
+        String password = "password";
+        return DriverManager.getConnection(url, user, password);
+    }
+
+    // Get a connection from the pool
+    public synchronized Connection getConnection() {
+        if (connectionPool.isEmpty()) {
+            throw new RuntimeException("All connections are in use.");
+        }
+        return connectionPool.poll();
+    }
+
+    // Return a connection to the pool
+    public synchronized void returnConnection(Connection connection) {
+        if (connection != null) {
+            connectionPool.add(connection);
+        }
+    }
+
+    // Close all connections in the pool
+    public synchronized void closeAllConnections() {
+        for (Connection connection : connectionPool) {
+            try {
+                if (!connection.isClosed()) {
+                    connection.close();
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+        connectionPool.clear();
+    }
+}
+
+// Usage Example
+public class Main {
+    public static void main(String[] args) {
+        DBConnectionManager dbManager = DBConnectionManager.getInstance();
+        
+        // Get a connection from the pool
+        Connection connection = dbManager.getConnection();
+        
+        try {
+            // Use the connection (e.g., execute queries)
+        } finally {
+            // Return the connection to the pool when done
+            dbManager.returnConnection(connection);
+        }
+
+        // Optionally close all connections when shutting down the application
+        dbManager.closeAllConnections();
+    }
+}
