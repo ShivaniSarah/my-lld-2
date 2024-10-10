@@ -1,0 +1,52 @@
+// Abstract handler
+abstract class RequestHandler {
+    protected RequestHandler nextHandler;
+
+    public void setNextHandler(RequestHandler nextHandler) {
+        this.nextHandler = nextHandler;
+    }
+
+    public abstract void handleRequest(String request);
+}
+
+// Concrete handlers
+class AuthHandler extends RequestHandler {
+    @Override
+    public void handleRequest(String request) {
+        System.out.println("Handling authentication.");
+        if (nextHandler != null) {
+            nextHandler.handleRequest(request);
+        }
+    }
+}
+
+class LoggingHandler extends RequestHandler {
+    @Override
+    public void handleRequest(String request) {
+        System.out.println("Logging request: " + request);
+        if (nextHandler != null) {
+            nextHandler.handleRequest(request);
+        }
+    }
+}
+
+class DataProcessingHandler extends RequestHandler {
+    @Override
+    public void handleRequest(String request) {
+        System.out.println("Processing data for request: " + request);
+    }
+}
+
+// Usage
+public class Main {
+    public static void main(String[] args) {
+        RequestHandler authHandler = new AuthHandler();
+        RequestHandler loggingHandler = new LoggingHandler();
+        RequestHandler dataProcessingHandler = new DataProcessingHandler();
+
+        authHandler.setNextHandler(loggingHandler);
+        loggingHandler.setNextHandler(dataProcessingHandler);
+
+        authHandler.handleRequest("GET /api/data");
+    }
+}
