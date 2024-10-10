@@ -1,0 +1,45 @@
+// Strategy interface
+public interface RouteStrategy {
+    void buildRoute(String startPoint, String endPoint);
+}
+
+// Concrete strategies
+public class FastestRouteStrategy implements RouteStrategy {
+    @Override
+    public void buildRoute(String startPoint, String endPoint) {
+        System.out.println("Building fastest route from " + startPoint + " to " + endPoint);
+    }
+}
+
+public class ShortestRouteStrategy implements RouteStrategy {
+    @Override
+    public void buildRoute(String startPoint, String endPoint) {
+        System.out.println("Building shortest route from " + startPoint + " to " + endPoint);
+    }
+}
+
+// Context class
+public class Navigator {
+    private RouteStrategy routeStrategy;
+
+    public void setRouteStrategy(RouteStrategy routeStrategy) {
+        this.routeStrategy = routeStrategy;
+    }
+
+    public void navigate(String startPoint, String endPoint) {
+        routeStrategy.buildRoute(startPoint, endPoint);
+    }
+}
+
+// Usage
+public class Main {
+    public static void main(String[] args) {
+        Navigator navigator = new Navigator();
+
+        navigator.setRouteStrategy(new FastestRouteStrategy());
+        navigator.navigate("Point A", "Point B");
+
+        navigator.setRouteStrategy(new ShortestRouteStrategy());
+        navigator.navigate("Point A", "Point B");
+    }
+}
