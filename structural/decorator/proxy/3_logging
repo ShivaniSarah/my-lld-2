@@ -1,0 +1,38 @@
+// Subject interface
+interface Data {
+    void save();
+}
+
+// Real Subject
+class RealData implements Data {
+    @Override
+    public void save() {
+        System.out.println("Data has been saved.");
+    }
+}
+
+// Proxy
+class LoggingProxy implements Data {
+    private RealData realData;
+
+    public LoggingProxy(RealData realData) {
+        this.realData = realData;
+    }
+
+    @Override
+    public void save() {
+        System.out.println("Logging: About to save data...");
+        realData.save();
+        System.out.println("Logging: Data has been saved.");
+    }
+}
+
+// Usage
+public class Main {
+    public static void main(String[] args) {
+        RealData realData = new RealData();
+        Data loggingProxy = new LoggingProxy(realData);
+        
+        loggingProxy.save(); // Logs before and after saving
+    }
+}
