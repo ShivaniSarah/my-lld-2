@@ -1,0 +1,68 @@
+// The "Implementation" interface for export formats.
+interface ExportFormat {
+    void export(String reportData);
+}
+
+// Concrete implementation for PDF export.
+class PDFExport implements ExportFormat {
+    @Override
+    public void export(String reportData) {
+        System.out.println("Exporting report to PDF: " + reportData);
+    }
+}
+
+// Concrete implementation for Excel export.
+class ExcelExport implements ExportFormat {
+    @Override
+    public void export(String reportData) {
+        System.out.println("Exporting report to Excel: " + reportData);
+    }
+}
+
+// The "Abstraction" for reports.
+abstract class Report {
+    protected ExportFormat exportFormat;
+
+    protected Report(ExportFormat exportFormat) {
+        this.exportFormat = exportFormat;
+    }
+
+    public abstract void generateReport(); // High-level operation
+}
+
+// Refined abstraction for Sales report.
+class SalesReport extends Report {
+    public SalesReport(ExportFormat exportFormat) {
+        super(exportFormat);
+    }
+
+    @Override
+    public void generateReport() {
+        String reportData = "Sales Report Data";
+        exportFormat.export(reportData);
+    }
+}
+
+// Refined abstraction for Inventory report.
+class InventoryReport extends Report {
+    public InventoryReport(ExportFormat exportFormat) {
+        super(exportFormat);
+    }
+
+    @Override
+    public void generateReport() {
+        String reportData = "Inventory Report Data";
+        exportFormat.export(reportData);
+    }
+}
+
+// Client code
+public class Main {
+    public static void main(String[] args) {
+        Report salesReport = new SalesReport(new PDFExport());
+        salesReport.generateReport(); // Exporting report to PDF: Sales Report Data
+
+        Report inventoryReport = new InventoryReport(new ExcelExport());
+        inventoryReport.generateReport(); // Exporting report to Excel: Inventory Report Data
+    }
+}
