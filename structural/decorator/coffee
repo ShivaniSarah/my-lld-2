@@ -1,0 +1,80 @@
+public interface Coffee {
+    double cost(); // Returns the cost of the coffee
+    String getDescription(); // Returns the description of the coffee
+}
+public class BasicCoffee implements Coffee {
+    @Override
+    public double cost() {
+        return 2.00; // Base cost of coffee
+    }
+
+    @Override
+    public String getDescription() {
+        return "Basic Coffee"; // Description of the coffee
+    }
+}
+public abstract class CoffeeDecorator implements Coffee {
+    protected Coffee coffee; // Reference to a Coffee object
+
+    public CoffeeDecorator(Coffee coffee) {
+        this.coffee = coffee;
+    }
+
+    @Override
+    public double cost() {
+        return coffee.cost(); // Delegates the call to the wrapped coffee
+    }
+
+    @Override
+    public String getDescription() {
+        return coffee.getDescription(); // Delegates the call to the wrapped coffee
+    }
+}
+// Milk decorator
+public class MilkDecorator extends CoffeeDecorator {
+    public MilkDecorator(Coffee coffee) {
+        super(coffee);
+    }
+
+    @Override
+    public double cost() {
+        return super.cost() + 0.50; // Adds the cost of milk
+    }
+
+    @Override
+    public String getDescription() {
+        return super.getDescription() + ", Milk"; // Adds milk to the description
+    }
+}
+
+// Sugar decorator
+public class SugarDecorator extends CoffeeDecorator {
+    public SugarDecorator(Coffee coffee) {
+        super(coffee);
+    }
+
+    @Override
+    public double cost() {
+        return super.cost() + 0.20; // Adds the cost of sugar
+    }
+
+    @Override
+    public String getDescription() {
+        return super.getDescription() + ", Sugar"; // Adds sugar to the description
+    }
+}
+public class Main {
+    public static void main(String[] args) {
+        // Create a basic coffee
+        Coffee coffee = new BasicCoffee();
+        System.out.println(coffee.getDescription() + " $" + coffee.cost());
+
+        // Add milk to the coffee
+        coffee = new MilkDecorator(coffee);
+        System.out.println(coffee.getDescription() + " $" + coffee.cost());
+
+        // Add sugar to the coffee
+        coffee = new SugarDecorator(coffee);
+        System.out.println(coffee.getDescription() + " $" + coffee.cost());
+    }
+}
