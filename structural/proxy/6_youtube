@@ -1,0 +1,125 @@
+import java.util.HashMap;
+import java.util.Map;
+
+// The interface of a remote service.
+interface ThirdPartyYouTubeLib {
+    Map<String, String> listVideos();
+    String getVideoInfo(String id);
+    String downloadVideo(String id);
+}
+
+// The concrete implementation of a service connector. This simulates making slow API calls to YouTube.
+class ThirdPartyYouTubeClass implements ThirdPartyYouTubeLib {
+
+    @Override
+    public Map<String, String> listVideos() {
+        // Simulate heavy operation
+        System.out.println("Fetching videos from YouTube...");
+        Map<String, String> videos = new HashMap<>();
+        videos.put("1", "Cat video");
+        videos.put("2", "Dog video");
+        return videos;
+    }
+
+    @Override
+    public String getVideoInfo(String id) {
+        // Simulate heavy operation
+        System.out.println("Fetching video info from YouTube for ID: " + id);
+        return "Video info for ID " + id;
+    }
+
+    @Override
+    public String downloadVideo(String id) {
+        // Simulate heavy operation
+        System.out.println("Downloading video from YouTube for ID: " + id);
+        return "Downloaded video content for ID " + id;
+    }
+}
+
+// Proxy class implementing the same interface. It caches results to avoid redundant API calls.
+class CachedYouTubeClass implements ThirdPartyYouTubeLib {
+    private ThirdPartyYouTubeLib youtubeService;
+    private Map<String, String> listCache;
+    private Map<String, String> videoCache;
+    private boolean needReset;
+
+    public CachedYouTubeClass(ThirdPartyYouTubeLib youtubeService) {
+        this.youtubeService = youtubeService;
+        this.listCache = new HashMap<>();
+        this.videoCache = new HashMap<>();
+        this.needReset = false;
+    }
+
+    @Override
+    public Map<String, String> listVideos() {
+        if (listCache.isEmpty() || needReset) {
+            System.out.println("Cache miss: Fetching list of videos from YouTube...");
+            listCache = youtubeService.listVideos();
+        } else {
+            System.out.println("Cache hit: Returning cached list of videos.");
+        }
+        return listCache;
+    }
+
+    @Override
+    public String getVideoInfo(String id) {
+        if (!videoCache.containsKey(id) || needReset) {
+            System.out.println("Cache miss: Fetching video info for ID: " + id);
+            String info = youtubeService.getVideoInfo(id);
+            videoCache.put(id, info);
+        } else {
+            System.out.println("Cache hit: Returning cached video info for ID: " + id);
+        }
+        return videoCache.get(id);
+    }
+
+    @Override
+    public String downloadVideo(String id) {
+        if (!videoCache.containsKey(id) || needReset) {
+            System.out.println("Cache miss: Downloading video for ID: " + id);
+            String videoContent = youtubeService.downloadVideo(id);
+            videoCache.put(id, videoContent);
+        } else {
+            System.out.println("Cache hit: Returning cached downloaded video for ID: " + id);
+        }
+        return videoCache.get(id);
+    }
+}
+
+// The YouTubeManager uses the YouTube service to render data.
+class YouTubeManager {
+    protected ThirdPartyYouTubeLib service;
+
+    public YouTubeManager(ThirdPartyYouTubeLib service) {
+        this.service = service;
+    }
+
+    public void renderVideoPage(String id) {
+        String info = service.getVideoInfo(id);
+        System.out.println("Rendering video page with info: " + info);
+    }
+
+    public void renderListPanel() {
+        Map<String, String> list = service.listVideos();
+        System.out.println("Rendering video list: " + list);
+    }
+
+    public void reactOnUserInput() {
+        renderVideoPage("1");
+        renderListPanel();
+    }
+}
+
+// The application can configure proxies on the fly.
+public class Application {
+    public static void main(String[] args) {
+        ThirdPartyYouTubeLib youtubeService = new ThirdPartyYouTubeClass();
+        ThirdPartyYouTubeLib youtubeProxy = new CachedYouTubeClass(youtubeService);
+        YouTubeManager manager = new YouTubeManager(youtubeProxy);
+
+        // Simulate user interaction
+        manager.reactOnUserInput();
+        System.out.println("Reusing cached data:");
+        manager.reactOnUserInput();
+    }
+}
