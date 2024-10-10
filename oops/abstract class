@@ -1,0 +1,19 @@
+Feature	Abstract Class	
+
+Definition	Can have both abstract and concrete methods.	
+Instantiation	Cannot be instantiated directly.	
+Method Implementation	Can provide implementation for some methods.	
+State/Fields	Can have instance variables (state) and constructors.
+Access Modifiers	Can have any access modifiers (private, protected, public).	
+Multiple Inheritance	A class can inherit from only one abstract class (single inheritance).	
+Use Cases	Used when classes share common behavior and state, or when a base class needs to provide a default implementation.
+
+Interface
+
+Definition Can only declare abstract methods (until Java 8) and default/static methods (from Java 8 onward).
+Instantiation Cannot be instantiated directly.
+Method  Cannot provide any implementation (prior to Java 8). From Java 8, default methods can have implementations.
+State/Fields  Cannot have instance variables; can have static final variables (constants).
+Access Modifiers All methods are implicitly public; fields are implicitly public, static, and final.
+Multiple Inheritance  A class can implement multiple interfaces (multiple inheritance).
+Use Cases 	Used to define a contract that can be implemented by any class, regardless of its position in the class hierarchy.
