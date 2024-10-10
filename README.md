@@ -1,6 +1,6 @@
 # LLD6
 
-<b>Creational Design patterns</b>
+## <b>Creational Design patterns</b>
 
 
 Factory Design Pattern
