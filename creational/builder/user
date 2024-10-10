@@ -1,0 +1,75 @@
+public class User {
+    private final String username;  // Required
+    private final String email;     // Required
+    private final int age;          // Optional
+    private final String address;    // Optional
+    private final String phone;      // Optional
+
+    // Private constructor to prevent direct instantiation
+    private User(UserBuilder builder) {
+        this.username = builder.username;
+        this.email = builder.email;
+        this.age = builder.age;
+        this.address = builder.address;
+        this.phone = builder.phone;
+    }
+
+    // Getters for the fields
+    public String getUsername() {
+        return username;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public int getAge() {
+        return age;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    // Static inner Builder class
+    public static class UserBuilder {
+        private final String username;  // Required
+        private final String email;     // Required
+        private int age = 0;            // Optional, default value
+        private String address = "";     // Optional, default value
+        private String phone = "";       // Optional, default value
+
+        // Builder constructor with required parameters
+        public UserBuilder(String username, String email) {
+            this.username = username;
+            this.email = email;
+        }
+
+        // Method to set optional age
+        public UserBuilder setAge(int age) {
+            this.age = age;
+            return this;
+        }
+
+        // Method to set optional address
+        public UserBuilder setAddress(String address) {
+            this.address = address;
+            return this;
+        }
+
+        // Method to set optional phone number
+        public UserBuilder setPhone(String phone) {
+            this.phone = phone;
+            return this;
+        }
+
+        // Method to build and return the User object
+        public User build() {
+            return new User(this);
+        }
+    }
+}
