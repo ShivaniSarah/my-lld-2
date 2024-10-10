@@ -1,0 +1,89 @@
+public class Car {
+    private final String make;        // Required
+    private final String model;       // Required
+    private final int year;           // Required
+    private final String color;        // Optional
+    private final String engineType;   // Optional
+
+    // Private constructor to prevent direct instantiation
+    private Car(CarBuilder builder) {
+        this.make = builder.make;
+        this.model = builder.model;
+        this.year = builder.year;
+        this.color = builder.color;
+        this.engineType = builder.engineType;
+    }
+
+    // Getters for the fields
+    public String getMake() {
+        return make;
+    }
+
+    public String getModel() {
+        return model;
+    }
+
+    public int getYear() {
+        return year;
+    }
+
+    public String getColor() {
+        return color;
+    }
+
+    public String getEngineType() {
+        return engineType;
+    }
+
+    // Static inner Builder class
+    public static class CarBuilder {
+        private final String make;        // Required
+        private final String model;       // Required
+        private final int year;           // Required
+        private String color;              // Optional
+        private String engineType;         // Optional
+
+        // Builder constructor with required parameters
+        public CarBuilder(String make, String model, int year) {
+            this.make = make;
+            this.model = model;
+            this.year = year;
+        }
+
+        // Method to set optional color
+        public CarBuilder setColor(String color) {
+            this.color = color;
+            return this;
+        }
+
+        // Method to set optional engine type
+        public CarBuilder setEngineType(String engineType) {
+            this.engineType = engineType;
+            return this;
+        }
+
+        // Method to build and return the Car object
+        public Car build() {
+            return new Car(this);
+        }
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        // Building a Car object using the builder
+        Car car1 = new Car.CarBuilder("Toyota", "Camry", 2024)
+                .setColor("Red")
+                .setEngineType("Hybrid")
+                .build();
+
+        // Building another Car object with different attributes
+        Car car2 = new Car.CarBuilder("Honda", "Civic", 2023)
+                .setColor("Blue")
+                .build();
+
+        // Displaying the details of the cars
+        System.out.println("Car 1: " + car1.getMake() + " " + car1.getModel() + " (" + car1.getYear() + "), Color: " + car1.getColor() + ", Engine: " + car1.getEngineType());
+        System.out.println("Car 2: " + car2.getMake() + " " + car2.getModel() + " (" + car2.getYear() + "), Color: " + car2.getColor() + ", Engine: " + car2.getEngineType());
+    }
+}
