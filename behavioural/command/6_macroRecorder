@@ -1,0 +1,114 @@
+import java.util.ArrayList;
+import java.util.List;
+
+// Command Interface
+interface Command {
+    void execute();
+    void undo();
+}
+
+// Receiver: Text Editor
+class TextEditor {
+    private StringBuilder text = new StringBuilder();
+
+    public void writeText(String newText) {
+        text.append(newText);
+        System.out.println("Text added: " + newText);
+        System.out.println("Current text: " + text.toString());
+    }
+
+    public void removeText(int length) {
+        int start = text.length() - length;
+        if (start < 0) start = 0;
+        String removedText = text.substring(start);
+        text.delete(start, text.length());
+        System.out.println("Text removed: " + removedText);
+        System.out.println("Current text: " + text.toString());
+    }
+
+    public String getText() {
+        return text.toString();
+    }
+}
+
+// Concrete Command: Write Text
+class WriteTextCommand implements Command {
+    private TextEditor editor;
+    private String textToWrite;
+
+    public WriteTextCommand(TextEditor editor, String textToWrite) {
+        this.editor = editor;
+        this.textToWrite = textToWrite;
+    }
+
+    @Override
+    public void execute() {
+        editor.writeText(textToWrite);
+    }
+
+    @Override
+    public void undo() {
+        editor.removeText(textToWrite.length());
+    }
+}
+
+// Invoker: Macro Recorder
+class MacroRecorder {
+    private List<Command> commandList = new ArrayList<>();
+
+    public void record(Command command) {
+        commandList.add(command);
+        command.execute();
+    }
+
+    public void replay() {
+        System.out.println("Replaying Macro:");
+        for (Command command : commandList) {
+            command.execute();
+        }
+    }
+
+    public void undoLastCommand() {
+        if (!commandList.isEmpty()) {
+            Command lastCommand = commandList.remove(commandList.size() - 1);
+            lastCommand.undo();
+        } else {
+            System.out.println("No commands to undo.");
+        }
+    }
+
+    public void clear() {
+        commandList.clear();
+        System.out.println("Macro recording cleared.");
+    }
+}
+
+// Client Code
+public class MacroRecordingSystem {
+    public static void main(String[] args) {
+        TextEditor editor = new TextEditor();
+        MacroRecorder macroRecorder = new MacroRecorder();
+
+        // Record commands
+        Command writeHello = new WriteTextCommand(editor, "Hello ");
+        Command writeWorld = new WriteTextCommand(editor, "World!");
+        
+        // Record and execute actions
+        macroRecorder.record(writeHello);  // Output: Text added: Hello
+        macroRecorder.record(writeWorld);  // Output: Text added: World!
+
+        // Undo the last command
+        macroRecorder.undoLastCommand();   // Output: Text removed: World!
+
+        // Replay recorded macro (after undoing)
+        macroRecorder.replay();            // Output: Text added: Hello 
+
+        // Clear and start a new macro
+        macroRecorder.clear();
+        Command writeMacro = new WriteTextCommand(editor, "Macro is recorded.");
+        macroRecorder.record(writeMacro);  // Output: Text added: Macro is recorded.
+
+        // Replay the new macro
+        macroRecorder.replay();            // Output: Text added: Macro is recorded.
+    }
+}
