@@ -1,0 +1,38 @@
+// Prototype interface
+interface GameCharacter extends Cloneable {
+    GameCharacter clone();
+    void display();
+}
+
+// Concrete class
+class Warrior implements GameCharacter {
+    private String weapon;
+    private int health;
+
+    public Warrior(String weapon, int health) {
+        this.weapon = weapon;
+        this.health = health;
+    }
+
+    @Override
+    public GameCharacter clone() {
+        return new Warrior(this.weapon, this.health);
+    }
+
+    @Override
+    public void display() {
+        System.out.println("Warrior with " + weapon + ", Health: " + health);
+    }
+}
+
+// Usage
+public class Main {
+    public static void main(String[] args) {
+        Warrior warrior1 = new Warrior("Sword", 100);
+        warrior1.display();
+
+        // Cloning the warrior
+        GameCharacter warrior2 = warrior1.clone();
+        warrior2.display();
+    }
+}
