@@ -1,0 +1,54 @@
+// Subject interface
+interface DataFetcher {
+    String fetchData(String request);
+}
+
+// Real Subject
+class RealDataFetcher implements DataFetcher {
+    @Override
+    public String fetchData(String request) {
+        // Simulating a time-consuming operation
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return "Data for " + request;
+    }
+}
+
+// Proxy
+class CachingProxy implements DataFetcher {
+    private RealDataFetcher realDataFetcher;
+    private Map<String, String> cache;
+
+    public CachingProxy() {
+        this.realDataFetcher = new RealDataFetcher();
+        this.cache = new HashMap<>();
+    }
+
+    @Override
+    public String fetchData(String request) {
+        if (cache.containsKey(request)) {
+            System.out.println("Fetching from cache for request: " + request);
+            return cache.get(request);
+        }
+        System.out.println("Fetching from real data fetcher for request: " + request);
+        String data = realDataFetcher.fetchData(request);
+        cache.put(request, data);
+        return data;
+    }
+}
+
+// Usage
+public class Main {
+    public static void main(String[] args) {
+        DataFetcher dataFetcher = new CachingProxy();
+
+        // First call will fetch from the real data fetcher
+        System.out.println(dataFetcher.fetchData("Request1"));
+        
+        // Second call will fetch from the cache
+        System.out.println(dataFetcher.fetchData("Request1"));
+    }
+}
