@@ -1,0 +1,52 @@
+// Abstract handler
+abstract class DocumentHandler {
+    protected DocumentHandler nextHandler;
+
+    public void setNextHandler(DocumentHandler nextHandler) {
+        this.nextHandler = nextHandler;
+    }
+
+    public abstract void processDocument(String document);
+}
+
+// Concrete handlers
+class ValidationHandler extends DocumentHandler {
+    @Override
+    public void processDocument(String document) {
+        System.out.println("Validating document: " + document);
+        if (nextHandler != null) {
+            nextHandler.processDocument(document);
+        }
+    }
+}
+
+class TransformationHandler extends DocumentHandler {
+    @Override
+    public void processDocument(String document) {
+        System.out.println("Transforming document: " + document);
+        if (nextHandler != null) {
+            nextHandler.processDocument(document);
+        }
+    }
+}
+
+class StorageHandler extends DocumentHandler {
+    @Override
+    public void processDocument(String document) {
+        System.out.println("Storing document: " + document);
+    }
+}
+
+// Usage
+public class Main {
+    public static void main(String[] args) {
+        DocumentHandler validationHandler = new ValidationHandler();
+        DocumentHandler transformationHandler = new TransformationHandler();
+        DocumentHandler storageHandler = new StorageHandler();
+
+        validationHandler.setNextHandler(transformationHandler);
+        transformationHandler.setNextHandler(storageHandler);
+
+        validationHandler.processDocument("Document1");
+    }
+}
