@@ -1,0 +1,121 @@
+// Command Interface
+interface Transaction {
+    void execute();
+    void undo();
+}
+
+// Receiver Class: Represents a bank account
+class BankAccount {
+    private String accountHolder;
+    private double balance;
+
+    public BankAccount(String accountHolder, double initialBalance) {
+        this.accountHolder = accountHolder;
+        this.balance = initialBalance;
+    }
+
+    public void deposit(double amount) {
+        balance += amount;
+        System.out.println(accountHolder + " deposited $" + amount + ". Current balance: $" + balance);
+    }
+
+    public void withdraw(double amount) {
+        if (balance >= amount) {
+            balance -= amount;
+            System.out.println(accountHolder + " withdrew $" + amount + ". Current balance: $" + balance);
+        } else {
+            System.out.println(accountHolder + " attempted to withdraw $" + amount + " but has insufficient funds. Current balance: $" + balance);
+        }
+    }
+
+    public double getBalance() {
+        return balance;
+    }
+}
+
+// Concrete Command: Deposit Operation
+class DepositCommand implements Transaction {
+    private BankAccount account;
+    private double amount;
+
+    public DepositCommand(BankAccount account, double amount) {
+        this.account = account;
+        this.amount = amount;
+    }
+
+    @Override
+    public void execute() {
+        account.deposit(amount);
+    }
+
+    @Override
+    public void undo() {
+        account.withdraw(amount);
+        System.out.println("Undo deposit: $" + amount + " was withdrawn.");
+    }
+}
+
+// Concrete Command: Withdraw Operation
+class WithdrawCommand implements Transaction {
+    private BankAccount account;
+    private double amount;
+
+    public WithdrawCommand(BankAccount account, double amount) {
+        this.account = account;
+        this.amount = amount;
+    }
+
+    @Override
+    public void execute() {
+        account.withdraw(amount);
+    }
+
+    @Override
+    public void undo() {
+        account.deposit(amount);
+        System.out.println("Undo withdraw: $" + amount + " was deposited back.");
+    }
+}
+
+// Invoker Class: Transaction Manager
+class TransactionManager {
+    private List<Transaction> transactionLog = new ArrayList<>();
+
+    public void executeTransaction(Transaction transaction) {
+        transaction.execute();
+        transactionLog.add(transaction);
+    }
+
+    public void undoLastTransaction() {
+        if (!transactionLog.isEmpty()) {
+            Transaction lastTransaction = transactionLog.remove(transactionLog.size() - 1);
+            lastTransaction.undo();
+        } else {
+            System.out.println("No transactions to undo.");
+        }
+    }
+}
+
+// Client Code
+public class TransactionalSystemExample {
+    public static void main(String[] args) {
+        BankAccount johnsAccount = new BankAccount("John", 1000);
+
+        // Create Transactions
+        Transaction deposit100 = new DepositCommand(johnsAccount, 100);
+        Transaction withdraw50 = new WithdrawCommand(johnsAccount, 50);
+
+        // Create Transaction Manager (Invoker)
+        TransactionManager transactionManager = new TransactionManager();
+
+        // Execute Transactions
+        transactionManager.executeTransaction(deposit100);  // John deposited $100
+        transactionManager.executeTransaction(withdraw50);   // John withdrew $50
+
+        // Undo last transaction (withdraw)
+        transactionManager.undoLastTransaction();  // Undo withdraw: $50 was deposited back.
+
+        // Undo previous transaction (deposit)
+        transactionManager.undoLastTransaction();  // Undo deposit: $100 was withdrawn.
+    }
+}
