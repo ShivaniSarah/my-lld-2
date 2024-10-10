@@ -1,0 +1,155 @@
+// Command Interface
+interface Command {
+    void execute();
+    void undo();
+}
+
+// Receiver Classes
+class Light {
+    public void on() {
+        System.out.println("Light is ON");
+    }
+
+    public void off() {
+        System.out.println("Light is OFF");
+    }
+}
+
+class TV {
+    public void on() {
+        System.out.println("TV is ON");
+    }
+
+    public void off() {
+        System.out.println("TV is OFF");
+    }
+}
+
+// Concrete Command for Light
+class LightOnCommand implements Command {
+    private Light light;
+
+    public LightOnCommand(Light light) {
+        this.light = light;
+    }
+
+    @Override
+    public void execute() {
+        light.on();
+    }
+
+    @Override
+    public void undo() {
+        light.off();
+    }
+}
+
+class LightOffCommand implements Command {
+    private Light light;
+
+    public LightOffCommand(Light light) {
+        this.light = light;
+    }
+
+    @Override
+    public void execute() {
+        light.off();
+    }
+
+    @Override
+    public void undo() {
+        light.on();
+    }
+}
+
+// Concrete Command for TV
+class TVOnCommand implements Command {
+    private TV tv;
+
+    public TVOnCommand(TV tv) {
+        this.tv = tv;
+    }
+
+    @Override
+    public void execute() {
+        tv.on();
+    }
+
+    @Override
+    public void undo() {
+        tv.off();
+    }
+}
+
+class TVOffCommand implements Command {
+    private TV tv;
+
+    public TVOffCommand(TV tv) {
+        this.tv = tv;
+    }
+
+    @Override
+    public void execute() {
+        tv.off();
+    }
+
+    @Override
+    public void undo() {
+        tv.on();
+    }
+}
+
+// Invoker Class
+class RemoteControl {
+    private Command command;
+
+    public void setCommand(Command command) {
+        this.command = command;
+    }
+
+    public void pressButton() {
+        command.execute();
+    }
+
+    public void pressUndo() {
+        command.undo();
+    }
+}
+
+// Client Code
+public class CommandPatternExample {
+    public static void main(String[] args) {
+        RemoteControl remote = new RemoteControl();
+
+        Light livingRoomLight = new Light();
+        TV livingRoomTV = new TV();
+
+        // Command for Light
+        Command lightOn = new LightOnCommand(livingRoomLight);
+        Command lightOff = new LightOffCommand(livingRoomLight);
+
+        // Command for TV
+        Command tvOn = new TVOnCommand(livingRoomTV);
+        Command tvOff = new TVOffCommand(livingRoomTV);
+
+        // Turn on the light
+        remote.setCommand(lightOn);
+        remote.pressButton();  // Output: Light is ON
+        remote.pressUndo();    // Output: Light is OFF
+
+        // Turn off the light
+        remote.setCommand(lightOff);
+        remote.pressButton();  // Output: Light is OFF
+        remote.pressUndo();    // Output: Light is ON
+
+        // Turn on the TV
+        remote.setCommand(tvOn);
+        remote.pressButton();  // Output: TV is ON
+        remote.pressUndo();    // Output: TV is OFF
+
+        // Turn off the TV
+        remote.setCommand(tvOff);
+        remote.pressButton();  // Output: TV is OFF
+        remote.pressUndo();    // Output: TV is ON
+    }
+}
