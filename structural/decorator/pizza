@@ -1,0 +1,108 @@
+public interface Pizza {
+    double cost(); // Returns the cost of the pizza
+    String getDescription(); // Returns the description of the pizza
+}
+public class BasicPizza implements Pizza {
+    @Override
+    public double cost() {
+        return 8.00; // Base cost of pizza
+    }
+
+    @Override
+    public String getDescription() {
+        return "Basic Pizza"; // Description of the pizza
+    }
+}
+public abstract class PizzaDecorator implements Pizza {
+    protected Pizza pizza; // Reference to a Pizza object
+
+    public PizzaDecorator(Pizza pizza) {
+        this.pizza = pizza;
+    }
+
+    @Override
+    public double cost() {
+        return pizza.cost(); // Delegates the call to the wrapped pizza
+    }
+
+    @Override
+    public String getDescription() {
+        return pizza.getDescription(); // Delegates the call to the wrapped pizza
+    }
+}
+// Cheese topping
+public class CheeseDecorator extends PizzaDecorator {
+    public CheeseDecorator(Pizza pizza) {
+        super(pizza);
+    }
+
+    @Override
+    public double cost() {
+        return super.cost() + 1.50; // Adds the cost of cheese
+    }
+
+    @Override
+    public String getDescription() {
+        return super.getDescription() + ", Cheese"; // Adds cheese to the description
+    }
+}
+
+// Pepperoni topping
+public class PepperoniDecorator extends PizzaDecorator {
+    public PepperoniDecorator(Pizza pizza) {
+        super(pizza);
+    }
+
+    @Override
+    public double cost() {
+        return super.cost() + 2.00; // Adds the cost of pepperoni
+    }
+
+    @Override
+    public String getDescription() {
+        return super.getDescription() + ", Pepperoni"; // Adds pepperoni to the description
+    }
+}
+
+// Mushroom topping
+public class MushroomDecorator extends PizzaDecorator {
+    public MushroomDecorator(Pizza pizza) {
+        super(pizza);
+    }
+
+    @Override
+    public double cost() {
+        return super.cost() + 1.75; // Adds the cost of mushrooms
+    }
+
+    @Override
+    public String getDescription() {
+        return super.getDescription() + ", Mushrooms"; // Adds mushrooms to the description
+    }
+}
+public class Main {
+    public static void main(String[] args) {
+        // Create a basic pizza
+        Pizza pizza = new BasicPizza();
+        System.out.println(pizza.getDescription() + " $" + pizza.cost());
+
+        // Add cheese to the pizza
+        pizza = new CheeseDecorator(pizza);
+        System.out.println(pizza.getDescription() + " $" + pizza.cost());
+
+        // Add pepperoni to the pizza
+        pizza = new PepperoniDecorator(pizza);
+        System.out.println(pizza.getDescription() + " $" + pizza.cost());
+
+        // Add mushrooms to the pizza
+        pizza = new MushroomDecorator(pizza);
+        System.out.println(pizza.getDescription() + " $" + pizza.cost());
+    }
+}
+
+
+// output
+Basic Pizza $8.0
+Basic Pizza, Cheese $9.5
+Basic Pizza, Cheese, Pepperoni $11.5
+Basic Pizza, Cheese, Pepperoni, Mushrooms $13.25
