@@ -1,0 +1,65 @@
+// Subject interface
+public interface GameEventSubject {
+    void registerObserver(GameEventObserver observer);
+    void notifyObservers();
+}
+
+// Observer interface
+public interface GameEventObserver {
+    void update(String eventType, String eventData);
+}
+
+// Concrete Subject
+public class Game implements GameEventSubject {
+    private List<GameEventObserver> observers;
+
+    public Game() {
+        observers = new ArrayList<>();
+    }
+
+    @Override
+    public void registerObserver(GameEventObserver observer) {
+        observers.add(observer);
+    }
+
+    @Override
+    public void notifyObservers() {
+        for (GameEventObserver observer : observers) {
+            observer.update("ScoreChange", "Score increased!");
+        }
+    }
+
+    public void playerScore() {
+        System.out.println("Player scored!");
+        notifyObservers(); // Notify observers of score change
+    }
+}
+
+// Concrete Observer
+public class Player implements GameEventObserver {
+    private String name;
+
+    public Player(String name) {
+        this.name = name;
+    }
+
+    @Override
+    public void update(String eventType, String eventData) {
+        System.out.println(name + " received event: " + eventType + " - " + eventData);
+    }
+}
+
+// Usage
+public class Main {
+    public static void main(String[] args) {
+        Game game = new Game();
+
+        Player player1 = new Player("Player 1");
+        Player player2 = new Player("Player 2");
+
+        game.registerObserver(player1);
+        game.registerObserver(player2);
+
+        game.playerScore(); // Simulate player scoring
+    }
+}
