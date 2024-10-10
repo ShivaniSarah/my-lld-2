@@ -1,0 +1,99 @@
+// Abstract product for Button
+public interface Button {
+    void paint();
+}
+
+// Abstract product for Checkbox
+public interface Checkbox {
+    void paint();
+}
+
+// Windows button implementation
+public class WindowsButton implements Button {
+    @Override
+    public void paint() {
+        System.out.println("Rendering a button in Windows style.");
+    }
+}
+
+// Windows checkbox implementation
+public class WindowsCheckbox implements Checkbox {
+    @Override
+    public void paint() {
+        System.out.println("Rendering a checkbox in Windows style.");
+    }
+}
+
+// Mac button implementation
+public class MacButton implements Button {
+    @Override
+    public void paint() {
+        System.out.println("Rendering a button in Mac style.");
+    }
+}
+
+// Mac checkbox implementation
+public class MacCheckbox implements Checkbox {
+    @Override
+    public void paint() {
+        System.out.println("Rendering a checkbox in Mac style.");
+    }
+}
+// Abstract factory interface
+public interface GUIFactory {
+    Button createButton();
+    Checkbox createCheckbox();
+}
+// Windows factory implementation
+public class WindowsFactory implements GUIFactory {
+    @Override
+    public Button createButton() {
+        return new WindowsButton();
+    }
+
+    @Override
+    public Checkbox createCheckbox() {
+        return new WindowsCheckbox();
+    }
+}
+// Mac factory implementation
+public class MacFactory implements GUIFactory {
+    @Override
+    public Button createButton() {
+        return new MacButton();
+    }
+
+    @Override
+    public Checkbox createCheckbox() {
+        return new MacCheckbox();
+    }
+}
+public class Application {
+    private Button button;
+    private Checkbox checkbox;
+
+    public Application(GUIFactory factory) {
+        button = factory.createButton();
+        checkbox = factory.createCheckbox();
+    }
+
+    public void paint() {
+        button.paint();
+        checkbox.paint();
+    }
+}
+public class Main {
+    public static void main(String[] args) {
+        GUIFactory factory;
+        String osType = "Windows"; // You can change this to "Mac" to test the MacFactory
+
+        if (osType.equalsIgnoreCase("Windows")) {
+            factory = new WindowsFactory();
+        } else {
+            factory = new MacFactory();
+        }
+
+        Application app = new Application(factory);
+        app.paint();
+    }
+}
