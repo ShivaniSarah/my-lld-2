@@ -1,0 +1,48 @@
+// Strategy interface
+public interface SortStrategy {
+    void sort(int[] array);
+}
+
+// Concrete strategy for QuickSort
+public class QuickSort implements SortStrategy {
+    @Override
+    public void sort(int[] array) {
+        // Implement QuickSort algorithm
+        System.out.println("Sorting array using QuickSort");
+    }
+}
+
+// Concrete strategy for MergeSort
+public class MergeSort implements SortStrategy {
+    @Override
+    public void sort(int[] array) {
+        // Implement MergeSort algorithm
+        System.out.println("Sorting array using MergeSort");
+    }
+}
+
+// Context class
+public class Sorter {
+    private SortStrategy sortStrategy;
+
+    public void setSortStrategy(SortStrategy sortStrategy) {
+        this.sortStrategy = sortStrategy;
+    }
+
+    public void sort(int[] array) {
+        sortStrategy.sort(array);
+    }
+}
+
+// Usage
+public class Main {
+    public static void main(String[] args) {
+        Sorter sorter = new Sorter();
+        
+        sorter.setSortStrategy(new QuickSort());
+        sorter.sort(new int[]{3, 2, 1});
+
+        sorter.setSortStrategy(new MergeSort());
+        sorter.sort(new int[]{1, 2, 3});
+    }
+}
