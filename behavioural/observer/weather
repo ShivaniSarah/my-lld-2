@@ -1,0 +1,76 @@
+// Subject interface
+public interface WeatherSubject {
+    void registerObserver(WeatherObserver observer);
+    void removeObserver(WeatherObserver observer);
+    void notifyObservers();
+}
+
+// Observer interface
+public interface WeatherObserver {
+    void update(float temperature, float humidity);
+}
+
+// Concrete Subject
+public class WeatherData implements WeatherSubject {
+    private List<WeatherObserver> observers;
+    private float temperature;
+    private float humidity;
+
+    public WeatherData() {
+        observers = new ArrayList<>();
+    }
+
+    @Override
+    public void registerObserver(WeatherObserver observer) {
+        observers.add(observer);
+    }
+
+    @Override
+    public void removeObserver(WeatherObserver observer) {
+        observers.remove(observer);
+    }
+
+    @Override
+    public void notifyObservers() {
+        for (WeatherObserver observer : observers) {
+            observer.update(temperature, humidity);
+        }
+    }
+
+    public void setMeasurements(float temperature, float humidity) {
+        this.temperature = temperature;
+        this.humidity = humidity;
+        notifyObservers(); // Notify all observers
+    }
+}
+
+// Concrete Observers
+public class CurrentConditionsDisplay implements WeatherObserver {
+    @Override
+    public void update(float temperature, float humidity) {
+        System.out.println("Current conditions: " + temperature + "C degrees and " + humidity + "% humidity.");
+    }
+}
+
+public class StatisticsDisplay implements WeatherObserver {
+    @Override
+    public void update(float temperature, float humidity) {
+        System.out.println("Statistics: Average temperature = " + temperature + "C, Average humidity = " + humidity + "%.");
+    }
+}
+
+// Usage
+public class Main {
+    public static void main(String[] args) {
+        WeatherData weatherData = new WeatherData();
+
+        CurrentConditionsDisplay currentDisplay = new CurrentConditionsDisplay();
+        StatisticsDisplay statisticsDisplay = new StatisticsDisplay();
+
+        weatherData.registerObserver(currentDisplay);
+        weatherData.registerObserver(statisticsDisplay);
+
+        weatherData.setMeasurements(30, 65);
+        weatherData.setMeasurements(25, 70);
+    }
+}
