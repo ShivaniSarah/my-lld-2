@@ -1,0 +1,75 @@
+// Subject interface
+public interface StockSubject {
+    void registerInvestor(Investor observer);
+    void removeInvestor(Investor observer);
+    void notifyInvestors();
+}
+
+// Observer interface
+public interface Investor {
+    void update(String stockName, float price);
+}
+
+// Concrete Subject
+public class Stock implements StockSubject {
+    private List<Investor> investors;
+    private String stockName;
+    private float price;
+
+    public Stock(String stockName) {
+        this.stockName = stockName;
+        investors = new ArrayList<>();
+    }
+
+    @Override
+    public void registerInvestor(Investor observer) {
+        investors.add(observer);
+    }
+
+    @Override
+    public void removeInvestor(Investor observer) {
+        investors.remove(observer);
+    }
+
+    @Override
+    public void notifyInvestors() {
+        for (Investor investor : investors) {
+            investor.update(stockName, price);
+        }
+    }
+
+    public void setPrice(float price) {
+        this.price = price;
+        notifyInvestors(); // Notify all investors
+    }
+}
+
+// Concrete Observer
+public class StockInvestor implements Investor {
+    private String name;
+
+    public StockInvestor(String name) {
+        this.name = name;
+    }
+
+    @Override
+    public void update(String stockName, float price) {
+        System.out.println(name + " notified. " + stockName + " is now $" + price);
+    }
+}
+
+// Usage
+public class Main {
+    public static void main(String[] args) {
+        Stock appleStock = new Stock("Apple");
+
+        StockInvestor investor1 = new StockInvestor("Investor A");
+        StockInvestor investor2 = new StockInvestor("Investor B");
+
+        appleStock.registerInvestor(investor1);
+        appleStock.registerInvestor(investor2);
+
+        appleStock.setPrice(150.0f);
+        appleStock.setPrice(155.0f);
+    }
+}
