@@ -1,0 +1,68 @@
+// The "Implementation" interface defines the low-level operations.
+interface DrawingAPI {
+    void drawCircle(double x, double y, double radius);
+}
+
+// Concrete implementation for DrawingAPI1
+class DrawingAPI1 implements DrawingAPI {
+    @Override
+    public void drawCircle(double x, double y, double radius) {
+        System.out.println("API1.circle at (" + x + ", " + y + ") with radius " + radius);
+    }
+}
+
+// Concrete implementation for DrawingAPI2
+class DrawingAPI2 implements DrawingAPI {
+    @Override
+    public void drawCircle(double x, double y, double radius) {
+        System.out.println("API2.circle at (" + x + ", " + y + ") with radius " + radius);
+    }
+}
+
+// The "Abstraction" defines higher-level operations (Shape).
+abstract class Shape {
+    protected DrawingAPI drawingAPI;
+
+    protected Shape(DrawingAPI drawingAPI) {
+        this.drawingAPI = drawingAPI;
+    }
+
+    public abstract void draw();             // High-level operation
+    public abstract void resizeByPercentage(double percentage);  // High-level operation
+}
+
+// Refined abstraction (Circle) that uses DrawingAPI.
+class Circle extends Shape {
+    private double x, y, radius;
+
+    public Circle(double x, double y, double radius, DrawingAPI drawingAPI) {
+        super(drawingAPI);
+        this.x = x;
+        this.y = y;
+        this.radius = radius;
+    }
+
+    @Override
+    public void draw() {
+        drawingAPI.drawCircle(x, y, radius);   // Delegating the implementation to the API
+    }
+
+    @Override
+    public void resizeByPercentage(double percentage) {
+        radius *= (1.0 + percentage / 100.0);
+    }
+}
+
+// Client code
+public class Main {
+    public static void main(String[] args) {
+        Shape circle1 = new Circle(1, 2, 3, new DrawingAPI1());
+        Shape circle2 = new Circle(5, 7, 11, new DrawingAPI2());
+
+        circle1.draw();
+        circle2.draw();
+
+        circle1.resizeByPercentage(50);  // Resize circle1 by 50%
+        circle1.draw();  // Draw again after resizing
+    }
+}
