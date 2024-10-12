@@ -1,0 +1,45 @@
+// Mediator interface
+interface ChatRoomMediator {
+    void showMessage(User user, String message);
+}
+
+// Concrete Mediator: ChatRoom
+class ChatRoom implements ChatRoomMediator {
+    @Override
+    public void showMessage(User user, String message) {
+        System.out.println(user.getName() + ": " + message);
+    }
+}
+// Colleague class: User
+class User {
+    private String name;
+    private ChatRoomMediator chatRoom;
+
+    public User(String name, ChatRoomMediator chatRoom) {
+        this.name = name;
+        this.chatRoom = chatRoom;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void sendMessage(String message) {
+        chatRoom.showMessage(this, message);
+    }
+}
+// Client code
+public class Main {
+    public static void main(String[] args) {
+        // Create a ChatRoom mediator
+        ChatRoom chatRoom = new ChatRoom();
+
+        // Create users
+        User user1 = new User("Alice", chatRoom);
+        User user2 = new User("Bob", chatRoom);
+
+        // Users send messages through the ChatRoom (mediator)
+        user1.sendMessage("Hi Bob!");
+        user2.sendMessage("Hello Alice!");
+    }
+}
