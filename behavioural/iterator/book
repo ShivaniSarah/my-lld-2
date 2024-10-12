@@ -1,0 +1,81 @@
+// Iterator interface that provides methods for traversing a collection
+interface Iterator {
+    boolean hasNext();
+    Object next();
+}
+
+// Simple Book class
+class Book {
+    private String title;
+
+    public Book(String title) {
+        this.title = title;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+}
+
+// Collection of books
+class BookCollection {
+    private Book[] books;
+    private int index = 0;
+
+    public BookCollection(int size) {
+        books = new Book[size];
+    }
+
+    public void addBook(Book book) {
+        if (index < books.length) {
+            books[index] = book;
+            index++;
+        }
+    }
+
+    public Iterator iterator() {
+        return new BookIterator();
+    }
+
+    // Internal class implementing the Iterator interface
+    private class BookIterator implements Iterator {
+        private int currentIndex = 0;
+
+        @Override
+        public boolean hasNext() {
+            return currentIndex < books.length && books[currentIndex] != null;
+        }
+
+        @Override
+        public Book next() {
+            return books[currentIndex++];
+        }
+    }
+}
+
+// Application
+public class Main {
+    public static void main(String[] args) {
+        BookCollection bookCollection = new BookCollection(5);
+
+        bookCollection.addBook(new Book("The Catcher in the Rye"));
+        bookCollection.addBook(new Book("To Kill a Mockingbird"));
+        bookCollection.addBook(new Book("1984"));
+
+        // Get an iterator to traverse through the books
+        Iterator iterator = bookCollection.iterator();
+
+        // Iterate through the book collection
+        while (iterator.hasNext()) {
+            Book book = (Book) iterator.next();
+            System.out.println("Book Title: " + book.getTitle());
+        }
+    }
+}
+// output
+
+Book Title: The Catcher in the Rye
+Book Title: To Kill a Mockingbird
+Book Title: 1984
+
+
