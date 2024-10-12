@@ -1,0 +1,56 @@
+// Complex subsystem
+class Account {
+    private int balance = 1000;
+
+    public int getBalance() { return balance; }
+    public void withdraw(int amount) { balance -= amount; }
+}
+
+class Security {
+    public boolean verifyPin(int pin) { return pin == 1234; }
+}
+
+class Notification {
+    public void sendTransactionNotification(String message) {
+        System.out.println("Notification: " + message);
+    }
+}
+
+// Facade class
+class BankingFacade {
+    private Account account;
+    private Security security;
+    private Notification notification;
+
+    public BankingFacade(Account account, Security security, Notification notification) {
+        this.account = account;
+        this.security = security;
+        this.notification = notification;
+    }
+
+    public void withdrawMoney(int pin, int amount) {
+        if (security.verifyPin(pin)) {
+            if (account.getBalance() >= amount) {
+                account.withdraw(amount);
+                notification.sendTransactionNotification("You have withdrawn $" + amount);
+            } else {
+                System.out.println("Insufficient balance");
+            }
+        } else {
+            System.out.println("Invalid PIN");
+        }
+    }
+}
+
+// Application
+public class Main {
+    public static void main(String[] args) {
+        Account account = new Account();
+        Security security = new Security();
+        Notification notification = new Notification();
+        
+        BankingFacade bank = new BankingFacade(account, security, notification);
+        bank.withdrawMoney(1234, 500); // Correct pin and amount
+        bank.withdrawMoney(4321, 500); // Incorrect pin
+    }
+}
