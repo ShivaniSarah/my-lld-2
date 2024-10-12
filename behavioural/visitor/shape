@@ -1,0 +1,144 @@
+interface Shape {
+    void move(int x, int y);
+    void draw();
+    void accept(Visitor visitor);
+}
+class Dot implements Shape {
+    private int x, y;
+
+    public Dot(int x, int y) {
+        this.x = x;
+        this.y = y;
+    }
+
+    public void move(int x, int y) {
+        this.x = x;
+        this.y = y;
+    }
+
+    public void draw() {
+        System.out.println("Drawing Dot at (" + x + ", " + y + ")");
+    }
+
+    public void accept(Visitor visitor) {
+        visitor.visitDot(this);
+    }
+}
+
+class Circle implements Shape {
+    private int x, y, radius;
+
+    public Circle(int x, int y, int radius) {
+        this.x = x;
+        this.y = y;
+        this.radius = radius;
+    }
+
+    public void move(int x, int y) {
+        this.x = x;
+        this.y = y;
+    }
+
+    public void draw() {
+        System.out.println("Drawing Circle at (" + x + ", " + y + ") with radius " + radius);
+    }
+
+    public void accept(Visitor visitor) {
+        visitor.visitCircle(this);
+    }
+}
+
+class Rectangle implements Shape {
+    private int x, y, width, height;
+
+    public Rectangle(int x, int y, int width, int height) {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+    }
+
+    public void move(int x, int y) {
+        this.x = x;
+        this.y = y;
+    }
+
+    public void draw() {
+        System.out.println("Drawing Rectangle at (" + x + ", " + y + ") with width " + width + " and height " + height);
+    }
+
+    public void accept(Visitor visitor) {
+        visitor.visitRectangle(this);
+    }
+}
+
+class CompoundShape implements Shape {
+    private List<Shape> shapes = new ArrayList<>();
+
+    public void add(Shape shape) {
+        shapes.add(shape);
+    }
+
+    public void move(int x, int y) {
+        for (Shape shape : shapes) {
+            shape.move(x, y);
+        }
+    }
+
+    public void draw() {
+        System.out.println("Drawing Compound Shape:");
+        for (Shape shape : shapes) {
+            shape.draw();
+        }
+    }
+
+    public void accept(Visitor visitor) {
+        visitor.visitCompoundShape(this);
+    }
+}
+interface Visitor {
+    void visitDot(Dot dot);
+    void visitCircle(Circle circle);
+    void visitRectangle(Rectangle rectangle);
+    void visitCompoundShape(CompoundShape compoundShape);
+}
+class XMLExportVisitor implements Visitor {
+    public void visitDot(Dot dot) {
+        System.out.println("Exporting Dot: ID, Coordinates (" + dot.x + ", " + dot.y + ")");
+    }
+
+    public void visitCircle(Circle circle) {
+        System.out.println("Exporting Circle: ID, Coordinates (" + circle.x + ", " + circle.y + "), Radius: " + circle.radius);
+    }
+
+    public void visitRectangle(Rectangle rectangle) {
+        System.out.println("Exporting Rectangle: ID, Coordinates (" + rectangle.x + ", " + rectangle.y + "), Width: " + rectangle.width + ", Height: " + rectangle.height);
+    }
+
+    public void visitCompoundShape(CompoundShape compoundShape) {
+        System.out.println("Exporting Compound Shape with " + compoundShape.shapes.size() + " children:");
+        for (Shape shape : compoundShape.shapes) {
+            shape.accept(this);  // Recursive call to export each shape
+        }
+    }
+}
+public class VisitorPatternDemo {
+    public static void main(String[] args) {
+        List<Shape> shapes = new ArrayList<>();
+        shapes.add(new Dot(1, 2));
+        shapes.add(new Circle(3, 4, 5));
+        shapes.add(new Rectangle(6, 7, 8, 9));
+
+        CompoundShape compoundShape = new CompoundShape();
+        compoundShape.add(new Dot(10, 11));
+        compoundShape.add(new Circle(12, 13, 14));
+        shapes.add(compoundShape);
+
+        Visitor xmlExportVisitor = new XMLExportVisitor();
+
+        // Exporting shapes
+        for (Shape shape : shapes) {
+            shape.accept(xmlExportVisitor);
+        }
+    }
+}
