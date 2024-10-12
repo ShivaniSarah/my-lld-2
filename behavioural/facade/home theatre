@@ -1,0 +1,51 @@
+// Complex subsystem
+class TV {
+    public void on() { System.out.println("TV is ON"); }
+    public void setInput(String input) { System.out.println("TV input set to: " + input); }
+}
+
+class DVDPlayer {
+    public void on() { System.out.println("DVD Player is ON"); }
+    public void play(String movie) { System.out.println("Playing movie: " + movie); }
+}
+
+class SoundSystem {
+    public void on() { System.out.println("Sound system is ON"); }
+    public void setVolume(int level) { System.out.println("Volume set to: " + level); }
+}
+
+// Facade class
+class HomeTheaterFacade {
+    private TV tv;
+    private DVDPlayer dvdPlayer;
+    private SoundSystem soundSystem;
+
+    public HomeTheaterFacade(TV tv, DVDPlayer dvdPlayer, SoundSystem soundSystem) {
+        this.tv = tv;
+        this.dvdPlayer = dvdPlayer;
+        this.soundSystem = soundSystem;
+    }
+
+    public void watchMovie(String movie) {
+        System.out.println("Setting up your home theater...");
+        tv.on();
+        tv.setInput("DVD");
+        dvdPlayer.on();
+        dvdPlayer.play(movie);
+        soundSystem.on();
+        soundSystem.setVolume(10);
+        System.out.println("Movie is now playing!");
+    }
+}
+
+// Application
+public class Main {
+    public static void main(String[] args) {
+        TV tv = new TV();
+        DVDPlayer dvdPlayer = new DVDPlayer();
+        SoundSystem soundSystem = new SoundSystem();
+        
+        HomeTheaterFacade homeTheater = new HomeTheaterFacade(tv, dvdPlayer, soundSystem);
+        homeTheater.watchMovie("Inception");
+    }
+}
