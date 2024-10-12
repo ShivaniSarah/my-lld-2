@@ -1,0 +1,69 @@
+// Expression interface defines the method to interpret an expression
+interface Expression {
+    int interpret();
+}
+
+// Terminal expression for numbers
+class Number implements Expression {
+    private int number;
+
+    public Number(int number) {
+        this.number = number;
+    }
+
+    @Override
+    public int interpret() {
+        return number;
+    }
+}
+
+// Non-terminal expression for addition
+class Add implements Expression {
+    private Expression leftExpression;
+    private Expression rightExpression;
+
+    public Add(Expression left, Expression right) {
+        this.leftExpression = left;
+        this.rightExpression = right;
+    }
+
+    @Override
+    public int interpret() {
+        return leftExpression.interpret() + rightExpression.interpret();
+    }
+}
+
+// Non-terminal expression for subtraction
+class Subtract implements Expression {
+    private Expression leftExpression;
+    private Expression rightExpression;
+
+    public Subtract(Expression left, Expression right) {
+        this.leftExpression = left;
+        this.rightExpression = right;
+    }
+
+    @Override
+    public int interpret() {
+        return leftExpression.interpret() - rightExpression.interpret();
+    }
+}
+// Client
+public class Main {
+    public static void main(String[] args) {
+        // Construct the expression: 10 + 5 - 3
+        Expression ten = new Number(10);
+        Expression five = new Number(5);
+        Expression three = new Number(3);
+
+        // Add 10 + 5
+        Expression addition = new Add(ten, five);
+
+        // Subtract (10 + 5) - 3
+        Expression subtraction = new Subtract(addition, three);
+
+        // Evaluate the expression
+        int result = subtraction.interpret();
+        System.out.println("Result of 10 + 5 - 3 = " + result);
+    }
+}
