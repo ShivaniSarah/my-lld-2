@@ -1,3 +1,6 @@
+import java.util.ArrayList;
+import java.util.List;
+
 // Element interface
 interface ShoppingCartItem {
     void accept(ShoppingCartVisitor visitor);
@@ -38,5 +41,31 @@ class DiscountApplier implements ShoppingCartVisitor {
     }
     public void visit(Electronics electronics) {
         System.out.println("Applying discount for Electronics.");
+    }
+}
+
+// Main function
+public class VisitorPatternDemo {
+    public static void main(String[] args) {
+        // Create shopping cart items
+        List<ShoppingCartItem> cartItems = new ArrayList<>();
+        cartItems.add(new Book());
+        cartItems.add(new Electronics());
+
+        // Create visitors
+        ShoppingCartVisitor priceCalculator = new PriceCalculator();
+        ShoppingCartVisitor discountApplier = new DiscountApplier();
+
+        // Calculate prices for each item
+        System.out.println("Price Calculation:");
+        for (ShoppingCartItem item : cartItems) {
+            item.accept(priceCalculator);
+        }
+
+        // Apply discounts for each item
+        System.out.println("\nApplying Discounts:");
+        for (ShoppingCartItem item : cartItems) {
+            item.accept(discountApplier);
+        }
     }
 }
