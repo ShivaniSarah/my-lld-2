@@ -1,0 +1,64 @@
+// Customer interface
+interface Customer {
+    String getName();
+    boolean isNull();  // Check if this is a real customer or a null customer
+}
+// RealCustomer: Represents a valid customer
+class RealCustomer implements Customer {
+    private String name;
+
+    public RealCustomer(String name) {
+        this.name = name;
+    }
+
+    @Override
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public boolean isNull() {
+        return false;
+    }
+}
+
+// NullCustomer: Represents a non-existent customer
+class NullCustomer implements Customer {
+    @Override
+    public String getName() {
+        return "Not Available in Customer Database";
+    }
+
+    @Override
+    public boolean isNull() {
+        return true;
+    }
+}
+// CustomerFactory to get the right customer (real or null)
+class CustomerFactory {
+    private static final String[] names = { "Alice", "Bob", "Charlie" };
+
+    public static Customer getCustomer(String name) {
+        for (String validName : names) {
+            if (validName.equalsIgnoreCase(name)) {
+                return new RealCustomer(name);
+            }
+        }
+        return new NullCustomer();
+    }
+}
+// Client code
+public class Main {
+    public static void main(String[] args) {
+        Customer customer1 = CustomerFactory.getCustomer("Alice");
+        Customer customer2 = CustomerFactory.getCustomer("Bob");
+        Customer customer3 = CustomerFactory.getCustomer("John"); // John does not exist
+        Customer customer4 = CustomerFactory.getCustomer("Charlie");
+
+        System.out.println("Customers:");
+        System.out.println(customer1.getName());
+        System.out.println(customer2.getName());
+        System.out.println(customer3.getName());
+        System.out.println(customer4.getName());
+    }
+}
