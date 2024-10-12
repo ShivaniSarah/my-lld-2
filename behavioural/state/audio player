@@ -1,0 +1,204 @@
+interface State {
+    void clickLock();
+    void clickPlay();
+    void clickNext();
+    void clickPrevious();
+}
+class AudioPlayer {
+    private State state;
+    private UserInterface UI;
+    private boolean playing;
+
+    public AudioPlayer() {
+        this.state = new ReadyState(this);
+        UI = new UserInterface();
+        UI.lockButton.onClick(this::clickLock);
+        UI.playButton.onClick(this::clickPlay);
+        UI.nextButton.onClick(this::clickNext);
+        UI.prevButton.onClick(this::clickPrevious);
+    }
+
+    public void changeState(State state) {
+        this.state = state;
+    }
+
+    public void clickLock() {
+        state.clickLock();
+    }
+
+    public void clickPlay() {
+        state.clickPlay();
+    }
+
+    public void clickNext() {
+        state.clickNext();
+    }
+
+    public void clickPrevious() {
+        state.clickPrevious();
+    }
+
+    public void startPlayback() {
+        playing = true;
+        System.out.println("Playback started.");
+    }
+
+    public void stopPlayback() {
+        playing = false;
+        System.out.println("Playback stopped.");
+    }
+
+    public void nextSong() {
+        System.out.println("Playing next song.");
+    }
+
+    public void previousSong() {
+        System.out.println("Playing previous song.");
+    }
+
+    public void fastForward(int time) {
+        System.out.println("Fast forwarding by " + time + " seconds.");
+    }
+
+    public void rewind(int time) {
+        System.out.println("Rewinding by " + time + " seconds.");
+    }
+
+    public boolean isPlaying() {
+        return playing;
+    }
+}
+class LockedState implements State {
+    private final AudioPlayer player;
+
+    public LockedState(AudioPlayer player) {
+        this.player = player;
+    }
+
+    public void clickLock() {
+        if (player.isPlaying()) {
+            player.changeState(new PlayingState(player));
+        } else {
+            player.changeState(new ReadyState(player));
+        }
+    }
+
+    public void clickPlay() {
+        // Locked, do nothing.
+    }
+
+    public void clickNext() {
+        // Locked, do nothing.
+    }
+
+    public void clickPrevious() {
+        // Locked, do nothing.
+    }
+}
+
+class ReadyState implements State {
+    private final AudioPlayer player;
+
+    public ReadyState(AudioPlayer player) {
+        this.player = player;
+    }
+
+    public void clickLock() {
+        player.changeState(new LockedState(player));
+    }
+
+    public void clickPlay() {
+        player.startPlayback();
+        player.changeState(new PlayingState(player));
+    }
+
+    public void clickNext() {
+        player.nextSong();
+    }
+
+    public void clickPrevious() {
+        player.previousSong();
+    }
+}
+
+class PlayingState implements State {
+    private final AudioPlayer player;
+
+    public PlayingState(AudioPlayer player) {
+        this.player = player;
+    }
+
+    public void clickLock() {
+        player.changeState(new LockedState(player));
+    }
+
+    public void clickPlay() {
+        player.stopPlayback();
+        player.changeState(new ReadyState(player));
+    }
+
+    public void clickNext() {
+        player.nextSong();
+    }
+
+    public void clickPrevious() {
+        player.previousSong();
+    }
+}
+class UserInterface {
+    Button lockButton = new Button("Lock");
+    Button playButton = new Button("Play");
+    Button nextButton = new Button("Next");
+    Button prevButton = new Button("Previous");
+
+    public UserInterface() {
+        // Simulate the button clicks in a real application
+    }
+}
+
+class Button {
+    private final String name;
+
+    public Button(String name) {
+        this.name = name;
+    }
+
+    public void onClick(Runnable action) {
+        System.out.println(name + " button clicked.");
+        action.run();
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        AudioPlayer audioPlayer = new AudioPlayer();
+
+        // Simulate user interactions
+        audioPlayer.clickPlay();    // Ready -> Playing
+        audioPlayer.clickNext();    // Next song
+        audioPlayer.clickLock();    // Lock the player
+        audioPlayer.clickPlay();     // Do nothing (locked)
+        audioPlayer.clickLock();    // Unlock the player
+        audioPlayer.clickPrevious(); // Previous song
+        audioPlayer.clickLock();    // Lock the player
+    }
+}
+
+// output
+
+Lock button clicked.
+Traffic Light is Red. Stop!
+Playback started.
+Next button clicked.
+Playing next song.
+Lock button clicked.
+Traffic Light is Red. Stop!
+Play button clicked.
+Lock button clicked.
+Traffic Light is Red. Stop!
+Unlock button clicked.
+Traffic Light is Red. Stop!
+Previous button clicked.
+Playing previous song.
+Lock button clicked.
+Traffic Light is Red. Stop!
