@@ -1,0 +1,45 @@
+// Complex subsystem
+class Engine {
+    public void start() { System.out.println("Engine started"); }
+}
+
+class FuelPump {
+    public void pump() { System.out.println("Fuel pump activated"); }
+}
+
+class Battery {
+    public void supplyPower() { System.out.println("Battery supplying power"); }
+}
+
+// Facade class
+class CarStartFacade {
+    private Engine engine;
+    private FuelPump fuelPump;
+    private Battery battery;
+
+    public CarStartFacade(Engine engine, FuelPump fuelPump, Battery battery) {
+        this.engine = engine;
+        this.fuelPump = fuelPump;
+        this.battery = battery;
+    }
+
+    public void startCar() {
+        System.out.println("Starting car...");
+        battery.supplyPower();
+        fuelPump.pump();
+        engine.start();
+        System.out.println("Car started successfully!");
+    }
+}
+
+// Application
+public class Main {
+    public static void main(String[] args) {
+        Engine engine = new Engine();
+        FuelPump fuelPump = new FuelPump();
+        Battery battery = new Battery();
+        
+        CarStartFacade carStart = new CarStartFacade(engine, fuelPump, battery);
+        carStart.startCar();
+    }
+}
