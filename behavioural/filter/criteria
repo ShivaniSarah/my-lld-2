@@ -1,0 +1,158 @@
+// Person class with attributes for filtering
+class Person {
+    private String name;
+    private String gender;
+    private String maritalStatus;
+
+    public Person(String name, String gender, String maritalStatus) {
+        this.name = name;
+        this.gender = gender;
+        this.maritalStatus = maritalStatus;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getGender() {
+        return gender;
+    }
+
+    public String getMaritalStatus() {
+        return maritalStatus;
+    }
+
+    @Override
+    public String toString() {
+        return "Person [Name: " + name + ", Gender: " + gender + ", Marital Status: " + maritalStatus + "]";
+    }
+}
+// Criteria interface for filtering persons
+import java.util.List;
+
+interface Criteria {
+    List<Person> meetCriteria(List<Person> persons);
+}
+// Filter criteria for males
+import java.util.List;
+import java.util.ArrayList;
+
+class CriteriaMale implements Criteria {
+    @Override
+    public List<Person> meetCriteria(List<Person> persons) {
+        List<Person> malePersons = new ArrayList<>();
+        for (Person person : persons) {
+            if (person.getGender().equalsIgnoreCase("Male")) {
+                malePersons.add(person);
+            }
+        }
+        return malePersons;
+    }
+}
+
+// Filter criteria for females
+class CriteriaFemale implements Criteria {
+    @Override
+    public List<Person> meetCriteria(List<Person> persons) {
+        List<Person> femalePersons = new ArrayList<>();
+        for (Person person : persons) {
+            if (person.getGender().equalsIgnoreCase("Female")) {
+                femalePersons.add(person);
+            }
+        }
+        return femalePersons;
+    }
+}
+
+// Filter criteria for single persons
+class CriteriaSingle implements Criteria {
+    @Override
+    public List<Person> meetCriteria(List<Person> persons) {
+        List<Person> singlePersons = new ArrayList<>();
+        for (Person person : persons) {
+            if (person.getMaritalStatus().equalsIgnoreCase("Single")) {
+                singlePersons.add(person);
+            }
+        }
+        return singlePersons;
+    }
+}
+// Combines two criteria with an AND logic
+class AndCriteria implements Criteria {
+    private Criteria criteria;
+    private Criteria otherCriteria;
+
+    public AndCriteria(Criteria criteria, Criteria otherCriteria) {
+        this.criteria = criteria;
+        this.otherCriteria = otherCriteria;
+    }
+
+    @Override
+    public List<Person> meetCriteria(List<Person> persons) {
+        List<Person> firstCriteriaPersons = criteria.meetCriteria(persons);
+        return otherCriteria.meetCriteria(firstCriteriaPersons);
+    }
+}
+
+// Combines two criteria with an OR logic
+class OrCriteria implements Criteria {
+    private Criteria criteria;
+    private Criteria otherCriteria;
+
+    public OrCriteria(Criteria criteria, Criteria otherCriteria) {
+        this.criteria = criteria;
+        this.otherCriteria = otherCriteria;
+    }
+
+    @Override
+    public List<Person> meetCriteria(List<Person> persons) {
+        List<Person> firstCriteriaPersons = criteria.meetCriteria(persons);
+        List<Person> otherCriteriaPersons = otherCriteria.meetCriteria(persons);
+
+        for (Person person : otherCriteriaPersons) {
+            if (!firstCriteriaPersons.contains(person)) {
+                firstCriteriaPersons.add(person);
+            }
+        }
+        return firstCriteriaPersons;
+    }
+}
+// Client code
+import java.util.List;
+import java.util.ArrayList;
+
+public class Main {
+    public static void main(String[] args) {
+        List<Person> persons = new ArrayList<>();
+
+        persons.add(new Person("John", "Male", "Single"));
+        persons.add(new Person("Jane", "Female", "Married"));
+        persons.add(new Person("Mike", "Male", "Married"));
+        persons.add(new Person("Sarah", "Female", "Single"));
+        persons.add(new Person("David", "Male", "Single"));
+
+        Criteria male = new CriteriaMale();
+        Criteria female = new CriteriaFemale();
+        Criteria single = new CriteriaSingle();
+        Criteria singleMale = new AndCriteria(single, male);
+        Criteria singleOrFemale = new OrCriteria(single, female);
+
+        System.out.println("Males: ");
+        printPersons(male.meetCriteria(persons));
+
+        System.out.println("\nFemales: ");
+        printPersons(female.meetCriteria(persons));
+
+        System.out.println("\nSingle Males: ");
+        printPersons(singleMale.meetCriteria(persons));
+
+        System.out.println("\nSingle or Females: ");
+        printPersons(singleOrFemale.meetCriteria(persons));
+    }
+
+    public static void printPersons(List<Person> persons) {
+        for (Person person : persons) {
+            System.out.println(person);
+        }
+    }
+}
