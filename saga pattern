@@ -1,0 +1,147 @@
+Key Points:
+Saga: Each step in the saga (order creation, payment processing, inventory reservation, shipping) is a local transaction.
+Compensation: If any step fails, the orchestrator executes compensating transactions to undo the previously completed steps (e.g., refunding payment, releasing inventory, cancelling the order).
+Orchestrator: Manages the flow of the saga, ensuring that transactions are executed in sequence and compensating actions are taken in case of failure.
+Choreography-Based Saga:
+In a choreographed saga, services emit events when a transaction is completed, and other services listen to those events to perform the next transaction. There’s no central controller like in orchestration.
+When to Use the Saga Pattern:
+Distributed systems where atomic transactions across services are not feasible.
+Long-running transactions that span multiple services and require failure handling.
+Ensuring eventual consistency in microservices.
+
+
+Step 1: Define the Saga Orchestrator
+The orchestrator coordinates the steps in the saga, 
+ensuring that each transaction and compensating transaction is executed in the correct order.
+
+// Saga orchestrator for handling order process
+
+class OrderSagaOrchestrator {
+    private final OrderService orderService;
+    private final PaymentService paymentService;
+    private final InventoryService inventoryService;
+    private final ShippingService shippingService;
+
+    public OrderSagaOrchestrator(OrderService orderService, PaymentService paymentService, 
+                                 InventoryService inventoryService, ShippingService shippingService) {
+        this.orderService = orderService;
+        this.paymentService = paymentService;
+        this.inventoryService = inventoryService;
+        this.shippingService = shippingService;
+    }
+
+    public void processOrder(String orderId) {
+        try {
+            // Step 1: Create order
+            orderService.createOrder(orderId);
+
+            // Step 2: Process payment
+            paymentService.processPayment(orderId);
+
+            // Step 3: Reserve inventory
+            inventoryService.reserveInventory(orderId);
+
+            // Step 4: Prepare shipping
+            shippingService.prepareShipping(orderId);
+
+            System.out.println("Order processed successfully!");
+
+        } catch (Exception e) {
+            System.out.println("Transaction failed: " + e.getMessage());
+            // Compensating transactions
+            shippingService.cancelShipping(orderId);
+            inventoryService.releaseInventory(orderId);
+            paymentService.refundPayment(orderId);
+            orderService.cancelOrder(orderId);
+        }
+    }
+}
+
+Step 2: Define Individual Services and Compensations
+Each service performs a local transaction, and in case of failure, compensating transactions are executed to undo the changes.
+
+// Order Service
+class OrderService {
+    public void createOrder(String orderId) {
+        System.out.println("Order created: " + orderId);
+    }
+
+    public void cancelOrder(String orderId) {
+        System.out.println("Order cancelled: " + orderId);
+    }
+}
+
+// Payment Service
+class PaymentService {
+    public void processPayment(String orderId) {
+        System.out.println("Payment processed for order: " + orderId);
+        // Simulate failure
+        if (orderId.equals("123")) throw new RuntimeException("Payment failed");
+    }
+
+    public void refundPayment(String orderId) {
+        System.out.println("Payment refunded for order: " + orderId);
+    }
+}
+
+// Inventory Service
+class InventoryService {
+    public void reserveInventory(String orderId) {
+        System.out.println("Inventory reserved for order: " + orderId);
+    }
+
+    public void releaseInventory(String orderId) {
+        System.out.println("Inventory released for order: " + orderId);
+    }
+}
+
+// Shipping Service
+class ShippingService {
+    public void prepareShipping(String orderId) {
+        System.out.println("Shipping prepared for order: " + orderId);
+    }
+
+    public void cancelShipping(String orderId) {
+        System.out.println("Shipping cancelled for order: " + orderId);
+    }
+}
+
+Step 3: Client Code
+The orchestrator handles the entire saga, including the compensation process if any transaction fails.
+
+public class Main {
+    public static void main(String[] args) {
+        // Create services
+        OrderService orderService = new OrderService();
+        PaymentService paymentService = new PaymentService();
+        InventoryService inventoryService = new InventoryService();
+        ShippingService shippingService = new ShippingService();
+
+        // Create orchestrator
+        OrderSagaOrchestrator orchestrator = new OrderSagaOrchestrator(orderService, paymentService, inventoryService, shippingService);
+
+        // Process the order (order ID "123" will fail at payment step)
+        orchestrator.processOrder("123");
+
+        // Process another order that will succeed
+        orchestrator.processOrder("456");
+    }
+}
+
+
+// output
+
+Order created: 123
+Payment processed for order: 123
+Transaction failed: Payment failed
+Shipping cancelled for order: 123
+Inventory released for order: 123
+Payment refunded for order: 123
+Order cancelled: 123
+
+Order created: 456
+Payment processed for order: 456
+Inventory reserved for order: 456
+Shipping prepared for order: 456
+Order processed successfully!
+
