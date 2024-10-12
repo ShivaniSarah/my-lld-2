@@ -1,0 +1,138 @@
+interface Mediator {
+    void notify(Component sender, String event);
+}
+class AuthenticationDialog implements Mediator {
+    private String title;
+    private Checkbox loginOrRegisterChkBx;
+    private Textbox loginUsername, loginPassword;
+    private Textbox registrationUsername, registrationPassword, registrationEmail;
+    private Button okBtn, cancelBtn;
+
+    public AuthenticationDialog() {
+        // Initialize components and pass the current mediator (this) to them
+        loginOrRegisterChkBx = new Checkbox(this);
+        loginUsername = new Textbox(this);
+        loginPassword = new Textbox(this);
+        registrationUsername = new Textbox(this);
+        registrationPassword = new Textbox(this);
+        registrationEmail = new Textbox(this);
+        okBtn = new Button(this);
+        cancelBtn = new Button(this);
+    }
+
+    @Override
+    public void notify(Component sender, String event) {
+        if (sender == loginOrRegisterChkBx && event.equals("check")) {
+            if (loginOrRegisterChkBx.isChecked()) {
+                title = "Log in";
+                // Show login form components
+                System.out.println("Displaying login form...");
+            } else {
+                title = "Register";
+                // Show registration form components
+                System.out.println("Displaying registration form...");
+            }
+        }
+
+        if (sender == okBtn && event.equals("click")) {
+            if (loginOrRegisterChkBx.isChecked()) {
+                // Handle login
+                System.out.println("Logging in...");
+                if (!findUser(loginUsername.getText(), loginPassword.getText())) {
+                    // Show error message
+                    System.out.println("Error: Invalid credentials.");
+                }
+            } else {
+                // Handle registration
+                System.out.println("Registering new user...");
+                createUser(registrationUsername.getText(), registrationPassword.getText(), registrationEmail.getText());
+                System.out.println("User registered and logged in.");
+            }
+        }
+    }
+
+    private boolean findUser(String username, String password) {
+        // Simulate finding a user (just a dummy check for example)
+        return "user".equals(username) && "password".equals(password);
+    }
+
+    private void createUser(String username, String password, String email) {
+        // Simulate creating a user account
+        System.out.println("Creating user: " + username);
+    }
+}
+abstract class Component {
+    protected Mediator dialog;
+
+    public Component(Mediator dialog) {
+        this.dialog = dialog;
+    }
+
+    public void click() {
+        dialog.notify(this, "click");
+    }
+
+    public void keypress() {
+        dialog.notify(this, "keypress");
+    }
+}
+
+class Button extends Component {
+    public Button(Mediator dialog) {
+        super(dialog);
+    }
+
+    public void click() {
+        super.click();
+        System.out.println("Button clicked.");
+    }
+}
+
+class Textbox extends Component {
+    private String text;
+
+    public Textbox(Mediator dialog) {
+        super(dialog);
+    }
+
+    public String getText() {
+        return text;
+    }
+
+    public void setText(String text) {
+        this.text = text;
+    }
+
+    public void keypress() {
+        super.keypress();
+        System.out.println("Text entered: " + text);
+    }
+}
+
+class Checkbox extends Component {
+    private boolean checked;
+
+    public Checkbox(Mediator dialog) {
+        super(dialog);
+    }
+
+    public void check() {
+        checked = !checked;
+        dialog.notify(this, "check");
+        System.out.println("Checkbox " + (checked ? "checked" : "unchecked"));
+    }
+
+    public boolean isChecked() {
+        return checked;
+    }
+}
+public class Main {
+    public static void main(String[] args) {
+        AuthenticationDialog dialog = new AuthenticationDialog();
+
+        // Simulate user interactions
+        dialog.loginOrRegisterChkBx.check(); // Toggle to "Log in"
+        dialog.loginOrRegisterChkBx.check(); // Toggle to "Register"
+        dialog.okBtn.click(); // Register the user
+    }
+}
