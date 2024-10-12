@@ -1,0 +1,63 @@
+interface State {
+    void handle(TrafficLight light);
+}
+class RedState implements State {
+    @Override
+    public void handle(TrafficLight light) {
+        System.out.println("Traffic Light is Red. Stop!");
+        light.setState(new GreenState()); // Change to next state
+    }
+}
+
+class YellowState implements State {
+    @Override
+    public void handle(TrafficLight light) {
+        System.out.println("Traffic Light is Yellow. Prepare to stop!");
+        light.setState(new RedState()); // Change to next state
+    }
+}
+
+class GreenState implements State {
+    @Override
+    public void handle(TrafficLight light) {
+        System.out.println("Traffic Light is Green. Go!");
+        light.setState(new YellowState()); // Change to next state
+    }
+}
+class TrafficLight {
+    private State state;
+
+    public TrafficLight() {
+        // Set initial state
+        state = new RedState();
+    }
+
+    public void setState(State state) {
+        this.state = state;
+    }
+
+    public void change() {
+        state.handle(this);
+    }
+}
+public class Main {
+    public static void main(String[] args) {
+        TrafficLight trafficLight = new TrafficLight();
+
+        // Simulate traffic light changes
+        trafficLight.change(); // Red -> Green
+        trafficLight.change(); // Green -> Yellow
+        trafficLight.change(); // Yellow -> Red
+        trafficLight.change(); // Red -> Green
+        trafficLight.change(); // Green -> Yellow
+    }
+}
+
+// output
+
+Traffic Light is Red. Stop!
+Traffic Light is Green. Go!
+Traffic Light is Yellow. Prepare to stop!
+Traffic Light is Red. Stop!
+Traffic Light is Green. Go!
+Traffic Light is Yellow. Prepare to stop!
