@@ -1,0 +1,42 @@
+// Element interface
+interface ShoppingCartItem {
+    void accept(ShoppingCartVisitor visitor);
+}
+
+// Concrete elements
+class Book implements ShoppingCartItem {
+    public void accept(ShoppingCartVisitor visitor) {
+        visitor.visit(this);
+    }
+}
+
+class Electronics implements ShoppingCartItem {
+    public void accept(ShoppingCartVisitor visitor) {
+        visitor.visit(this);
+    }
+}
+
+// Visitor interface
+interface ShoppingCartVisitor {
+    void visit(Book book);
+    void visit(Electronics electronics);
+}
+
+// Concrete visitors
+class PriceCalculator implements ShoppingCartVisitor {
+    public void visit(Book book) {
+        System.out.println("Calculating price for Book.");
+    }
+    public void visit(Electronics electronics) {
+        System.out.println("Calculating price for Electronics.");
+    }
+}
+
+class DiscountApplier implements ShoppingCartVisitor {
+    public void visit(Book book) {
+        System.out.println("Applying discount for Book.");
+    }
+    public void visit(Electronics electronics) {
+        System.out.println("Applying discount for Electronics.");
+    }
+}
