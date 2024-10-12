@@ -1,0 +1,58 @@
+// Flyweight: stores common formatting attributes like font and size
+class TextFormatting {
+    private String font;
+    private int size;
+    private String color;
+
+    public TextFormatting(String font, int size, String color) {
+        this.font = font;
+        this.size = size;
+        this.color = color;
+    }
+
+    public void applyFormatting(char c) {
+        System.out.println("Character: '" + c + "' with font: " + font + ", size: " + size + ", color: " + color);
+    }
+}
+// Flyweight Factory: manages shared TextFormatting objects
+import java.util.HashMap;
+import java.util.Map;
+
+class TextFormattingFactory {
+    private Map<String, TextFormatting> formattingPool = new HashMap<>();
+
+    public TextFormatting getTextFormatting(String font, int size, String color) {
+        String key = font + size + color;
+        if (!formattingPool.containsKey(key)) {
+            formattingPool.put(key, new TextFormatting(font, size, color));
+        }
+        return formattingPool.get(key);
+    }
+}
+// Client class
+class WordProcessor {
+    private TextFormattingFactory formattingFactory = new TextFormattingFactory();
+
+    public void displayCharacter(char c, String font, int size, String color) {
+        TextFormatting formatting = formattingFactory.getTextFormatting(font, size, color);
+        formatting.applyFormatting(c);
+    }
+}
+
+// Main Application
+public class Main {
+    public static void main(String[] args) {
+        WordProcessor processor = new WordProcessor();
+
+        // Multiple characters with same formatting can share the same flyweight object
+        processor.displayCharacter('H', "Arial", 12, "black");
+        processor.displayCharacter('e', "Arial", 12, "black");
+        processor.displayCharacter('l', "Arial", 12, "black");
+        processor.displayCharacter('o', "Times New Roman", 14, "blue");
+    }
+}
+// output
+Character: 'H' with font: Arial, size: 12, color: black
+Character: 'e' with font: Arial, size: 12, color: black
+Character: 'l' with font: Arial, size: 12, color: black
+Character: 'o' with font: Times New Roman, size: 14, color: blue
