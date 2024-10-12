@@ -1,0 +1,57 @@
+// Target interface that the client expects (USB-C charger)
+interface USBCharger {
+    void chargeWithUSB();
+}
+
+// Adaptee (Three-pin power socket)
+class PowerSocket {
+    public void provideElectricity() {
+        System.out.println("Providing electricity through three-pin plug.");
+    }
+}
+// Adapter class that adapts PowerSocket to USBCharger
+class PowerAdapter implements USBCharger {
+    private PowerSocket powerSocket;
+
+    public PowerAdapter(PowerSocket powerSocket) {
+        this.powerSocket = powerSocket;
+    }
+
+    @Override
+    public void chargeWithUSB() {
+        // Adapt the three-pin socket to USB
+        System.out.println("Adapter converting three-pin plug to USB-C.");
+        powerSocket.provideElectricity();  // Use the original power socket functionality
+    }
+}
+// Client class (Laptop) that expects a USB-C charger
+class Laptop {
+    private USBCharger charger;
+
+    public Laptop(USBCharger charger) {
+        this.charger = charger;
+    }
+
+    public void charge() {
+        System.out.println("Laptop is charging...");
+        charger.chargeWithUSB();
+    }
+}
+
+// Main Application
+public class Main {
+    public static void main(String[] args) {
+        PowerSocket powerSocket = new PowerSocket(); // Existing three-pin socket
+        USBCharger charger = new PowerAdapter(powerSocket); // Adapter to convert to USB-C
+        
+        Laptop laptop = new Laptop(charger);
+        laptop.charge();  // Charging the laptop using the adapter
+    }
+}
+
+
+// output
+
+Laptop is charging...
+Adapter converting three-pin plug to USB-C.
+Providing electricity through three-pin plug.
