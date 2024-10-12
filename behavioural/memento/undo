@@ -1,0 +1,65 @@
+class Memento {
+    private final String state;
+
+    public Memento(String state) {
+        this.state = state;
+    }
+
+    public String getState() {
+        return state;
+    }
+}
+class TextEditor {
+    private String text;
+
+    public void setText(String text) {
+        this.text = text;
+        System.out.println("Current Text: " + text);
+    }
+
+    public Memento save() {
+        return new Memento(text);
+    }
+
+    public void restore(Memento memento) {
+        this.text = memento.getState();
+        System.out.println("Restored Text: " + text);
+    }
+}
+class Caretaker {
+    private final List<Memento> mementoList = new ArrayList<>();
+
+    public void addMemento(Memento memento) {
+        mementoList.add(memento);
+    }
+
+    public Memento getMemento(int index) {
+        return mementoList.get(index);
+    }
+}
+public class Main {
+    public static void main(String[] args) {
+        TextEditor editor = new TextEditor();
+        Caretaker caretaker = new Caretaker();
+
+        // Typing text and saving states
+        editor.setText("Hello, World!");
+        caretaker.addMemento(editor.save());
+
+        editor.setText("Hello, Design Patterns!");
+        caretaker.addMemento(editor.save());
+
+        editor.setText("Hello, Memento Pattern!");
+        caretaker.addMemento(editor.save());
+
+        // Undo last action
+        editor.restore(caretaker.getMemento(1)); // Restores "Hello, Design Patterns!"
+    }
+}
+
+// output
+
+Current Text: Hello, World!
+Current Text: Hello, Design Patterns!
+Current Text: Hello, Memento Pattern!
+Restored Text: Hello, Design Patterns!
