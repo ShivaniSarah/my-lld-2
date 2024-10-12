@@ -1,0 +1,36 @@
+abstract class DocumentTemplate {
+    // Template method
+    public final void createDocument() {
+        writeHeader();
+        writeBody();
+        writeFooter();
+    }
+
+    protected abstract void writeHeader();
+    protected abstract void writeBody();
+    protected abstract void writeFooter();
+}
+
+class ReportDocument extends DocumentTemplate {
+    protected void writeHeader() {
+        System.out.println("Header: Report Title");
+    }
+    protected void writeBody() {
+        System.out.println("Body: Report content...");
+    }
+    protected void writeFooter() {
+        System.out.println("Footer: Report footer.");
+    }
+}
+
+class LetterDocument extends DocumentTemplate {
+    protected void writeHeader() {
+        System.out.println("Header: Letter Recipient");
+    }
+    protected void writeBody() {
+        System.out.println("Body: Letter content...");
+    }
+    protected void writeFooter() {
+        System.out.println("Footer: Letter signature.");
+    }
+}
