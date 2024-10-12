@@ -1,0 +1,165 @@
+abstract class GameAI {
+    // Template method defining the skeleton of the algorithm.
+    public final void turn() {
+        collectResources();
+        buildStructures();
+        buildUnits();
+        attack();
+    }
+
+    // Common implementation for collecting resources.
+    protected void collectResources() {
+        System.out.println("Collecting resources...");
+        for (Structure s : builtStructures) {
+            s.collect();
+        }
+    }
+
+    // Abstract methods to be implemented by subclasses.
+    protected abstract void buildStructures();
+    protected abstract void buildUnits();
+
+    // Common implementation for attack strategy.
+    protected void attack() {
+        Enemy enemy = closestEnemy();
+        if (enemy == null) {
+            sendScouts(map.getCenter());
+        } else {
+            sendWarriors(enemy.getPosition());
+        }
+    }
+
+    // Abstract methods for sending scouts and warriors.
+    protected abstract void sendScouts(Position position);
+    protected abstract void sendWarriors(Position position);
+
+    // Assume these methods are defined somewhere in the context.
+    protected abstract Structure[] builtStructures();
+    protected abstract Enemy closestEnemy();
+}
+
+
+class OrcsAI extends GameAI {
+    @Override
+    protected void buildStructures() {
+        System.out.println("Building structures as Orcs...");
+        // Example of structure building logic.
+        if (thereAreResources()) {
+            System.out.println("Building farms, then barracks, then stronghold.");
+        }
+    }
+
+    @Override
+    protected void buildUnits() {
+        System.out.println("Building units as Orcs...");
+        if (hasPlentyOfResources()) {
+            if (noScouts()) {
+                System.out.println("Building peon and adding to scouts group.");
+            } else {
+                System.out.println("Building grunt and adding to warriors group.");
+            }
+        }
+    }
+
+    @Override
+    protected void sendScouts(Position position) {
+        System.out.println("Sending scouts to " + position + " as Orcs...");
+        // Logic for sending scouts.
+    }
+
+    @Override
+    protected void sendWarriors(Position position) {
+        System.out.println("Sending warriors to " + position + " as Orcs...");
+        // Logic for sending warriors.
+    }
+
+    // Mock methods for demonstration.
+    private boolean thereAreResources() { return true; }
+    private boolean hasPlentyOfResources() { return true; }
+    private boolean noScouts() { return false; }
+
+    protected Structure[] builtStructures() { return new Structure[0]; }
+    protected Enemy closestEnemy() { return null; }
+}
+
+
+class MonstersAI extends GameAI {
+    @Override
+    protected void collectResources() {
+        System.out.println("Monsters don't collect resources.");
+    }
+
+    @Override
+    protected void buildStructures() {
+        System.out.println("Monsters don't build structures.");
+    }
+
+    @Override
+    protected void buildUnits() {
+        System.out.println("Monsters don't build units.");
+    }
+
+    @Override
+    protected void sendScouts(Position position) {
+        System.out.println("Monsters sending scouts to " + position + "...");
+    }
+
+    @Override
+    protected void sendWarriors(Position position) {
+        System.out.println("Monsters sending warriors to " + position + "...");
+    }
+
+    protected Structure[] builtStructures() { return new Structure[0]; }
+    protected Enemy closestEnemy() { return null; }
+}
+
+class Structure {
+    void collect() {
+        System.out.println("Collecting from structure...");
+    }
+}
+
+class Enemy {
+    Position getPosition() {
+        return new Position();
+    }
+}
+
+class Position {
+    @Override
+    public String toString() {
+        return "Position";
+    }
+}
+
+class Map {
+    Position getCenter() {
+        return new Position();
+    }
+}
+public class Main {
+    public static void main(String[] args) {
+        GameAI orcAI = new OrcsAI();
+        System.out.println("Orc AI's turn:");
+        orcAI.turn();
+        
+        System.out.println("\nMonsters AI's turn:");
+        GameAI monsterAI = new MonstersAI();
+        monsterAI.turn();
+    }
+}
+
+
+// output
+
+Orc AI's turn:
+Collecting resources...
+Building structures as Orcs...
+Building farms, then barracks, then stronghold.
+Building units as Orcs...
+Building grunt and adding to warriors group.
+Attacking...
+Monsters don't collect resources.
+Monsters don't build structures.
+Monsters don't build units.
+Monsters sending scouts to Position...
