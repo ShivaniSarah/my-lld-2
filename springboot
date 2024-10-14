@@ -1,0 +1,25 @@
+https://www.geeksforgeeks.org/spring-boot-interview-questions-and-answers/
+
+@SpringBootApplication
+@EnableAutoConfiguration
+@OpenAPIDefinition
+@ComponentScan
+    @Component
+    @Service
+    @RestController
+    @Controller
+    @Repository
+@Configuration
+@Bean
+@Autowired
+@PostMapping
+@GetMapping
+@Value
+@Qualifier
+@RequestBody 
+@ResponseBody 
+@Profile
+
+Dependency Injection
+Inversion Of Control
+Spring IOC container
