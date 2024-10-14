@@ -4,7 +4,7 @@ https://www.youtube.com/watch?v=90hAvj0A8C8&list=PL6W8uoQQ2c60g6_fcjDCLHSx1LBeVY
 
 @SpringBootApplication
 @EnableAutoConfiguration
-@OpenAPIDefinition
+@OpenAPIDefinition // for swagger documentation
 @ComponentScan
     @Component
     @Service
