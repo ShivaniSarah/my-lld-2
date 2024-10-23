@@ -1,0 +1,37 @@
+@Repository
+@Component
+class MyDao {
+
+    public MyDao() {
+    }
+getEmpId(){
+return "Dao";
+}
+
+@Service
+class MyService {
+    private MyDao MyDao;
+
+    public MyService(MyDao MyDao) {
+        this.MyDao = MyDao
+    }
+ void getEmpId(String id){
+    myDao.getEmpId(id);
+  }
+}
+
+@Controller
+class MyController {
+    private MyService myService;
+
+    public MyController(MyService MyService) {
+        this.myService = myService
+    }
+  public Employee getEmployee(){
+    myService.getEmpId("1");
+  }
+
+}
+
+
+
