@@ -25,3 +25,8 @@ https://www.youtube.com/watch?v=90hAvj0A8C8&list=PL6W8uoQQ2c60g6_fcjDCLHSx1LBeVY
 Dependency Injection
 Inversion Of Control
 Spring IOC container
+
+
+actuator
+@Transactional
+implement atomic transaction so that it can rollback
