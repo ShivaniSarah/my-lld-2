@@ -1,0 +1,55 @@
+create a controller class
+create service class
+create repositor class
+
+
+@RestController("/api/v1")
+class EmployeeController {
+    public EmployeeService EmployeeService;
+
+    //constructor here
+    @Autowired
+    EmployeeController(EmployeeService e) {
+     this.EmployeeService = e;   
+    }
+
+    @GetMapping("/getEmployee/{id}")
+    public Response getEmployee( @Requestparam int id) {
+        EmployeeService.getempById(id)
+    }
+}
+
+@sservice
+class EmployeeService {
+    public EmployeeRepository EmployeeRepository;
+
+    //constructor here
+    @Autowired
+    EmployeeService(EmployeeRepository e) {
+     this.EmployeeRepository = e;   
+    }
+
+    public Employee getempById(int id) {
+        EmployeeRepository.getempById(id)
+    }
+}
+
+@repository
+class EmployeeRepository {
+    public EmployeeRepository EmployeeRepository;
+
+    //constructor here
+    
+    EmployeeRepository() {
+    }
+
+    public Employee getempById(int id) {
+        //logic to fetch from db
+        //to tell the intervierer   we can use spring jpa/hibernate that you have read about not much idea
+    }
+}
+
+class Employee {
+    int salary
+    int name;
+}
