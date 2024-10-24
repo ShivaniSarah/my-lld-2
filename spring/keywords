@@ -1,3 +1,5 @@
+Spring MVC
+
 pom.xml
 
 It will download dependencies from maven repository: https://mvnrepository.com/
@@ -14,4 +16,8 @@ packaging the application (e.g., into a JAR or WAR file).
 Version Management: It makes it easy to manage versions of your dependencies and plugins, 
 allowing for clean upgrades and patches.
 Multi-Module Support: Maven supports multi-module projects, allowing you to manage multiple related projects under a single pom.xml.
+
+Maven is primarily a command-line interface (CLI) tool used for building and managing Java-based projects.
+It automates the process of project compilation, dependency management, packaging, and more. 
+Developers interact with Maven through a series of commands issued in a terminal or command prompt.
 
