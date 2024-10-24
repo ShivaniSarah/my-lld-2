@@ -23,3 +23,8 @@ Developers interact with Maven through a series of commands issued in a terminal
 
 Maven wrapper properties and script files like mvnw for linux and mvnw.cmd for windows are there means that we can use maven commands to run
 the maven repo
+
+The Spring IOC (Inversion of Control) Container is a core component of the Spring Framework that is responsible for managing the lifecycle, configuration, and dependencies of the objects (also known as beans) within a Spring application.
+
+Inversion of Control (IOC)
+Inversion of Control is a design principle where the control of object creation and management is transferred from the application to a container (like the Spring IOC container). This allows developers to delegate the responsibility of managing dependencies and object lifecycle to the container rather than doing it manually within the application code.
