@@ -24,7 +24,7 @@ class MyService {
 class MyController {
     private MyService myService;
 
-    public MyController(MyService MyService) {
+    public MyController(MyService myService) {
         this.myService = myService
     }
   public Employee getEmployee(){
