@@ -21,3 +21,5 @@ Maven is primarily a command-line interface (CLI) tool used for building and man
 It automates the process of project compilation, dependency management, packaging, and more. 
 Developers interact with Maven through a series of commands issued in a terminal or command prompt.
 
+Maven wrapper properties and script files like mvnw for linux and mvnw.cmd for windows are there means that we can use maven commands to run
+the maven repo
