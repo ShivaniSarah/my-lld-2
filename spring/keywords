@@ -1,0 +1,17 @@
+pom.xml
+
+It will download dependencies from maven repository: https://mvnrepository.com/
+The pom.xml file in a Spring project is essential because it manages project dependencies
+and configurations using Maven, which is a build automation tool.
+
+Dependency Management: It declares the dependencies (libraries and frameworks) 
+needed for your Spring project. Maven handles downloading and managing these libraries automatically,
+ensuring compatibility and avoiding version conflicts.
+
+Build Lifecycle: Maven provides a structured lifecycle for building, testing, and deploying the application.
+Plugin Management: It includes plugins for compiling code, running tests, generating reports, and 
+packaging the application (e.g., into a JAR or WAR file).
+Version Management: It makes it easy to manage versions of your dependencies and plugins, 
+allowing for clean upgrades and patches.
+Multi-Module Support: Maven supports multi-module projects, allowing you to manage multiple related projects under a single pom.xml.
+
