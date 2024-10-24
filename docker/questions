@@ -1,0 +1,2 @@
+running image is called container in docker
+multiple servicees can be run in docker but avoided (docker compose)
