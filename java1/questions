@@ -1,0 +1,10 @@
+A JAR (Java ARchive) file is a package file format in Java that bundles together multiple Java classes, metadata, and resources (like text files or images) into a single compressed file. It is essentially a ZIP file with a .jar extension, designed specifically for distributing and deploying Java applications or libraries.
+
+Key Features of a JAR File:
+Packaging: A JAR file packages together all the Java .class files (compiled bytecode), libraries, and other resources needed by a Java application. This makes it easier to distribute and deploy Java applications.
+
+Execution: A JAR file can be executable if it contains a Main-Class entry in its MANIFEST.MF file (metadata for the JAR). This allows you to run the application from the command line directly using:
+
+bash
+Copy code
+java -jar myapp.jar
