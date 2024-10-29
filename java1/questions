@@ -16,3 +16,5 @@ Iterable
 Load Factor of hashmap
 
 Generic methods
+
+checked and unchecked exceptions
