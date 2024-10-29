@@ -44,3 +44,7 @@ Common Actuator Endpoints:
 /actuator/env: Exposes properties from the environment.
 /actuator/loggers: Manage and view logging configuration.
 /actuator/httptrace: Provides tracing information for recent HTTP requests.
+
+Annotations
+
+@Transactional
