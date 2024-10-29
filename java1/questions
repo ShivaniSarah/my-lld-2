@@ -20,3 +20,87 @@ Generic methods
 checked and unchecked exceptions
 
 memories of young and old generation java wht is it?
+
+◯ Java Basics
+   ◦ Data types and variables
+   ◦ Operators
+   ◦ Control statements (if-else, switch, loops)
+◯ Classes and Objects
+   ◦ "this" keyword
+   ◦ access control
+   ◦ "static" keyword
+   ◦ "final" keyword
+   ◦ Inner Class
+◯ Object-Oriented Programming (OOP)
+   ◦ Classes and objects
+   ◦ Constructors
+   ◦ Inheritance
+   ◦ Polymorphism (method overloading and overriding)
+   ◦ Abstraction
+   ◦ Encapsulation
+   ◦ Interfaces and abstract classes
+◯ Collections Framework
+   ◦ List, Set, and Map interfaces
+   ◦ ArrayList, LinkedList, HashSet, TreeSet, HashMap, LinkedHashMap, TreeMap
+   ◦ Iterators and enhanced for loop
+   ◦ Comparable and Comparator
+◯ String Handling
+   ◦ Theory
+   ◦ String Constructors
+   ◦ String Length
+   ◦ String Operations
+   ◦ Character Extraction
+   ◦ String Comparision
+   ◦ Searching Strings
+   ◦ Modifying Strings
+   ◦ Data Conversion using valueOf()
+   ◦ StringBuffer
+   ◦ StringBuilder
+◯ Multithreading and Concurrency
+   ◦ Thread lifecycle
+   ◦ Creating and managing threads
+   ◦ Synchronization
+   ◦ Concurrency utilities (Executor framework, CountDownLatch, CyclicBarrier)
+◯ Core Java Concepts
+   ◦ JVM vs JRE vs JDK
+   ◦ Memory Management
+   ◦ Garbage Management
+◯ Exception Handling
+   ◦ try, catch, finally
+   ◦ throw and throws
+   ◦ Custom exceptions
+◯ Enums, Autoboxing and Annotations
+   ◦ Enumerations
+   ◦ values() and valueOf()
+   ◦ Wrappers
+   ◦ Autoboxing
+   ◦ Unboxing
+   ◦ Annotations (Metadata)
+   ◦ Built-In Annotations
+◯ Generics
+   ◦ What are Generics
+   ◦ Bounded Types
+◯ Java 8 Features
+   ◦ Functional interfaces and Lambda expressions
+   ◦ Streams API
+   ◦ Optional class
+   ◦ Default and static methods in interfaces
+   ◦ Date and Time API (java.time package)
+◯ JVM Internals
+   ◦ JVM architecture
+   ◦ Class loading mechanism
+   ◦ Memory management (heap, stack)
+   ◦ Garbage collection
+◯ Java Memory Model
+   ◦ Understanding volatile and atomic variables
+   ◦ Thread safety
+   ◦ Happens-before relationship
+◯ Java I/O
+   ◦ File handling (File class)
+   ◦ Byte streams (InputStream, OutputStream)
+   ◦ Character streams (Reader, Writer)
+   ◦ Serialization and Deserialization
+◯ Design Patterns
+   ◦ Creational patterns (Singleton, Factory, Builder)
+   ◦ Structural patterns (Adapter, Composite, Decorator)
+   ◦ Behavioral patterns (Strategy, Observer, Command)
