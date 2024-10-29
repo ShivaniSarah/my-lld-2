@@ -6,3 +6,10 @@ Packaging: A JAR file packages together all the Java .class files (compiled byte
 Execution: A JAR file can be executable if it contains a Main-Class entry in its MANIFEST.MF file (metadata for the JAR). This allows you to run the application from the command line directly using:
 
 java -jar myapp.jar
+
+Random Access Interface
+
+Marker Interface
+
+Iterable
+
