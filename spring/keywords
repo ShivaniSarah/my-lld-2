@@ -28,3 +28,19 @@ The Spring IOC (Inversion of Control) Container is a core component of the Sprin
 
 Inversion of Control (IOC)
 Inversion of Control is a design principle where the control of object creation and management is transferred from the application to a container (like the Spring IOC container). This allows developers to delegate the responsibility of managing dependencies and object lifecycle to the container rather than doing it manually within the application code.
+
+Spring Actuator:
+In Spring, an actuator provides features to help monitor and manage an application in production. Spring Boot Actuator includes a set of built-in endpoints that allow you to interact with your Spring Boot application, monitor its state, gather metrics, check health, and even modify runtime properties.
+Key Features of Spring Boot Actuator:
+Health Check: Monitor the status of the application (e.g., UP or DOWN).
+Metrics: Track various metrics such as memory usage, CPU, HTTP request counts, and response times.
+Auditing: Provides auditing information like user login and access events.
+Tracing: Helps track application traces for debugging purposes.
+HTTP Endpoints: Actuators expose various endpoints via HTTP to manage and monitor the application.
+Common Actuator Endpoints:
+/actuator/health: Provides application health information.
+/actuator/metrics: Displays various application metrics.
+/actuator/info: Displays application information.
+/actuator/env: Exposes properties from the environment.
+/actuator/loggers: Manage and view logging configuration.
+/actuator/httptrace: Provides tracing information for recent HTTP requests.
