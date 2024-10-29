@@ -68,3 +68,73 @@ Weaving: The process of applying aspects to the target object. In Spring AOP, we
 Annotations
 
 @Transactional
+
+
+☀️ Spring and Spring Boot
+
+◯ Introduction to Spring Framework
+   ◦ Overview and architecture
+   ◦ Inversion of Control (IoC)
+   ◦ Dependency Injection (DI)
+◯ Spring Beans and Context
+   ◦ Bean lifecycle
+   ◦ Bean scopes
+   ◦ ApplicationContext vs. BeanFactory
+◯ Spring Configuration
+   ◦ XML configuration
+   ◦ Java-based configuration (using @Configuration and @Bean)
+   ◦ Annotation-based configuration (using @Component, @Autowired, @Qualifier)
+◯ Spring AOP (Aspect-Oriented Programming)
+   ◦ AOP concepts
+   ◦ Defining aspects, advice, pointcuts, and join points
+   ◦ Using @Aspect and @Before, @After, @Around
+◯ Spring Data Access
+   ◦ JDBC with Spring
+   ◦ Spring Data JPA
+   ◦ Transaction management
+◯ Spring MVC (Model-View-Controller)
+   ◦ DispatcherServlet
+   ◦ Controllers, models, and views
+   ◦ RESTful web services
+   ◦ Data binding and form handling
+◯ Introduction to Spring Boot
+   ◦ Overview and features
+   ◦ Spring Boot starters
+   ◦ Creating a Spring Boot application
+◯ Spring Boot Auto-Configuration
+   ◦ Understanding auto-configuration
+   ◦ Customizing auto-configuration
+◯ Spring Boot Annotations
+   ◦ @SpringBootApplication
+   ◦ @EnableAutoConfiguration
+   ◦ @ConfigurationProperties
+◯ Spring Boot Actuator
+   ◦ Monitoring and management endpoints
+   ◦ Customizing actuator endpoints
+   ◦ Health checks and metrics
+◯ Spring Boot DevTools
+   ◦ LiveReload
+   ◦ Automatic restarts
+◯ Spring Boot Data
+   ◦ Spring Data JPA
+   ◦ Working with repositories
+◯ Spring Boot Security
+   ◦ Integrating Spring Security
+   ◦ Secure REST APIs
+   ◦ OAuth2 and JWT with Spring Boot
+◯ Spring Cloud
+   ◦ Microservices architecture
+   ◦ Service discovery with Eureka
+   ◦ Circuit breaker pattern with Hystrix
+   ◦ API Gateway with Spring Cloud Gateway
+◯ Spring Batch
+   ◦ Batch processing concepts
+   ◦ Creating batch jobs
+   ◦ Scheduling and execution
+◯ Spring Integration
+   ◦ Enterprise integration patterns
+   ◦ Messaging and channels
+   ◦ Transformers and routers
+◯ Build Tools
+   ◦ Maven
+   ◦ Gradle
