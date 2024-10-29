@@ -45,6 +45,26 @@ Common Actuator Endpoints:
 /actuator/loggers: Manage and view logging configuration.
 /actuator/httptrace: Provides tracing information for recent HTTP requests.
 
+Aspect-Oriented Programming (AOP) is a programming paradigm that aims to increase modularity by allowing the separation of cross-cutting concerns. In Spring, AOP is used to implement aspects such as logging, transaction management, security, etc., separately from the business logic.
+
+Key Concepts in AOP:
+Aspect: A module that encapsulates the behavior affecting multiple classes (cross-cutting concern). In Spring, aspects are implemented using classes annotated with @Aspect.
+
+Join Point: A specific point in the execution of a program, such as the execution of a method or the handling of an exception, where an aspect can be applied.
+
+Advice: The action taken by an aspect at a particular join point. Spring AOP supports different types of advice:
+
+Before: Runs before the method execution.
+After: Runs after the method completes.
+After Returning: Runs after the method successfully returns a result.
+After Throwing: Runs if the method throws an exception.
+Around: Runs before and after the method execution.
+Pointcut: A predicate that matches join points. A pointcut expression defines at which join points advice should be applied.
+
+Weaving: The process of applying aspects to the target object. In Spring AOP, weaving is performed at runtime using proxies.
+
+
+
 Annotations
 
 @Transactional
