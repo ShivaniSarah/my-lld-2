@@ -1,13 +1,29 @@
+
+// Observer interface
+public interface WeatherObserver {
+    void update(float temperature, float humidity);
+}
+
+// Concrete Observers
+public class CurrentConditionsDisplay implements WeatherObserver {
+    @Override
+    public void update(float temperature, float humidity) {
+        System.out.println("Current conditions: " + temperature + "C degrees and " + humidity + "% humidity.");
+    }
+}
+
+public class StatisticsDisplay implements WeatherObserver {
+    @Override
+    public void update(float temperature, float humidity) {
+        System.out.println("Statistics: Average temperature = " + temperature + "C, Average humidity = " + humidity + "%.");
+    }
+}
+
 // Subject interface
 public interface WeatherSubject {
     void registerObserver(WeatherObserver observer);
     void removeObserver(WeatherObserver observer);
     void notifyObservers();
-}
-
-// Observer interface
-public interface WeatherObserver {
-    void update(float temperature, float humidity);
 }
 
 // Concrete Subject
@@ -44,20 +60,6 @@ public class WeatherData implements WeatherSubject {
     }
 }
 
-// Concrete Observers
-public class CurrentConditionsDisplay implements WeatherObserver {
-    @Override
-    public void update(float temperature, float humidity) {
-        System.out.println("Current conditions: " + temperature + "C degrees and " + humidity + "% humidity.");
-    }
-}
-
-public class StatisticsDisplay implements WeatherObserver {
-    @Override
-    public void update(float temperature, float humidity) {
-        System.out.println("Statistics: Average temperature = " + temperature + "C, Average humidity = " + humidity + "%.");
-    }
-}
 
 // Usage
 public class Main {
