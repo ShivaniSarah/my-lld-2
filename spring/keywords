@@ -1,4 +1,14 @@
 Spring MVC
+https://www.geeksforgeeks.org/difference-between-spring-and-spring-boot/
+If we want to use Spring MVC, we need to use @ComponentScan annotation, Dispatcher servlet, view resolver, web jars, etc. 
+This kind of configuration makes it slow to develop an application. 
+So, in this place, Spring Boot Autoconfiguration comes in. 
+It looks at what types of frameworks are available at the classpath 
+and it looks at what configurations are provided by the programmers or what configurations are provided already for the application.
+It will look at both of them. Data is not configured but there is hibernation on the classpath, 
+so it will configure the data source automatically. It will configure the in-memory database, 
+it will configure the dispatcher servlet automatically. This is called autoconfiguration. 
+Spring Boot creates a starter project by which all the XML configurations and dependencies get by default.
 
 pom.xml
 
