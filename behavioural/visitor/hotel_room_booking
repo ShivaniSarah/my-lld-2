@@ -1,0 +1,206 @@
+// Visitor interface
+interface RoomVisitor {
+    void visit(SingleRoom singleRoom);
+    void visit(DoubleRoom doubleRoom);
+    void visit(SuiteRoom suiteRoom);
+}
+
+// Element interface
+interface Room {
+    void accept(RoomVisitor visitor);
+}
+
+// Concrete Elements
+class SingleRoom implements Room {
+    private int availableRooms;
+    private double price;
+
+    public SingleRoom(int availableRooms, double price) {
+        this.availableRooms = availableRooms;
+        this.price = price;
+    }
+
+    public int getAvailableRooms() {
+        return availableRooms;
+    }
+
+    public double getPrice() {
+        return price;
+    }
+
+    public void bookRoom() {
+        if (availableRooms > 0) {
+            availableRooms--;
+        } else {
+            System.out.println("No Single Rooms available!");
+        }
+    }
+
+    @Override
+    public void accept(RoomVisitor visitor) {
+        visitor.visit(this);
+    }
+}
+
+class DoubleRoom implements Room {
+    private int availableRooms;
+    private double price;
+
+    public DoubleRoom(int availableRooms, double price) {
+        this.availableRooms = availableRooms;
+        this.price = price;
+    }
+
+    public int getAvailableRooms() {
+        return availableRooms;
+    }
+
+    public double getPrice() {
+        return price;
+    }
+
+    public void bookRoom() {
+        if (availableRooms > 0) {
+            availableRooms--;
+        } else {
+            System.out.println("No Double Rooms available!");
+        }
+    }
+
+    @Override
+    public void accept(RoomVisitor visitor) {
+        visitor.visit(this);
+    }
+}
+
+class SuiteRoom implements Room {
+    private int availableRooms;
+    private double price;
+
+    public SuiteRoom(int availableRooms, double price) {
+        this.availableRooms = availableRooms;
+        this.price = price;
+    }
+
+    public int getAvailableRooms() {
+        return availableRooms;
+    }
+
+    public double getPrice() {
+        return price;
+    }
+
+    public void bookRoom() {
+        if (availableRooms > 0) {
+            availableRooms--;
+        } else {
+            System.out.println("No Suite Rooms available!");
+        }
+    }
+
+    @Override
+    public void accept(RoomVisitor visitor) {
+        visitor.visit(this);
+    }
+}
+
+// Concrete Visitor: Check availability
+class AvailabilityVisitor implements RoomVisitor {
+    @Override
+    public void visit(SingleRoom singleRoom) {
+        System.out.println("Single Rooms available: " + singleRoom.getAvailableRooms());
+    }
+
+    @Override
+    public void visit(DoubleRoom doubleRoom) {
+        System.out.println("Double Rooms available: " + doubleRoom.getAvailableRooms());
+    }
+
+    @Override
+    public void visit(SuiteRoom suiteRoom) {
+        System.out.println("Suite Rooms available: " + suiteRoom.getAvailableRooms());
+    }
+}
+
+// Concrete Visitor: Calculate total cost
+class TotalCostVisitor implements RoomVisitor {
+    private double totalCost = 0.0;
+
+    @Override
+    public void visit(SingleRoom singleRoom) {
+        totalCost += singleRoom.getAvailableRooms() * singleRoom.getPrice();
+    }
+
+    @Override
+    public void visit(DoubleRoom doubleRoom) {
+        totalCost += doubleRoom.getAvailableRooms() * doubleRoom.getPrice();
+    }
+
+    @Override
+    public void visit(SuiteRoom suiteRoom) {
+        totalCost += suiteRoom.getAvailableRooms() * suiteRoom.getPrice();
+    }
+
+    public double getTotalCost() {
+        return totalCost;
+    }
+}
+
+// Client code
+public class HotelBooking {
+    public static void main(String[] args) {
+        // Create rooms with initial availability and prices
+        SingleRoom singleRoom = new SingleRoom(5, 100.0);
+        DoubleRoom doubleRoom = new DoubleRoom(3, 150.0);
+        SuiteRoom suiteRoom = new SuiteRoom(2, 300.0);
+
+        Room[] rooms = {singleRoom, doubleRoom, suiteRoom};
+
+        // Check availability
+        System.out.println("Initial availability:");
+        AvailabilityVisitor availabilityVisitor = new AvailabilityVisitor();
+        for (Room room : rooms) {
+            room.accept(availabilityVisitor);
+        }
+
+        // Calculate total cost
+        TotalCostVisitor costVisitor = new TotalCostVisitor();
+        for (Room room : rooms) {
+            room.accept(costVisitor);
+        }
+        System.out.println("Total cost of all available rooms: $" + costVisitor.getTotalCost());
+
+        // Book a room and update
+        System.out.println("\nBooking a Single Room...");
+        singleRoom.bookRoom();
+
+        System.out.println("\nUpdated availability:");
+        for (Room room : rooms) {
+            room.accept(availabilityVisitor);
+        }
+
+        // Recalculate total cost
+        costVisitor = new TotalCostVisitor();
+        for (Room room : rooms) {
+            room.accept(costVisitor);
+        }
+        System.out.println("Updated total cost of all available rooms: $" + costVisitor.getTotalCost());
+    }
+}
+
+
+// output
+
+Initial availability:
+Single Rooms available: 5
+Double Rooms available: 3
+Suite Rooms available: 2
+Total cost of all available rooms: $1400.0
+
+Booking a Single Room...
+
+Updated availability:
+Single Rooms available: 4
+Double Rooms available: 3
+Suite Rooms available: 2
+Updated total cost of all available rooms: $1300.0
