@@ -1,0 +1,5 @@
+public synchronized Logger getInstance(LogConfig logConfig) { // object level
+ public static synchronized Logger getInstance(LogConfig logConfig) { // class level
+        synchronized ( Logger.class){   // class level
+            
+        }
