@@ -3,3 +3,6 @@ public synchronized Logger getInstance(LogConfig logConfig) { // object level
         synchronized ( Logger.class){   // class level
             
         }
+synchronized ( this){   // object level
+            
+        }
