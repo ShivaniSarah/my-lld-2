@@ -1,5 +1,7 @@
-The SOLID principles are a set of five design principles in software engineering aimed at making systems easier to understand, develop, and maintain.
-They were introduced by Robert C. Martin (Uncle Bob) as guidelines for building robust, scalable, and reusable object-oriented systems. Here's a brief overview:
+The SOLID principles are a set of five design principles in software engineering aimed at making systems easier to understand, 
+develop, and maintain.
+They were introduced by Robert C. Martin (Uncle Bob) as guidelines for building robust, scalable, and reusable object-oriented systems. 
+Here's a brief overview:
 
 1. Single Responsibility Principle (SRP)
 Definition: A class should have one, and only one, reason to change.
@@ -19,7 +21,8 @@ class InvoiceSaver {
 
 2. Open/Closed Principle (OCP)
 Definition: Software entities (classes, modules, functions, etc.) should be open for extension but closed for modification.
-Explanation: You should be able to add new functionality without changing existing code, which helps prevent breaking existing functionality.
+Explanation: You should be able to add new functionality without changing existing code, which helps prevent breaking existing
+functionality.
 Example:
 interface Shape {
     double calculateArea();
@@ -43,7 +46,8 @@ class AreaCalculator {
 }
 3. Liskov Substitution Principle (LSP)
 Definition: Subtypes must be substitutable for their base types without altering the correctness of the program.
-Explanation: A derived class should enhance functionality, not break it. Any instance of the base class should be replaceable by an instance of the derived class.
+Explanation: A derived class should enhance functionality, not break it. 
+Any instance of the base class should be replaceable by an instance of the derived class.
 Example:
 class Bird {
     void fly() {
