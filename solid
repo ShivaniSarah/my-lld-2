@@ -1,8 +1,10 @@
-The SOLID principles are a set of five design principles in software engineering aimed at making systems easier to understand, develop, and maintain. They were introduced by Robert C. Martin (Uncle Bob) as guidelines for building robust, scalable, and reusable object-oriented systems. Here's a brief overview:
+The SOLID principles are a set of five design principles in software engineering aimed at making systems easier to understand, develop, and maintain.
+They were introduced by Robert C. Martin (Uncle Bob) as guidelines for building robust, scalable, and reusable object-oriented systems. Here's a brief overview:
 
 1. Single Responsibility Principle (SRP)
 Definition: A class should have one, and only one, reason to change.
-Explanation: Each class should only handle a single responsibility or function. If a class has more than one responsibility, changes in one part might inadvertently affect other parts.
+Explanation: Each class should only handle a single responsibility or function. If a class has more than one responsibility,
+changes in one part might inadvertently affect other parts.
 Example:
 class InvoicePrinter {
     void printInvoice(Invoice invoice) {
