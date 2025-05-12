@@ -1,0 +1,61 @@
+class MQ{
+
+
+MQ(){
+    consumers = new ArrayList<>();
+    queue = new HashMap<String, Queue>;
+    indices = new HashMap<String, Integer>;
+}
+
+Map<String, String[]> queue;
+
+public Map<String, Consumer> consumers;
+
+public Map<String, Integer> indices;
+
+}
+
+
+class Producer{
+
+MQ mq;
+
+
+public register(Consumer consumer){
+   mq.getConsumers.put(consumer.getId(),consumer);
+}
+
+public void writeMessage(String consumerId, String message){
+     Consumer consumer =   mq.getConsumers().get(consumerId);
+
+     Inetger ind = mq.getIndices.get(consumerId);
+     String[] consumerQueue = mq.getQueue.get(consumerId);
+     consumerQueue[ind]= message;
+     ind++;
+     consumerQueue.put(consumerId,ind);
+     consumer.notify(consumerId);
+
+}
+
+}
+
+
+class  Consumer{
+
+MQ mq;
+
+public void notify(consumerId){
+ String[] q= mq.getQueue().get(consumerId);
+ Integer index =    mq.getIndices().get(consumerId);
+    return   q[index];
+
+}
+
+}
+
+
+
+
+
+
+
