@@ -1,8 +1,73 @@
-public synchronized Logger getInstance(LogConfig logConfig) { // object level
- public static synchronized Logger getInstance(LogConfig logConfig) { // class level
-        synchronized ( Logger.class){   // class level
-            
+https://www.geeksforgeeks.org/object-level-lock-in-java/
+
+
+Object Level lock on threads
+
+An object-level lock is a mechanism when we want to synchronize a non-static method or non-static code block such that only 
+one thread will be able to execute the code block on a given instance of the class. 
+First, it has to get a lock of that object. Once the thread gets the lock then it
+is allowed to execute any synchronized method on that object. Once method execution completes automatically thread releases the lock. 
+Acquiring and releasing lock internally is taken care of by JVM and the programmer is not responsible for these activities.
+
+
+public class GeekClass
+{
+    public synchronized void GeekMethod(){}
+}
+
+or
+
+
+public class GeekClass
+{
+    public void GeekMethod(){
+        synchronized (this)
+        {
+            // other thread safe code
         }
-synchronized ( this){   // object level
-            
+    }
+}
+
+
+
+or
+
+// not used much
+
+public class DemoClass
+{
+    private final Object lock = new Object();
+    public void demoMethod(){
+        synchronized (lock)
+        {
+            // other thread safe code
         }
+    }
+}
+
+
+---------------
+
+Class Level lock on threads
+
+ If a thread wants to execute a static synchronized method, then the thread requires a class level lock. 
+ Once a thread got the class level lock, then it is allowed to execute any static synchronized method of that class.
+Once method execution completes automatically thread releases the lock.
+
+public static synchronized int incrementCount()
+{
+}
+
+
+or
+
+
+public class GeekClass
+{
+    public void GeekMethod(){
+        synchronized (GeekClass.class)
+        {
+            //thread has acquired lock on  Geek class
+        }
+    }
+}
