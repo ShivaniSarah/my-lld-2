@@ -967,3 +967,57 @@ task 5 complete
 task 4 complete
 
 
+Example:
+one thread prints even and one thread prints odd ,,,, print 1 to 20 in order
+
+
+class NumberPrinter {
+    private int number = 1;
+    private final int MAX = 20;
+
+    public synchronized void printOdd() throws InterruptedException {
+        while (number <= MAX) {
+            if (number % 2 == 0) {
+                wait(); // wait if it's not odd's turn
+            } else {
+                System.out.println("Odd: " + number++);
+                notify(); // wake up even thread
+            }
+        }
+    }
+
+    public synchronized void printEven() throws InterruptedException {
+        while (number <= MAX) {
+            if (number % 2 == 1) {
+                wait(); // wait if it's not even's turn
+            } else {
+                System.out.println("Even: " + number++);
+                notify(); // wake up odd thread
+            }
+        }
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        NumberPrinter printer = new NumberPrinter();
+
+        Thread oddThread = new Thread(() -> {
+            try {
+                printer.printOdd();
+            } catch (InterruptedException e) { e.printStackTrace(); }
+        });
+
+        Thread evenThread = new Thread(() -> {
+            try {
+                printer.printEven();
+            } catch (InterruptedException e) { e.printStackTrace(); }
+        });
+
+        oddThread.start();
+        evenThread.start();
+    }
+}
+
+
+
