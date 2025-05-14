@@ -3,6 +3,8 @@ Q. memory management in java and allocation of integers , real numbers and strin
 
 Ans.
 
+Refer: https://www.geeksforgeeks.org/java-memory-management/
+
 
 In modern Java (Java 17+), memory management and the runtime handling of data types like integers,
 real numbers (floating-point), and strings follow certain principles largely governed by the Java Virtual Machine (JVM). 
@@ -29,8 +31,15 @@ Stores class level lookup table constant pool and method bytecode
 Stores primitive values and references to objects.
 
 Method calls, local variables, and function call chains live here.
+In Java, Stack memory is used to store local variables, method calls and references to an object. 
+Each time a method is called, a new stack frame is created to hold local variables and object references. 
+The stack memory is managed automatically, when a method finishes the stack frame is removed and the space used by its local variable
+is also released.
 
-Each thread has its own stack.
+Note:
+
+Stack memory stores references to objects not the object themselves
+Each thread in Java application has its own stack.
 
 ➤ Registers 
 Program Counter points to the current execution step
@@ -456,6 +465,25 @@ if you want an internal code walkthrough (e.g., how IntegerCache works).
 
 --------------------------------------------------------------------------------------------------------
 
+Refer: https://www.geeksforgeeks.org/garbage-collection-java/
+https://www.geeksforgeeks.org/types-of-jvm-garbage-collectors-in-java-with-implementation-details/
+
+The Garbage collector in Java automatically removes the unused objects that are no longer needed. It runs in the background to free up memory.
+In Java, The garbage collector is responsible for reclaiming memory by destroying objects that are no longer in use. When an object becomes unreachable that means no active reference points to it, it then becomes eligible for garbage collector. The garbage collector removes those objects freeing up the memory in the heap.
+Garbage collector finds objects that are no longer needed by the program.
+It removes those unused objects to free up the memory and making space for new objects.
+New objects are collected more frequently than older objects, which helps improve efficiency.
+You can request garbage collection using System.gc(), but the JVM ultimately decides when it should run.
+Note:System.gc() and Runtime.gc() are the methods which requests for Garbage collection to JVM explicitly but it doesn’t ensures garbage collection as the final decision of garbage collection is of JVM only.
+
+Types of Garbage Collectors
+Serial Garbage Collector: It is the simplest type of garbage collector. It uses a single thread to handle all garbage collection tasks.
+Parallel Garbage Collector: It is the default garbage collector in Java 8. It uses multiple threads to perform garbage collection tasks.
+Concurrent Mark-Sweep Collector: It is designed to minimize pause times by doing most of its work while the application is still running. It uses multiple threads to mark and clean up unreachable objects.
+G1 Garbage Collector: It was introduced in JDK 7 and became the default garbage collector in Java 9. Designed for applications with large heap sizes (greater than 4GB).
+Z Garbage Collector: It is designed to handle large heaps with minimal pause times, typically in the range of milliseconds.
+Shenandoah Garbage Collector: It is another low-pause-time garbage collector introduced in Java 12.
+
 
 ✅ Does Garbage Collection (GC) Apply to These Areas?
 Memory Area	     Is GC Applied?	     Explanation
@@ -736,9 +764,256 @@ Writing memory-efficient, leak-free Java code
 
 Would you like a visual roadmap of JVM memory or a cheat sheet with all key tuning flags and GC types?
 
+--------------------------------------------------------------------------------------------------------
+
+
+Memory Layout of an Object
+In Java, an object consist of three main parts:
+
+Object header: It contains metadata like the object’s class and lock information for synchronization.
+Instance data: It refers to the actual fields or variables that belongs to an object.
+Padding: It refers to the extra memory to align the object size to the word size for better performance.
+The object header includes:
+
+Class Pointer: This is a reference to the object’s class.
+Lock Information: This is used for synchronization in multithreaded programs.
+GC-related Information: It is used by the garbage collector for managing the object lifecycle.
+
+
+--------------------------------------------------------------------------------------------------------
 
 
 
+Java Virtual Machine (JVM) Stack Area 
+
+This is not stack memory
+
+The Java Virtual Machine is responsible for running Java applications, and it manages various memory areas, one of which is the Stack Area. In this article, we are going to discuss about JVM Stack Area in depth.
+
+In Java, each thread has its stack called the Run-Time Stack, created when the thread starts.
+The memory for a Java Virtual Machine stack does not need to be contiguous.
+The JVM manages this stack by pushing and popping frames. Each method call creates a new stack frame that stores:
+Method call information: Stores details about the method being executed.
+Local variables: Stores local variables defined within the method.
+Method parameters: Stores parameters passed to the method.
+Return address: Tracks where to return once the method completes.
+After all method calls are completed, the stack is emptied and destroyed by the JVM. The stack data is thread-specific, ensuring thread safety for local variables. Each entry in the stack is called a Stack Frame or Activation Record.
+
+Working of Stack
+When a method is called a new stack frame is created and pushes onto the stack, this stack frame contains all the information needed for the method execution. The JVM executes the method’s code, using the local variables and parameters stored in the stack frame. Once the method execution is complete, the stack frame is popped off the stack, and control returns to the calling method.
+
+Example: Here, the below code demonstrate how actually the stack works.
+
+
+
+// Java Program to Demonstrate the working of stack
+import java.io.*;
+
+class Geeks {
+    public static int add(int a, int b) {
+        return a + b;
+    }
+    public static void main (String[] args) {
+        int ans = add(5, 5);
+        System.out.println("Answer: " + ans);
+    }
+}
+
+Output
+Answer: 10
+Explanation:
+
+When main method is called, the stack frame for the main is created.
+Inside the main, the add method is called with the parameters, now the new stack frame for the add is created.
+The add method executes using the provided parameters
+After the add method returns, its stack frame is popped off and control returns to main.
+Below diagram demonstrates the stack area of JVM:
+
+Stack Area of JVM
+Stack Frame Structure 
+The stack frame basically consists of three parts. The three parts are
+
+Local Variable Array
+Operand Stack
+Frame Data
+When JVM invokes a Java method, first it checks the class data to determine the number of words (size of the local variable array and operand stack, which is measured in words for each individual method) required by the method in the local variables array and operand stack. It creates a stack frame of the proper size for invoked method and pushes it onto the Java stack. 
+
+1. Local Variable Array (LVA)
+The local variables part of the stack frame is organized as a zero-based array of words.
+It contains all parameters and local variables of the method.
+Each slot or entry in the array is of 4 Bytes.
+Values of type int, float, and reference occupy 1 entry or slot in the array i.e. 4 bytes.
+Values of double and long occupy 2 consecutive entries in the array i.e. 8 bytes total.
+Byte, short, and char values will be converted to int type before storing and occupy 1 slot i.e. 4 Bytes.
+But the way of storing Boolean values is varied from JVM to JVM. But most of the JVM gives 1 slot for Boolean values in the local variable array.
+The parameters are placed into the local variable array first, in the order in which they are declared.
+Example: Let us consider a class Example having a method bike() then the local variable array will be as shown in the below diagram:
+
+// Class Declaration 
+
+
+class Example 
+
+
+
+{   
+
+
+public void bike(int i, long l, float f, double d, Object o, byte b) 
+
+
+
+      {        
+
+
+
+      }  
+
+
+
+} 
+
+
+Local Variable Array for bike()
+
+2. Operand Stack (OS)
+The JVM uses an operand stack as a workspace for temporary calculations.
+Unlike the local variable array, which you access using an index, the operand stack works with special instructions. These instructions can push values onto the stack, pop values off, and perform operations using those values.
+Example: Here is how a JVM will use this below code that would subtract two local variables that contain two ints and store the int result in a third local variable:
+
+Assembly Code Instruction for Operand Stack
+So here first two instructions iload_0 and iload_1 will push the values in the operand stack from a local variable array. And instruction isub will subtract these two values and store the result back to the operand stack and after istore_2 the result will pop out from the operand stack and will store into a local variable array at position 2.
+Working of LVA and OS
+
+3. Frame Data (FD)
+It contains all symbolic references (constant pool resolution) and normal method returns related to that particular method.
+It also contains a reference to the Exception table which provides the corresponding catch block information in the case of exceptions.
+ 
+
+Refer: https://www.geeksforgeeks.org/java-virtual-machine-jvm-stack-area/
+
+
+--------------------------------------------------------------------------------------------------------
+
+
+
+Here’s a clean and complete overview of how Java code is executed step by step, from source code to runtime — covering everything from compilation to the JVM lifecycle:
+
+
+
+1. Write Java Code
+You write source code in a .java file:
+
+
+public class HelloWorld {
+    public static void main(String[] args) {
+        System.out.println("Hello, World!");
+    }
+}
+2. Compile Java Code → Bytecode
+The Java compiler (javac) compiles .java source files into .class files containing bytecode.
+
+
+javac HelloWorld.java
+This produces:
+
+
+HelloWorld.class
+✅ The .class file contains platform-independent bytecode instructions, not native machine code.
+
+3. Class Loading
+At runtime, the ClassLoader loads .class files into memory:
+
+Bootstrap ClassLoader (loads core classes like java.lang.*)
+
+Extension ClassLoader
+
+Application ClassLoader (loads user-defined classes)
+
+Loaded classes are stored in the Metaspace in modern Java (Java 8+).
+
+4. Bytecode Verification
+Before execution, the JVM verifies the bytecode for safety and correctness:
+
+Ensures no illegal access (e.g., stack overflows, invalid instructions)
+
+Enforces Java's type safety and access control
+
+If verification fails, you get a VerifyError.
+
+5. Execution by JVM
+Once verified, execution begins:
+
+JVM calls the main() method
+
+Bytecode is interpreted or Just-In-Time (JIT) compiled into native machine code for better performance
+
+6. Runtime Memory Allocation
+As the program runs, JVM allocates memory for:
+
+Objects → on the Heap (Young/Old generation)
+
+Local variables/method frames → on the Stack (per thread)
+
+Class metadata → in Metaspace
+
+Constants → in the Runtime Constant Pool
+
+Static fields → usually in the Heap
+
+7. Just-In-Time (JIT) Compilation
+The HotSpot JVM identifies "hot" code (methods used frequently) and compiles them to native code using the JIT compiler for speed.
+
+Types of JIT compilers:
+
+C1 (Client) – Fast startup, used for GUI apps.
+
+C2 (Server) – Optimized for long-running apps.
+
+8. Garbage Collection (GC)
+The JVM uses Garbage Collection to automatically free memory:
+
+Reclaims memory from unreachable objects in the heap
+
+Different GC algorithms: G1, ZGC, Parallel GC, etc.
+
+Young generation → frequent collections
+
+Old generation → less frequent but more expensive
+
+9. Program Terminates
+Once the main() method or all non-daemon threads finish:
+
+JVM shuts down
+
+GC may run a final time
+
+Shutdown hooks (if any) are called
+
+
+
+1. Source Code (.java)
+        ↓
+2. javac compiles to Bytecode (.class)
+        ↓
+3. ClassLoader loads class into Metaspace
+        ↓
+4. Bytecode Verifier checks safety
+        ↓
+5. Execution begins via Interpreter or JIT
+        ↓
+6. Objects allocated in Heap, methods in Stack
+        ↓
+7. JIT optimizes hot code → Native Code
+        ↓
+8. GC cleans unused Heap memory
+        ↓
+9. Program ends, JVM shuts down
+
+
+
+
+--------------------------------------------------------------------------------------------------------
 
 
 
