@@ -967,6 +967,8 @@ task 5 complete
 task 4 complete
 
 
+-------------------------------------------------
+
 Example:
 one thread prints even and one thread prints odd ,,,, print 1 to 20 in order
 
@@ -1024,6 +1026,56 @@ public class Main {
         evenThread.start();
     }
 }
+
+
+---------------------
+
+# code for deadlock
+
+
+class A {
+    synchronized void methodA(B b) {
+        System.out.println("Thread 1: Holding lock A...");
+        try { Thread.sleep(100); } catch (Exception e) {}
+        System.out.println("Thread 1: Waiting for lock B...");
+        b.last();
+    }
+
+    synchronized void last() {
+        System.out.println("In method A");
+    }
+}
+
+class B {
+    synchronized void methodB(A a) {
+        System.out.println("Thread 2: Holding lock B...");
+        try { Thread.sleep(100); } catch (Exception e) {}
+        System.out.println("Thread 2: Waiting for lock A...");
+        a.last();
+    }
+
+    synchronized void last() {
+        System.out.println("In method B");
+    }
+}
+
+public class DeadlockExample {
+    public static void main(String[] args) {
+        A a = new A();
+        B b = new B();
+
+        Thread t1 = new Thread(() -> a.methodA(b));
+        Thread t2 = new Thread(() -> b.methodB(a));
+
+        t1.start();
+        t2.start();
+    }
+}
+
+---------------------
+
+
+
 
 
 
