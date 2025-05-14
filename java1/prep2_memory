@@ -293,6 +293,15 @@ Perform incremental or concurrent compaction of Old Gen.
 
 More sophisticated in how they manage regions (not just Eden/S0/S1).
 
+
+The finalize() method in Java is a protected, non-static method of the java.lang.Object class, which is the superclass of all Java classes. It is called by the garbage collector on an object when the garbage collector determines that there are no more references to the object. This provides a final opportunity for the object to perform cleanup actions before it is garbage collected. 
+To use the finalize() method, it must be overridden in a subclass. The method has the following signature:
+Java
+
+protected void finalize() throws Throwable {
+    // Cleanup code here
+}
+
 --------------------------------------------------------------------------------------------------------
 
 
