@@ -30,3 +30,64 @@ Spring IOC container
 actuator
 @Transactional
 implement atomic transaction so that it can rollback
+
+-----------
+
+The @Qualifier annotation in Spring is used to resolve ambiguity when multiple beans of the same type are present in the application context. By specifying a qualifier, Spring knows which bean to inject when there are multiple candidates.
+
+Example:
+java
+Copy
+Edit
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
+
+interface Vehicle {
+    void drive();
+}
+
+@Component
+class Car implements Vehicle {
+    public void drive() {
+        System.out.println("Driving a car!");
+    }
+}
+
+@Component
+class Bike implements Vehicle {
+    public void drive() {
+        System.out.println("Riding a bike!");
+    }
+}
+
+@Component
+class Driver {
+    private Vehicle vehicle;
+
+    @Autowired
+    @Qualifier("bike")  // Specifies which vehicle to inject
+    public void setVehicle(Vehicle vehicle) {
+        this.vehicle = vehicle;
+    }
+
+    public void drive() {
+        vehicle.drive();
+    }
+}
+
+
+
+--------
+
+
+
+The @SpringBootApplication annotation in Spring Boot is a convenience annotation that combines three important annotations:
+
+@EnableAutoConfiguration: Enables Spring Boot's auto-configuration mechanism.
+
+@ComponentScan: Tells Spring to scan for components, configurations, and services in the current package and its sub-packages.
+
+@Configuration: Marks the class as a source of bean definitions for the application context.
+
+It is typically placed on the main class of a Spring Boot application to kickstart the application context and automatically configure the application.
