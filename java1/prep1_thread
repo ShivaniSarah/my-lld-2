@@ -222,7 +222,7 @@ isDaemon()	It checks whether the current thread is daemon or not
 setDaemon()	It set the current thread as Daemon thread
 start()	It starts the execution of the thread
 run()	It does the executable operations statements in the body of this method over a thread
-sleep()	It is a static method that puts the thread to sleep for a certain time been passed as an argument to it
+Thread.sleep()	It is a static method that puts the thread to sleep for a certain time been passed as an argument to it
 wait()	It sets the thread back in waiting state.
 notify()	It gives out a notification to one thread that is in waiting state. It’s used to wake up only one thread that’s waiting for an object,
 notifyAll()	It gives out a notification to all the thread in the waiting state
@@ -231,7 +231,7 @@ public String getName() ;
 public void setName(String name);
 suspend() Method :The suspend() method of thread class puts the thread from running to waiting state. This method is employed if you would like to prevent the thread execution and begin it again when a particular event occurs. This method allows a thread to temporarily cease execution. The suspended thread is often resumed using the resume() method.
 resume()	It is used to resume the suspended thread.
-currentThread() 
+currentThread().getName() 
 getName()
 setName() 
 getState()
@@ -242,7 +242,7 @@ Q. Diff between wait and join
 
 wait()	                                                                                join()
 It is a method of java.lang.Object class.	                                              It is a method of java.lang.
-wait() method can be called by a synchronized block or method.	                        It is used to stop the current thread.
+wait() method can be called by a synchronized block or method.	                        It is used to pause the current thread and wait for the thread.join() to complete .
 wait() method is implemented for performing multi-thread-synchronization.	              It can be called either with synchronized and without synchronized context.
 Its syntax is -:   public final void wait() throws InterruptedException                 Its syntax is -: public final void join() throws InterruptedException 
 wait() method causes the thread to sleep until notify() and notifyAll() are called	    It can be used to add sequence among more than one thread
@@ -712,8 +712,89 @@ Synchronization
 
 For more depth in synchronization, one can also learn object level lock and class level lock and do notice the differences between two to get a fair understanding of the same before implementing the same.
 
+Object Level lock on threads
+
+An object-level lock is a mechanism when we want to synchronize a non-static method or non-static code block such that only 
+one thread will be able to execute the code block on a given instance of the class. 
+First, it has to get a lock of that object. Once the thread gets the lock then it
+is allowed to execute any synchronized method on that object. Once method execution completes automatically thread releases the lock. 
+Acquiring and releasing lock internally is taken care of by JVM and the programmer is not responsible for these activities.
+
+
+public class GeekClass
+{
+    public synchronized void GeekMethod(){}
+}
+
+or
+
+
+public class GeekClass
+{
+    public void GeekMethod(){
+        synchronized (this)
+        {
+            // other thread safe code
+        }
+    }
+}
+
+
+
+or
+
+// not used much
+
+public class DemoClass
+{
+    private final Object lock = new Object();
+    public void demoMethod(){
+        synchronized (lock)
+        {
+            // other thread safe code
+        }
+    }
+}
+
+
+---------------
+
+Class Level lock on threads
+
+ If a thread wants to execute a static synchronized method, then the thread requires a class level lock. 
+ Once a thread got the class level lock, then it is allowed to execute any static synchronized method of that class.
+Once method execution completes automatically thread releases the lock.
+
+public static synchronized int incrementCount()
+{
+}
+
+
+or
+
+
+public class GeekClass
+{
+    public void GeekMethod(){
+        synchronized (GeekClass.class)
+        {
+            //thread has acquired lock on  Geek class
+        }
+    }
+}
+
 
  Disadvantage:  Performance issues will arise as during the execution of one thread all the other threads are put to a  blocking state  and do note they are not in  waiting state  . This causes a  performance drop if the time taken for one thread is too long. 
+
+
+
+ When multiple threads are working on the same data, and the value of our data is changing, that scenario is not thread-safe, and we will get inconsistent results. When a thread is already working on an object and preventing another thread from working on the same object, this process is called Thread-Safety. Now there are several ways to achieve thread-safety in our program namely as follows:
+
+Using Synchronization
+Using Volatile Keyword
+Using Atomic Variable
+Using Final Keyword
+
 
 
 
