@@ -55,4 +55,42 @@ public class StreamWithIfElse {
 }
 
 
+flatMap:
+
+
+
+
+import java.util.Arrays;
+
+public class FlatMapExample {
+    public static void main(String[] args) {
+        Integer[][] arr = {{1, 2}, {3, 4}, {5, 6}};
+
+        Arrays.stream(arr)  // Stream of arrays
+            .flatMap(Arrays::stream)  // Flatten the array into a single stream
+            .forEach(System.out::println);  // Output: 1, 2, 3, 4, 5, 6
+    }
+}
+
+
+or
+
+
+import java.util.Arrays;
+import java.util.List;
+
+public class ComplexFlatMapExample {
+    public static void main(String[] args) {
+        List<List<List<Integer>>> nestedLists = Arrays.asList(
+            Arrays.asList(Arrays.asList(1, 2), Arrays.asList(3, 4)),
+            Arrays.asList(Arrays.asList(5, 6), Arrays.asList(7, 8))
+        );
+
+        nestedLists.stream()  // Stream of List<List<List<Integer>>>
+            .flatMap(List::stream)  // Flatten List<List<List<Integer>>> to List<List<Integer>>
+            .flatMap(List::stream)  // Flatten List<List<Integer>> to List<Integer>
+            .map(n -> n * 2)  // Perform some transformation (multiply by 2)
+            .forEach(System.out::println);  // Output: 2, 4, 6, 8, 10, 12, 14, 16
+    }
+}
 
