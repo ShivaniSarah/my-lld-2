@@ -794,6 +794,8 @@ Using Synchronization
 Using Volatile Keyword
 Using Atomic Variable
 Using Final Keyword
+ReentrantLock
+ReadWriteLock
 
 Using Volatile Keyword
 
