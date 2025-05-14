@@ -681,9 +681,34 @@ Running Thread Priority : 1
 Running Thread Priority : 1
 
 
+------------------------------------------------------------------------------------------------------------------------------------------------
 
 
+Daemon thread is basically a service provider thread that provides services to the user thread. The scope for this thread start() or be it terminate() is completely dependent on the user's thread as it supports in the backend for user threads being getting run. As soon as the user thread is terminated daemon thread is also terminated at the same time as being the service provider thread.
 
+Hence, the characteristics of the Daemon thread are as follows:
+
+It is only the service provider thread not responsible for interpretation in user threads.
+So, it is a low-priority thread.
+It is a dependent thread as it has no existence on its own.
+JVM terminates the thread as soon as user threads are terminated and come back into play as the user's thread starts.
+Yes, you guess the most popular example is garbage collector in java. Some other examples do include 'finalizer'.
+Exceptions: IllegalArgumentException as return type while setting a Daemon thread is boolean so do apply carefully.
+
+ Note:  To get rid of the exception users thread should only start after setting it to daemon thread. The other way of starting prior setting it to daemon will not work as it will pop-out IllegalArgumentException 
+
+
+Another way to achieve the same is through Thread Group in which as the name suggests multiple threads are treated as a single object and later on all the operations are carried on over this object itself aiding in providing a substitute for the Thread Pool.
+
+ Note: 
+
+ While implementing ThreadGroup do note that ThreadGroup is a part of '  java.lang.ThreadGroup'  class not a part of Thread class in java so do peek out constructors and methods of ThreadGroup class before moving ahead keeping a check over deprecated methods in his class so as not to face any ambiguity further. 
+Here main() method in itself is a thread because of which you do see Exception in main() while running the program because of which system.main thread exception is thrown sometimes while execution of the program.
+
+------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+Synchronization
 
 
 
