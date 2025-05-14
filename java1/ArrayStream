@@ -1,0 +1,58 @@
+import java.util.Arrays;
+
+public class StreamExample {
+    public static void main(String[] args) {
+        int[] arr = {1, 2, 3, 4, 5, 6};
+
+        int result = Arrays.stream(arr)
+            .filter(n -> n % 2 == 0)    // Keep even numbers: 2, 4, 6
+            .map(n -> n * n)            // Square them: 4, 16, 36
+            .reduce(0, Integer::sum);   // Sum: 4 + 16 + 36 = 56
+
+        System.out.println("Result: " + result);
+    }
+}
+
+
+
+or
+
+
+
+
+import java.util.Arrays;
+
+public class StreamWithIfElse {
+    public static void main(String[] args) {
+        int[] arr = {2, 3, 4, 5, 6, 7, 8};
+
+        int result = Arrays.stream(arr)
+            .filter(n -> {
+                if (n % 2 == 0) {
+                    System.out.println("Keeping even: " + n);
+                    return true;
+                } else {
+                    System.out.println("Filtering out odd: " + n);
+                    return false;
+                }
+            })
+            .map(n -> {
+                if (n < 5) {
+                    System.out.println("Squaring small even: " + n);
+                    return n * n;
+                } else {
+                    System.out.println("Doubling large even: " + n);
+                    return n * 2;
+                }
+            })
+            .reduce(0, (a, b) -> {
+                System.out.println("Adding " + a + " + " + b);
+                return a + b;
+            });
+
+        System.out.println("Final Result: " + result);
+    }
+}
+
+
+
