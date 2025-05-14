@@ -1,1 +1,137 @@
-xxxsx
+Q. memory management in java and allocation of integers , real numbers and string and how they are used in run time ? tell for modern java ?
+
+
+Ans.
+
+
+In modern Java (Java 17+), memory management and the runtime handling of data types like integers,
+real numbers (floating-point), and strings follow certain principles largely governed by the Java Virtual Machine (JVM). 
+Here's a comprehensive breakdown:
+
+🔷 1. Memory Management in Java
+Java handles memory automatically, using:
+
+➤ Heap Memory
+Stores objects, including Integer, Double, String, custom classes, etc.
+
+Managed by the Garbage Collector (GC).
+
+Divided into:
+
+Young Generation (short-lived objects)
+
+Old Generation (long-lived objects)
+
+Metaspace (class metadata)
+
+➤ Stack Memory
+Stores primitive values and references to objects.
+
+Method calls, local variables, and function call chains live here.
+
+Each thread has its own stack.
+
+➤ Registers and Native Heap
+Handled internally by the JVM and native code, rarely user-controlled.
+
+🔷 2. Primitive vs. Wrapper Types
+Type	Memory Location	Usage
+int, float, double	Stack (if local), Heap (if inside objects)	Primitive types
+Integer, Double	Heap (Boxed objects)	Wrapper objects
+String	Heap + String pool	Immutable object
+
+🔷 3. Allocation and Use at Runtime
+
+✅ Integers (int, Integer)
+
+int is a primitive: 4 bytes (32 bits), stored in stack if local.
+int a = 10;
+
+Integer is an object, stored in heap, with some caching for small values (-128 to 127).
+Integer b = 10; // uses Integer.valueOf() internally, uses cache
+
+Autoboxing:
+Integer b = 10; // converts int to Integer
+
+Unboxing:
+int c = b; // converts Integer to int
+
+✅ Real Numbers (float, double)
+
+float (32-bit), double (64-bit): primitive types.
+Default real number in Java is double.
+double d = 3.14;
+Float fObj = 3.14f; // autoboxing to Float
+
+Like int, used in stack or heap depending on context.
+
+✅ String
+
+Refer: https://www.geeksforgeeks.org/string-constant-pool-in-java/
+
+String is a reference type, stored on the heap.
+Immutable: any modification creates a new object.
+
+String Constant / Literal pool (interning):
+Java maintains a pool of unique strings in memory.
+
+Example:
+
+String s1 = "hello"; // uses string pool
+String s2 = new String("hello"); // new object on heap
+String s3 = "hello";
+System.out.println((s1==s2)+" "+ (s1==s3));    // false true
+
+
+class Main {
+    public static void main(String[] args) {
+        String s1 = "hello"; // uses string pool
+        StringBuilder s2 = new StringBuilder("hello"); // new object on heap
+        String s3 = "hello";
+        System.out.println((s1==s2.toString())+" "+ (s1==s3));  // false true
+    }
+}
+
+
+Runtime usage:
+Strings used often in method calls, logging, I/O, etc.
+
+Heavy use of StringBuilder or StringBuffer for efficiency when mutating.
+
+🔷 4. Garbage Collection (GC)
+
+Unused objects are cleaned up automatically.
+
+Modern JVM uses G1 GC, ZGC, or Shenandoah for low-pause GC.
+
+Efficient memory management helps prevent leaks and improve performance.
+
+🔷 5. Escape Analysis and Scalar Replacement (Modern JVM Optimization)
+
+Escape analysis detects if an object can be allocated on the stack instead of heap.
+
+Scalar replacement breaks an object into its primitive fields for optimization.
+
+These are done at runtime by JIT compiler, reducing memory pressure.
+
+🔷 Summary Table
+
+Data Type        |   	Stored In	       |  Heap or Stack          |  	Mutable	          |  GC Tracked
+--------------------------------------------------------------------------------------------------------
+int, double	     |    Primitive	       |  Stack (or in object)	 |      Yes        	    |    No
+Integer, Double  | 	  Object           |	Heap	                 |      No(Immutable)	  |    Yes
+String	         |    Object           |  Heap + Pool	           |      No	            |    Yes
+
+🔷 Best Practices
+
+Use primitives when possible to avoid GC overhead.
+
+Use StringBuilder for concatenations in loops.
+
+Avoid new String("...") — prefer string literals.
+
+Be aware of autoboxing in performance-critical code.
+
+
+
+
