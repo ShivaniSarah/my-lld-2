@@ -710,8 +710,10 @@ Here main() method in itself is a thread because of which you do see Exception i
 
 Synchronization
 
+For more depth in synchronization, one can also learn object level lock and class level lock and do notice the differences between two to get a fair understanding of the same before implementing the same.
 
 
+ Disadvantage:  Performance issues will arise as during the execution of one thread all the other threads are put to a  blocking state  and do note they are not in  waiting state  . This causes a  performance drop if the time taken for one thread is too long. 
 
 
 
