@@ -797,6 +797,15 @@ Using Final Keyword
 ReentrantLock
 ReadWriteLock
 
+
+What is a blocking queue?
+A Blocking Queue is a type of queue in concurrent programming that provides blocking operations for managing producer-consumer scenarios. When a thread tries to retrieve an element from an empty Blocking Queue, it's blocked until another thread adds an element. Conversely, if a thread attempts to add an element to a full Blocking Queue, it's blocked until another thread removes an element. This behavior facilitates synchronization between threads, ensuring that producers and consumers work efficiently. 
+
+A ReentrantLock allows a thread to acquire the same lock multiple times, which is particularly useful when a thread needs to access a shared resource repeatedly within its execution. It implements the Lock interface, providing greater control over locking compared to synchronized blocks.
+
+ReentrantLock tracks a “hold count” which is a value that starts at 1 when a thread first locks the resource. Each time the thread re-enters the lock, the count is incremented. The count is decremented when the lock is released. Once the hold count reaches zero, the lock is fully released.
+
+
 Using Volatile Keyword
 
 class SharedObj
