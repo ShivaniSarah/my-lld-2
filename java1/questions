@@ -9,11 +9,74 @@ java -jar myapp.jar
 
 Random Access Interface
 
+----------
+
 Marker Interface
+
+✅ Marker Interface in Java
+A Marker Interface is an interface without any methods or fields. It is used to mark or tag a class to indicate some metadata to the JVM or frameworks at runtime.
+
+🔧 Examples in Java:
+Serializable – Marks a class as serializable
+
+Cloneable – Allows object cloning using clone()
+
+Remote – Indicates remote method invocation (RMI)
+
+RandomAccess – Marks fast random access in List implementations like ArrayList
+
+🧠 Purpose:
+Instead of functionality, it’s used for:
+
+Type identification
+
+Special treatment by Java runtime or frameworks
+
+
+----------
+
 
 Iterable
 
+----------
+
+
 Load Factor of hashmap
+Load Factor is a measure of how full the HashMap can get before it needs to resize (rehash). It is defined as:
+loadFactor = numberOfEntries / capacity
+
+----------
+
+✅ Functional Interface in Java
+A functional interface is an interface that contains only one abstract method. It can have default or static methods, but only one method must be abstract.
+
+🧠 Why it matters:
+Functional interfaces are the foundation of lambda expressions and method references in Java (from Java 8 onward).
+
+✅ Example:
+
+@FunctionalInterface
+interface MyFunctionalInterface {
+    void execute();
+}
+You can use it like this:
+
+MyFunctionalInterface obj = () -> System.out.println("Running");
+obj.execute();
+🔧 Built-in Functional Interfaces (from java.util.function):
+Runnable – no arguments, no return
+
+Supplier<T> – returns a result, takes no input
+
+Consumer<T> – takes input, returns nothing
+
+Function<T, R> – takes input, returns output
+
+Predicate<T> – takes input, returns boolean
+
+
+----------
+
 
 Generic methods
 
@@ -104,3 +167,11 @@ memories of young and old generation java wht is it?
    ◦ Creational patterns (Singleton, Factory, Builder)
    ◦ Structural patterns (Adapter, Composite, Decorator)
    ◦ Behavioral patterns (Strategy, Observer, Command)
+
+
+
+
+
+JDK stream
+
+
