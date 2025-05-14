@@ -1,1 +1,697 @@
-Multithreading
+Multithreading in java
+
+https://www.geeksforgeeks.org/java-multithreading-tutorial/
+
+Threads are the backbone of multithreading. We are living in the real world which in itself is caught on the web surrounded by
+lots of applications. With the advancement in technologies, we cannot achieve the speed required to run them simultaneously unless
+we introduce the concept of multi-tasking efficiently. It is achieved by the concept of thread.
+
+
+Real-life Example of Java Multithreading
+
+Suppose you are using two tasks at a time on the computer, be it using Microsoft Word and listening to music.
+These two tasks are called  processes  . So you start typing in Word and at the same time start music app, this is called  multitasking  .
+Now you committed a mistake in a Word and spell check shows exception, this means Word is a process that is broken down into sub-processes. 
+Now if a machine is dual-core then one process or task is been handled by one core and music is been handled by another core. 
+
+In the above example, we come across both multiprocessing and multithreading.
+These are somehow indirectly used to achieve multitasking. In this way the mechanism of dividing the tasks is called multithreading
+in which every process or task is called by a thread where a thread is responsible for when to execute, when to stop and
+how long to be in a waiting state. 
+
+Hence, a thread is the smallest unit of processing whereas multitasking is a process of executing multiple tasks at a time.
+
+Multitasking is being achieved in two ways :
+
+Multiprocessing : 
+
+Process-based multitasking is a heavyweight process and occupies different address spaces in memory. 
+Hence, while switching from one process to another, it will require some time be it very small, causing a lag because of switching.
+This happens as registers will be loaded in memory maps and the list will be updated.
+
+Multithreading : 
+
+Thread-based multitasking is a lightweight process and occupies the same address space.
+Hence, while switching cost of communication will be very less.
+
+
+
+Q. If there multiple cores, then also switching takes time ?
+
+Ans.
+
+Yes, even with multiple cores, process switching still takes time, though the impact can vary depending on the system architecture and the specifics of the workload. Here's a more detailed explanation of what happens:
+So basically even if multiple cores use the same shared memory RAM cache and IO resources, then it takes time. 
+Only if each cores is completely independent have its oen resources then it is call parallel processing and is truly efficient.
+
+🧠 Process Switching on Multiple Cores
+Multicore Processor: A multicore processor has more than one CPU core, allowing multiple processes or threads to run concurrently on different cores. In this case, you can have several processes or threads running simultaneously, each on its own core.
+
+Context Switching: Even with multiple cores, when the operating system decides to switch a process or thread (known as a context switch), the system needs to:
+
+Save the state (context) of the current process/thread (e.g., CPU registers, program counter).
+
+Load the state of the next process/thread to be executed.
+
+Inter-core Switching: If the process or thread is moved from one core to another (which can happen due to scheduling decisions), the operating system needs to handle the communication between cores and potentially move cache data between them. This can introduce some latency because:
+
+Cache coherence: Different cores may have different cached data. Moving a process between cores might require invalidating or updating caches.
+
+Synchronization overhead: Ensuring that shared data is properly synchronized between cores can add additional overhead, particularly if memory access needs to be coordinated.
+
+🕒 Time Taken for Switching
+Switching time can be broken down into several components:
+
+Context Switching: When a process is switched, the operating system saves the state of the current process and loads the state of the next process. This process takes time, whether the task runs on a single core or multiple cores. The time is typically in the range of microseconds, but still noticeable.
+
+Cache Misses: When switching between cores, the new process might not benefit from the previous core's cache. This can result in more cache misses and memory accesses, which can add latency when switching between cores.
+
+Inter-process Communication (IPC): If processes need to share data, this often involves communication between cores, which can add latency, particularly if there's contention for shared resources (like memory).
+
+Operating System Overhead: The OS itself needs to schedule processes, which can introduce additional overhead. This scheduling process involves deciding which process gets to run on which core, and the decision-making can take some time, particularly if the scheduler is complex.
+
+🧑‍💻 When Multiple Cores Help
+True Parallelism: With multiple cores, processes can execute truly in parallel, without the need for switching. This is especially useful for CPU-bound tasks that can be split into smaller independent tasks (such as in parallel computing).
+
+Reduced Overall Latency: By spreading tasks across different cores, you can reduce the overall system load and avoid a situation where a single core is overloaded, leading to excessive switching.
+
+⏳ Conclusion
+Process Switching Still Takes Time: Even with multiple cores, switching between processes still takes time due to the need for context saving, restoring, cache synchronization, and possible inter-core communication.
+
+Benefit of Multiple Cores: The real advantage of multiple cores comes when you have multiple threads or processes running in parallel. This allows you to minimize the time a single process spends on the CPU by distributing the load, but it does not eliminate the time taken for switching when required.
+
+
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+Thread Lifecycle
+
+Please check the correct diagram here
+
+https://www.geeksforgeeks.org/lifecycle-and-states-of-a-thread-in-java/
+
++------------------------+
+|         New             |
+|------------------------|
+| - Thread is created     |
+| - Not yet started       |
++------------------------+
+          |
+          | start() 
+          v
++------------------------+
+|       Runnable          |
+|------------------------|
+| - Thread is ready to    |
+|   run, waiting for CPU  |
+|   time to be allocated  |
++------------------------+
+          |
+          | run()
+          v
++------------------------+
+|       Running           |
+|------------------------|
+| - Thread is executing   |
+|   the code in the run() |
+|   method                |
++------------------------+
+          |
+          | sleep(ms), join(), wait(), ( interrupt() can cause Exception here)
+          v
++------------------------+
+|       Blocked           |
+|------------------------|
+| - Waiting for a lock    |
+|   or resource           |
++------------------------+
+          |
+          | wait()
+          v
++------------------------+
+|       Waiting           |                                                         
+|------------------------|                                                          
+| - Waiting for a signal  | 
+|   or condition to be    |
+|   met                   |
++------------------------+
+          |                                                                       
+          |     notify(), ( interrupt() can cause Exception here)
+          | 
+          v
++------------------------+
+|       Running           |
+|------------------------|
+| - Thread is executing   |
+|   the code remaining    |
+|                         |
++------------------------+   
+          |                                                                       
+          |
+          | interrupt() , stop(), automatic exit of main method
+          v
++------------------------+
+|       Terminated        |
+|------------------------|
+| - Thread has finished   |
+|   execution or was      |
+|   interrupted           |
++------------------------+
+
+
+
+Key Java Methods & Transitions:
+
+start(): Transitions the thread from the New state to Runnable.
+
+run(): The run() method is executed when the thread is in the Running state.
+
+sleep(ms): Moves the thread to the Blocked state for the specified time.
+
+join(): Moves the thread to Blocked until the specified thread completes.
+
+wait(): Causes the current thread to release the lock and enter the Waiting state until notified.
+
+notify() / notifyAll(): Wakes up one or more threads that are waiting on the object's monitor.
+
+interrupt(): Interrupts the thread, potentially causing it to leave Blocked or Waiting and move to the Terminated state if an exception is thrown.
+
+Q. If interrupt is called before waiting state it should not go to waiting state right directly go to termination state ?
+
+Explanation of interrupt() Behavior:
+
+interrupt():
+
+If the thread is in the Waiting state (waiting for a signal or condition), it will not stay in the Waiting state. Instead, it will move to the Terminated state, often throwing an InterruptedException.
+
+If the thread is running or sleeping, it can be interrupted, causing it to throw an exception or exit its current state.
+
+This adjustment ensures that interrupt() leads to proper termination or handling of the thread, instead of leaving it stuck in the Waiting state.
+
+
+
+Below is the Lifecycle of a Thread been illustrated
+New : When a thread is just created.
+Runnable : When a start() method is called over thread processed by the thread scheduler.
+Case A: Can be a running thread
+Case B: Can not be a running thread
+Running : When it hits case 1 means the scheduler has selected it to be run the thread from runnable state to run state.
+Blocked : When it hits case 2 meaning the scheduler has selected not to allow a thread to change state from runnable to run.
+Terminated : When the run() method exits or stop() method gets called.
+
+
+------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+In operating systems, process scheduling algorithms are used to manage the execution of processes (or threads) by the CPU.
+When multiple processes or threads are ready to run, the scheduler needs to decide which one to execute next.
+These algorithms determine the order in which processes (or threads) are scheduled for execution.
+Incorporating threads into these scheduling algorithms means that the operating system not only handles processes 
+(which are instances of running programs) but also manages threads (which are the smallest units of execution within processes).
+First In First Out
+Last In First Out
+Round Robin Scheduling
+
+
+------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+isDaemon()	It checks whether the current thread is daemon or not
+setDaemon()	It set the current thread as Daemon thread
+start()	It starts the execution of the thread
+run()	It does the executable operations statements in the body of this method over a thread
+sleep()	It is a static method that puts the thread to sleep for a certain time been passed as an argument to it
+wait()	It sets the thread back in waiting state.
+notify()	It gives out a notification to one thread that is in waiting state. It’s used to wake up only one thread that’s waiting for an object,
+notifyAll()	It gives out a notification to all the thread in the waiting state
+stop()	It is used to stop the execution of the thread
+public String getName() ;
+public void setName(String name);
+suspend() Method :The suspend() method of thread class puts the thread from running to waiting state. This method is employed if you would like to prevent the thread execution and begin it again when a particular event occurs. This method allows a thread to temporarily cease execution. The suspended thread is often resumed using the resume() method.
+resume()	It is used to resume the suspended thread.
+currentThread() 
+getName()
+setName() 
+getState()
+getPriority()
+------------------------------------------------------------------------------------------------------------------------------------------------
+
+Q. Diff between wait and join
+
+wait()	                                                                                join()
+It is a method of java.lang.Object class.	                                              It is a method of java.lang.
+wait() method can be called by a synchronized block or method.	                        It is used to stop the current thread.
+wait() method is implemented for performing multi-thread-synchronization.	              It can be called either with synchronized and without synchronized context.
+Its syntax is -:   public final void wait() throws InterruptedException                 Its syntax is -: public final void join() throws InterruptedException 
+wait() method causes the thread to sleep until notify() and notifyAll() are called	    It can be used to add sequence among more than one thread
+
+
+------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+Two Ways to Implement Multithreading
+Using Thread Class
+Using Runnable Interface
+
+------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+1. Using Thread Class
+
+// Case 1
+// Java Program to illustrate Creation and execution of
+// thread via start() and run() method in Single inheritance
+
+// Class 1
+// Helper thread Class extending main Thread Class
+class MyThread1 extends Thread {
+
+    // Method inside MyThread2
+    // run() method which is called as
+    // soon as thread is started
+    public void run()
+    {
+
+        // Print statement when the thread is called
+        System.out.println("Thread1 is running");
+    }
+}
+
+// Class 2
+// Main thread Class extending main Thread Class
+class MyThread2 extends Thread {
+
+    // Method inside MyThread2
+    // run() method which is called 
+    // as soon as thread is started
+    public void run()
+    {
+
+        // run() method which is called as soon as thread is
+        // started
+
+        // Print statement when the thread is called
+        System.out.println("Thread2 is running");
+    }
+}
+
+// Class 3
+// Main Class
+class GFG {
+
+    // Main method
+    public static void main(String[] args)
+    {
+
+        // Creating a thread object of our thread class
+        MyThread1 obj1 = new MyThread1();
+        MyThread2 obj2 = new MyThread2();
+
+        // Getting the threads to the run state
+
+        // This thread will transcend from runnable to run
+        // as start() method will look for run() and execute
+        // it
+        obj1.start();
+
+        // This thread will also transcend from runnable to
+        // run as start() method will look for run() and
+        // execute it
+        obj2.start();
+    }
+}
+
+
+
+
+
+
+or without comments
+
+
+
+
+
+
+
+class MyThread1 extends Thread {
+    public void run()
+    {
+        System.out.println("Thread1 is running");
+    }
+}
+
+class MyThread2 extends Thread {
+    public void run()
+    {
+        System.out.println("Thread2 is running");
+    }
+}
+
+class GFG {
+    public static void main(String[] args)
+    {
+        MyThread1 obj1 = new MyThread1();
+        MyThread2 obj2 = new MyThread2();
+        obj1.start();
+        obj2.start();
+    }
+}
+
+
+
+
+
+2. Using Runnable Interface
+
+
+// Java Program to illustrate Runnable Interface in threads
+// as multiple inheritance is not allowed
+
+// Importing basic packages
+import java.io.*;
+import java.util.*;
+
+// Class 1
+// Helper class implementing Runnable interface
+class MyThread1 implements Runnable {
+
+    // run() method inside this class
+    @Override
+    public void run()
+    {
+        // Iterating to get more execution of threads
+        for (int i = 0; i < 5; i++) {
+
+            // Print statement whenever run() method
+            // of this class is called
+            System.out.println("Thread1");
+
+            // Getting sleep method in try block to
+            // check for any exceptions
+            try {
+                // Making the thread pause for a certain
+                // time using sleep() method
+                Thread.sleep(1000);
+            }
+
+            // Catch block to handle the exceptions
+            catch (Exception e) {
+            }
+        }
+    }
+}
+
+// Class 2
+// Helper class implementing Runnable interface
+class MyThread2 implements Runnable {
+
+    // run() method inside this class
+    @Override
+    public void run()
+    {
+        for (int i = 0; i < 5; i++) {
+
+            // Print statement whenever run() method
+            // of this class is called
+            System.out.println("Thread2");
+
+            // Getting sleep method in try block to
+            // check for any exceptions
+            try {
+
+                // Making the thread pause for a certain
+                // time
+                // using sleep() method
+                Thread.sleep(1000);
+            }
+
+            // Catch block to handle the exceptions
+            catch (Exception e) {
+            }
+        }
+    }
+}
+
+// Class 3
+// Main class
+public class GFG {
+
+    // Main driver method
+    public static void main(String[] args)
+    {
+
+        // Creating reference of Runnable to
+        // our classes above in main() method
+        Runnable obj1 = new MyThread1();
+        Runnable obj2 = new MyThread2();
+
+        // Creating reference of thread class
+        // by passing object of Runnable in constructor of
+        // Thread class
+        Thread t1 = new Thread(obj1);
+        Thread t2 = new Thread(obj2);
+
+        // Starting the execution of our own run() method
+        // in the classes above
+        t1.start();
+        t2.start();
+    }
+}
+
+
+
+
+or
+// without comments
+
+
+import java.io.*;
+import java.util.*;
+class MyThread1 implements Runnable {
+    @Override
+    public void run()
+    {
+        for (int i = 0; i < 5; i++) {
+            System.out.println("Thread1");
+            try {
+                Thread.sleep(1000);
+            }
+            catch (Exception e) {
+            }
+        }
+    }
+}
+class MyThread2 implements Runnable {
+    @Override
+    public void run()
+    {      for (int i = 0; i < 5; i++) {
+            System.out.println("Thread2");
+            try {
+                Thread.sleep(1000);
+            }
+            catch (Exception e) {
+            }
+        }
+    }
+}
+public class GFG {
+    public static void main(String[] args)
+    {
+        Runnable obj1 = new MyThread1();
+        Runnable obj2 = new MyThread2();
+        Thread t1 = new Thread(obj1);
+        Thread t2 = new Thread(obj2);
+        t1.start();
+        t2.start();
+    }
+}
+
+------------------------------------------------------------------------------------------------------------------------------------------------
+
+Example:
+
+Refer: https://www.geeksforgeeks.org/lifecycle-and-states-of-a-thread-in-java/
+
+
+Example of Demonstrating Thread States
+Below is a real-world example of a ticket booking system that demonstrates different thread states:
+
+
+
+// Java program to demonstrate thread states 
+// using a ticket booking scenario
+class TicketBooking implements Runnable {
+    @Override
+    public void run() {
+        
+        try {
+            
+            // Timed waiting
+            Thread.sleep(200); 
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        System.out.println("State of MainThread while mainThread is waiting: " +
+                TicketSystem.mainThread.getState());
+
+        try {
+            
+            // Another timed waiting
+            Thread.sleep(100); 
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+public class TicketSystem implements Runnable {
+    public static Thread mainThread;
+    public static TicketSystem ticketSystem;
+
+    @Override
+    public void run() {
+        TicketBooking booking = new TicketBooking();
+        Thread bookingThread = new Thread(booking);
+
+        System.out.println("State after creating bookingThread: " + bookingThread.getState());
+
+        bookingThread.start();
+        System.out.println("State after starting bookingThread: " + bookingThread.getState());
+
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        System.out.println("State after sleeping bookingThread: " + bookingThread.getState());
+
+        try {
+            
+            // Moves mainThread to waiting state until bookingThread joins its.
+            bookingThread.join(); 
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        System.out.println("State after bookingThread finishes: " + bookingThread.getState());
+    }
+
+    public static void main(String[] args) {
+        ticketSystem = new TicketSystem();
+        mainThread = new Thread(ticketSystem);
+
+        System.out.println("State after creating mainThread: " + mainThread.getState());
+
+        mainThread.start();
+        System.out.println("State after starting mainThread: " + mainThread.getState());
+    }
+}
+
+Output:
+
+
+State after creating mainThread: NEW
+State after starting mainThread: RUNNABLE
+State after creating bookingThread: NEW
+State after starting bookingThread: RUNNABLE
+State after sleeping bookingThread: TIMED_WAITING
+State of MainThread while mainThread is waiting: WAITING
+State after bookingThread finishes: TERMINATED
+
+------------------------------------------------------------------------------------------------------------------------------------------------
+
+Priorities in threads is a concept where each thread is having a priority which is represented by numbers ranging from 1 to 10.
+
+The default priority is set to 5 as excepted.
+Minimum priority is set to 1.
+Maximum priority is set to 10.
+Here 3 constants are defined in it namely as follows:
+
+public static int NORM_PRIORITY
+public static int MIN_PRIORITY
+public static int MAX_PRIORITY
+
+
+// Java Program to illustrate Priority Threads
+// Case 3: MIN_PRIORITY
+
+// Importing input output thread class
+import java.io.*;
+// Importing Thread class from java.util package
+import java.util.*;
+
+// Class 1
+// Helper Class (Our thread  class)
+class MyThread extends Thread {
+
+    // run() method to transit thread from
+    // runnable to run state
+    public void run()
+    {
+
+        // Printing the current running thread via getName()
+        // method using currentThread() method
+        System.out.println("Running Thread : "
+                           + currentThread().getName());
+
+        // Print and display the priority of current thread
+        // via currentThread() using getPriority() method
+        System.out.println("Running Thread Priority : "
+                           + currentThread().getPriority());
+    }
+}
+
+// Class 2
+// Main Class
+class GFG {
+
+    // Main driver method
+    public static void main(String[] args)
+    {
+
+        // Creating objects of MyThread(above class)
+        // in the main() method
+        MyThread t1 = new MyThread();
+        MyThread t2 = new MyThread();
+
+        // Setting priority to thread via NORM_PRIORITY
+        // which set priority to 1 as least priority thread
+        t1.setPriority(Thread.MIN_PRIORITY);
+        t2.setPriority(Thread.MIN_PRIORITY);
+
+        // Setting default priority using
+        // NORM_PRIORITY
+        t1.start();
+        t2.start();
+    }
+}
+
+o/p
+
+Case 3: MIN_PRIORITY
+
+Running Thread : Thread-0
+Running Thread : Thread-1
+Running Thread Priority : 1
+Running Thread Priority : 1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
