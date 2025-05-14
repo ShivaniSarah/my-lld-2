@@ -1,0 +1,184 @@
+✅ 1. Atomicity — "All or nothing"
+Definition:
+A transaction is atomic—it either completes entirely or not at all. If any part fails, the whole transaction is rolled back.
+
+Example:
+In a banking app:
+
+Step 1: Debit ₹1000 from Account A
+
+Step 2: Credit ₹1000 to Account B
+If the system crashes after Step 1, the ₹1000 debit is reversed to maintain correctness.
+
+Prevents:
+
+Partial updates
+
+Inconsistent data from incomplete transactions
+
+✅ 2. Consistency — "Valid to valid state"
+Definition:
+A transaction transforms the database from one valid state to another, maintaining integrity constraints (like foreign keys, balance rules, etc.).
+
+Example:
+If a user registers, the email must be unique.
+A transaction inserting the user enforces this rule. If the email exists, the transaction fails, keeping the database consistent.
+
+Prevents:
+
+Violation of business rules
+
+Corrupt data states
+
+✅ 3. Isolation — "Each transaction is independent"
+Definition:
+Even if transactions run concurrently, their outcome must be the same as if they had executed serially (one after the other).
+
+Example:
+Two users book the last movie ticket at the same time.
+Proper isolation ensures only one gets it.
+
+Types of Isolation Problems (prevented):
+
+Dirty Read: Reading uncommitted data from another transaction
+
+Non-repeatable Read: Data changes between reads in the same transaction
+
+Phantom Read: New rows appear in a repeated query
+
+SQL Isolation Levels (from weakest to strongest):
+
+Read Uncommitted
+
+Read Committed
+
+Repeatable Read
+
+Serializable
+
+✅ 4. Durability — "Once committed, always there"
+Definition:
+After a transaction commits, the changes are permanently stored, even in case of power loss, crash, etc.
+
+Example:
+Once money is transferred and the confirmation is received, even a system crash won't lose the data—it’s stored in non-volatile memory/logs.
+
+Ensured by:
+
+Write-ahead logging
+
+Redo logs
+
+Persistent storage systems
+
+
+
+  | Property    | Ensures                      | Example                   | Prevents              |
+| ----------- | ---------------------------- | ------------------------- | --------------------- |
+| Atomicity   | All-or-nothing execution     | Bank transfer             | Partial updates       |
+| Consistency | Valid state transitions      | Unique email constraint   | Constraint violation  |
+| Isolation   | Transactions don’t interfere | Concurrent booking        | Dirty/phantom reads   |
+| Durability  | Committed data persists      | Order remains after crash | Data loss post-commit |
+
+
+-------------------------------
+
+Consistency ensures that a database starts in a valid state and ends in a valid state after any transaction, maintaining all integrity constraints, rules, and relationships defined.
+  
+  ✅ How It Works
+A consistent transaction:
+
+Obeys data types, constraints, and rules (e.g., balance must be ≥ 0).
+
+Automatically rolls back if any rule is violated.
+
+Preserves relationships (e.g., foreign key constraints).
+
+✅ Example
+Suppose you have two tables:
+
+Accounts(account_id INT PRIMARY KEY, balance INT CHECK (balance >= 0))
+If a transaction deducts ₹1000 from an account with ₹500, the constraint fails. Consistency ensures:
+
+Transaction is rolled back
+
+Database never enters an invalid state
+
+⚠️ What It Prevents
+Violating business rules
+
+Data corruption due to incomplete or incorrect operations
+
+Logical anomalies (e.g., account with negative balance, orphaned foreign keys)
+
+💡 Key Point
+Consistency is maintained by application rules + database constraints.
+If any step violates consistency, the whole transaction fails and the DB remains unchanged.
+
+---------------
+  
+🔍 Types of Consistency (with scenarios and how we ensure it)
+In databases, consistency has different types or facets depending on context. Below are the major types:
+
+1. Data Integrity Consistency
+Scenario:
+A Users table requires email to be unique. If two transactions try to insert the same email, one must fail.
+
+Ensured by:
+
+Primary key/unique constraints
+
+Check constraints (CHECK (balance >= 0))
+
+Triggers
+
+2. Referential Consistency (Foreign Key Consistency)
+Scenario:
+A Orders table references Users. An order can't exist for a deleted user.
+
+Ensured by:
+
+Foreign key constraints (ON DELETE CASCADE, RESTRICT)
+
+Referential integrity rules
+
+3. Transactional Consistency
+Scenario:
+In a bank transfer, debit and credit must both succeed or fail together. If one part fails, rollback is needed.
+
+Ensured by:
+
+Atomic transactions
+
+Rollback mechanisms
+
+COMMIT/ROLLBACK
+
+4. Application-Level Consistency
+Scenario:
+Business rule: a user can’t place more than 3 orders in a minute.
+
+Ensured by:
+
+Custom validations in application code
+
+Pre-transaction checks
+
+Stored procedures
+
+5. Read Consistency (Concurrency-Related)
+Scenario:
+User A reads data while User B updates it. User A should not see half-written data.
+
+Ensured by:
+
+Isolation levels (READ COMMITTED, REPEATABLE READ)
+
+MVCC (Multi-Version Concurrency Control)
+
+✅ How Consistency is Ensured
+Level	Technique
+Schema level	Primary keys, foreign keys, check constraints
+Transactional	ACID compliance, rollback on failure
+Application	Validations, business rules, code guards
+Runtime		Concurrency control, isolation levels
