@@ -231,7 +231,7 @@ public String getName() ;
 public void setName(String name);
 suspend() Method :The suspend() method of thread class puts the thread from running to waiting state. This method is employed if you would like to prevent the thread execution and begin it again when a particular event occurs. This method allows a thread to temporarily cease execution. The suspended thread is often resumed using the resume() method.
 resume()	It is used to resume the suspended thread.
-currentThread().getName() 
+Thread.currentThread().getName() 
 getName()
 setName() 
 getState()
