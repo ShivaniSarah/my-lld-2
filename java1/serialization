@@ -3,10 +3,15 @@ https://www.geeksforgeeks.org/serialization-in-java/
 Serialization and Deserialization in Java with Example
 
  
-Serialization is a mechanism of converting the state of an object into a byte stream. Deserialization is the reverse process where the byte stream is used to recreate the actual Java object in memory. This mechanism is used to persist the object.serialize-deserialize-java 
-The byte stream created is platform independent. So, the object serialized on one platform can be deserialized on a different platform. To make a Java object serializable we implement the java.io.Serializable interface. The ObjectOutputStream class contains writeObject() method for serializing an Object. 
- 
+Serialization is a mechanism of converting the state of an object into a byte stream. Deserialization is the reverse process 
+where the byte stream is used to recreate the actual Java object in memory. 
+This mechanism is used to persist the object.serialize-deserialize-java 
+The byte stream created is platform independent.
+So, the object serialized on one platform can be deserialized on a different platform. 
+To make a Java object serializable we implement the java.io.Serializable interface.
 
+The ObjectOutputStream class contains writeObject() method for serializing an Object. 
+ 
 public final void writeObject(Object obj)throws IOException
 
 The ObjectInputStream class contains readObject() method for deserializing an object. 
@@ -29,4 +34,89 @@ Points to remember
 2. Only non-static data members are saved via Serialization process. 
 3. Static data members and transient data members are not saved via Serialization process. 
 So, if you don't want to save value of a non-static data member then make it transient. 
+
+------------------------------------------------------------------------------------------------------------------------------------------------------
+
 4. Constructor of object is never called when an object is deserialized. 
+
+When an object is deserialized, its constructor is not invoked. Instead, the object is reconstructed from its byte stream (internal binary representation) directly in memory.
+
+📌 Example:
+
+
+import java.io.*;
+
+class A implements Serializable {
+    A() {
+        System.out.println("Constructor of A called");
+    }
+}
+
+public class Test {
+    public static void main(String[] args) throws Exception {
+        A a = new A();
+
+        // Serialize
+        ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream("a.ser"));
+        out.writeObject(a);
+        out.close();
+
+        // Deserialize
+        ObjectInputStream in = new ObjectInputStream(new FileInputStream("a.ser"));
+        A a2 = (A) in.readObject(); // Constructor not called here
+        in.close();
+    }
+}
+
+
+
+✅ Output:
+Constructor of A called
+
+Notice: The constructor is only called when we create new A() — not during deserialization (readObject()).
+
+---------------------------------------------------------------------------------------------------------------------------------------
+
+5. Associated objects must be implementing Serializable interface.
+
+If a class (e.g., A) contains a field (e.g., B ob = new B();), then B must also implement Serializable, otherwise you'll get a NotSerializableException.
+
+📌 Example:
+
+import java.io.*;
+
+class B implements Serializable {
+    int value = 100;
+}
+
+class A implements Serializable {
+    B ob = new B(); // Associated object
+}
+
+public class Test {
+    public static void main(String[] args) throws Exception {
+        A a = new A();
+
+        ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream("a.ser"));
+        out.writeObject(a);  // Will work because B is Serializable
+        out.close();
+    }
+}
+
+
+❌ If B doesn't implement Serializable, you’ll get:
+java.io.NotSerializableException: B
+
+---------------------------------------------------------------------------------------------------------------------------------------
+
+
+6. SerialVersionUID
+
+The Serialization runtime associates a version number with each Serializable class called a SerialVersionUID, which is used during Deserialization to verify that sender and receiver of a serialized object have loaded classes for that object which are compatible with respect to serialization. If the receiver has loaded a class for the object that has different UID than that of corresponding sender's class, the Deserialization will result in an InvalidClassException. 
+
+A Serializable class can declare its own UID explicitly by declaring a field name. It must be static, final and of type long. i.e- ANY-ACCESS-MODIFIER static final long serialVersionUID=42L; If a serializable class doesn't explicitly declare a serialVersionUID, then the serialization runtime will calculate a default one for that class based on various aspects of class, as described in Java Object Serialization Specification. However it is strongly recommended that all serializable classes explicitly declare serialVersionUID value, since its computation is highly sensitive to class details that may vary depending on compiler implementations, any change in class or using different id may affect the serialized data. It is also recommended to use private modifier for UID since it is not useful as inherited member. serialver The serialver is a tool that comes with JDK. It is used to get serialVersionUID number for Java classes. 
+
+You can run the following command to get serialVersionUID serialver [-classpath classpath] [-show] [classname...]
+
+
+
