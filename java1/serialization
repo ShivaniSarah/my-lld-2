@@ -112,11 +112,269 @@ java.io.NotSerializableException: B
 
 6. SerialVersionUID
 
-The Serialization runtime associates a version number with each Serializable class called a SerialVersionUID, which is used during Deserialization to verify that sender and receiver of a serialized object have loaded classes for that object which are compatible with respect to serialization. If the receiver has loaded a class for the object that has different UID than that of corresponding sender's class, the Deserialization will result in an InvalidClassException. 
+The Serialization runtime associates a version number with each Serializable class called a SerialVersionUID,
+which is used during Deserialization to verify that sender and receiver of a serialized object have 
+loaded classes for that object which are compatible with respect to serialization.
+If the receiver has loaded a class for the object that has different UID than that of corresponding sender's class,
+the Deserialization will result in an InvalidClassException. 
 
-A Serializable class can declare its own UID explicitly by declaring a field name. It must be static, final and of type long. i.e- ANY-ACCESS-MODIFIER static final long serialVersionUID=42L; If a serializable class doesn't explicitly declare a serialVersionUID, then the serialization runtime will calculate a default one for that class based on various aspects of class, as described in Java Object Serialization Specification. However it is strongly recommended that all serializable classes explicitly declare serialVersionUID value, since its computation is highly sensitive to class details that may vary depending on compiler implementations, any change in class or using different id may affect the serialized data. It is also recommended to use private modifier for UID since it is not useful as inherited member. serialver The serialver is a tool that comes with JDK. It is used to get serialVersionUID number for Java classes. 
+A Serializable class can declare its own UID explicitly by declaring a field name. It must be static, final and
+of type long. i.e- private static final long serialVersionUID=42L; 
+If a serializable class doesn't explicitly declare a serialVersionUID,
+then the serialization runtime will calculate a default one for that class based on various aspects of class,
+as described in Java Object Serialization Specification.
+However it is strongly recommended that all serializable classes explicitly declare serialVersionUID value,
+since its computation is highly sensitive to class details 
+that may vary depending on compiler implementations, any change in class or using different id may affect the serialized data.
+It is also recommended to use private modifier for UID since it is not useful as inherited member. serialver The serialver is
+a tool that comes with JDK. It is used to get serialVersionUID number for Java classes. 
 
 You can run the following command to get serialVersionUID serialver [-classpath classpath] [-show] [classname...]
 
+🧾 1. Define a Serializable Class
+// Employee.java
+import java.io.Serializable;
 
+public class Employee implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    private String name;
+    private int id;
+
+    public Employee(String name, int id) {
+        this.name = name;
+        this.id = id;
+    }
+
+    public String toString() {
+        return "Employee{name='" + name + "', id=" + id + "}";
+    }
+}
+
+💾 2. Serialize the Object
+
+// SerializeDemo.java
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+
+public class SerializeDemo {
+    public static void main(String[] args) throws IOException {
+        Employee emp = new Employee("Alice", 101);
+        ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream("employee.ser"));
+        out.writeObject(emp);
+        out.close();
+        System.out.println("Object serialized: " + emp);
+    }
+}
+
+📥 3. Deserialize the Object
+
+// DeserializeDemo.java
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+
+public class DeserializeDemo {
+    public static void main(String[] args) throws IOException, ClassNotFoundException {
+        ObjectInputStream in = new ObjectInputStream(new FileInputStream("employee.ser"));
+        Employee emp = (Employee) in.readObject();
+        in.close();
+        System.out.println("Object deserialized: " + emp);
+    }
+}
+
+🔁 Now: Change serialVersionUID in Employee class
+
+Change serialVersionUID from 1L to 2L without deleting employee.ser file:
+
+// Change this line in Employee.java
+private static final long serialVersionUID = 2L;
+
+Recompile only Employee.java (not SerializeDemo).
+
+🚨 Run DeserializeDemo.java
+
+Output will be:
+
+Exception in thread "main" java.io.InvalidClassException: Employee; 
+local class incompatible: stream classdesc serialVersionUID = 1, local class serialVersionUID = 2
+💥 This error occurs because serialVersionUIDs don't match — the object was serialized with version 1, but we're trying to deserialize it with version 2.
+
+✅ Fix: Keep serialVersionUID the Same
+
+If you leave it as:
+private static final long serialVersionUID = 1L;
+…even if you change other non-critical parts of the class, deserialization will still work as long as the UID matches and structure is compatible.
+
+| Action                                             | Result                           |
+| -------------------------------------------------- | -------------------------------- |
+| Serialize with UID = 1L, Deserialize with UID = 1L | ✅ Works                          |
+| Serialize with UID = 1L, Deserialize with UID = 2L | ❌ Throws `InvalidClassException` |
+
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Q. Is the serialized output stored in file employee.ser ?
+
+Ans:
+
+Yes, exactly. In the example I provided:
+
+ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream("employee.ser"));
+out.writeObject(emp);
+
+The serialized form of the Employee object is stored in the file named employee.ser.
+
+🔍 What is in employee.ser?
+
+This file contains a binary representation of the Employee object, including:
+
+Class metadata (like class name, serialVersionUID, fields, etc.)
+
+The actual data of the object (like name = "Alice", id = 101)
+
+The version (UID) used to validate compatibility during deserialization
+
+📥 Why it's important?
+
+When you later call:
+
+ObjectInputStream in = new ObjectInputStream(new FileInputStream("employee.ser"));
+Employee emp = (Employee) in.readObject();
+
+Java will:
+Read the serialVersionUID from the file
+
+Compare it with the UID of the current Employee class loaded in memory
+
+If they match → deserialization succeeds ✅
+If not → InvalidClassException is thrown ❌
+
+🛠 Where is employee.ser stored?
+
+It’s stored in your current working directory unless you specify a full path:
+new FileOutputStream("path/to/employee.ser");
+You can open the file with a hex editor or xxd on Linux/macOS, but it won’t be human-readable.
+
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+import java.io.*;
+
+// Serializable class
+class Emp implements Serializable {
+    private static final long serialVersionUID = 129348938L;
+
+    transient int a;       // Not serialized
+    static int b;          // Not serialized (static)
+    String name;
+    int age;
+
+    // Constructor
+    public Emp(String name, int age, int a, int b) {
+        this.name = name;
+        this.age = age;
+        this.a = a;
+        this.b = b;
+    }
+}
+
+public class SerialExample {
+
+    public static void printData(Emp object) {
+        System.out.println("name = " + object.name);
+        System.out.println("age = " + object.age);
+        System.out.println("a = " + object.a);
+        System.out.println("b = " + Emp.b);
+    }
+
+    public static void main(String[] args) {
+        Emp object = new Emp("ab", 20, 2, 1000);
+        String filename = "employee.ser";
+
+        // Serialization
+        try (FileOutputStream fileOut = new FileOutputStream(filename);
+             ObjectOutputStream out = new ObjectOutputStream(fileOut)) {
+
+            out.writeObject(object);
+            System.out.println("Object has been serialized\nData before Deserialization:");
+            printData(object);
+
+            // Change static value after serialization
+            Emp.b = 2000; //or  object.b = 2000
+
+        } catch (IOException ex) {
+            System.out.println("IOException is caught");
+        }
+
+        object = null;
+
+        // Deserialization
+        try (FileInputStream fileIn = new FileInputStream(filename);
+             ObjectInputStream in = new ObjectInputStream(fileIn)) {
+
+            object = (Emp) in.readObject();
+            System.out.println("\nObject has been deserialized\nData after Deserialization:");
+            printData(object);
+
+        } catch (IOException | ClassNotFoundException ex) {
+            System.out.println("Exception is caught: " + ex);
+        }
+    }
+}
+
+
+o/p
+
+
+Object has been serialized
+Data before Deserialization:
+name = ab
+age = 20
+a = 2
+b = 1000
+
+Object has been deserialized
+Data after Deserialization:
+name = ab
+age = 20
+a = 0
+b = 2000
+
+
+| Field Type    | Serialized? | Value after Deserialization |
+| ------------- | ----------- | --------------------------- |
+| `name`, `age` | ✅ Yes       | Same as original            |
+| `transient a` | ❌ No        | Default (0)                 |
+| `static b`    | ❌ No        | Current class value (2000)  |
+
+
+
+Deserialization step:
+a = 0 → because it was transient
+
+b = 2000 → reflects current static value in memory
+
+name and age retain original values
+
+
+
+Static fields belong to the class, not the object.
+They are also not serialized.
+After deserialization, their value comes from the current class definition in memory, not from the serialized data.
+
+
+Transient fields are not serialized.
+On deserialization, a is reset to its default value (for int, it's 0).
+
+
+
+Transient Vs Final:
+final variables will be participated into serialization directly by their values.
+Hence declaring a final variable as transient there is no use.
+//the compiler assign the value to final variable
 
