@@ -815,7 +815,61 @@ class SharedObj
    // immediately reflect in other thread
    static volatile int sharedVar = 6;
 }
+
  we may only desire visibility and not atomicity.
+
+The purpose of volatile in this line:
+
+private static volatile Logger instance;
+
+is not for atomicity, but for visibility and ordering guarantees.
+
+1. Visibility:
+Without volatile, it's possible for one thread to see a partially constructed Logger object due to reordering optimizations by the compiler or CPU.
+
+2. Instruction Reordering Prevention:
+In Java, the construction of an object like new Logger(logConfig) is not atomic:
+
+Allocate memory
+
+Initialize fields
+
+Assign the reference to instance
+
+If this is reordered (which is legal unless volatile is used), instance may be assigned before the object is fully constructed.
+
+Hence, using volatile ensures:
+
+No instruction reordering during construction.
+
+Changes to instance are immediately visible to all threads.
+
+🔒 But What About Synchronization?
+If you're using synchronized on the entire method, you don’t technically need volatile because the lock already provides visibility and atomicity.
+
+But in double-checked locking, volatile becomes mandatory.
+
+| Concern    | `volatile` solves it? | `synchronized` solves it? | Required?                                           |
+| ---------- | --------------------- | ------------------------- | --------------------------------------------------- |
+| Visibility | ✅ Yes                 | ✅ Yes                     | `volatile` required if using double-checked locking |
+| Atomicity  | ❌ No                  | ✅ Yes                     | handled by `synchronized`                           |
+| Reordering | ✅ Yes                 | ✅ Yes (implicitly)        | `volatile` required for safe DCL                    |
+
+
+Yes — in Singleton, volatile is used for visibility and to prevent instruction reordering, not for atomicity. This subtlety is critical when implementing double-checked locking correctly. You’ve nailed that distinction.
+
+🔹 What does atomic mean?
+In computing, atomic refers to an operation that is indivisible — it either completes entirely or does not happen at all, with no intermediate visible states to other threads.
+
+🧠 In Simple Terms:
+An atomic operation is one that cannot be interrupted and is guaranteed to be thread-safe on its own.
+
+🔧 Examples of Atomic Operations in Java:
+Reading and writing int, boolean, and reference variables are atomic.
+
+++counter is not atomic (because it involves read-modify-write).
+
+AtomicInteger.incrementAndGet() is atomic.
 
 Using Atomic Variable
 
