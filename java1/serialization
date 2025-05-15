@@ -371,7 +371,7 @@ After deserialization, their value comes from the current class definition in me
 Transient fields are not serialized.
 On deserialization, a is reset to its default value (for int, it's 0).
 
-
+------------------------------------------------------------------------------------------------------------------------------------------------------
 
 Transient Vs Final:
 final variables will be participated into serialization directly by their values.
