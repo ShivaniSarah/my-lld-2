@@ -1222,6 +1222,130 @@ public class ProducerConsumerExample {
     }
 }
 
+or
+
+
+
+// using BlockingQueue
+
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+
+public class ProducerConsumerBlockingQueue {
+    public static void main(String[] args) {
+        BlockingQueue<String> queue = new ArrayBlockingQueue<>(5);
+
+        Runnable producer = () -> {
+            int i = 1;
+            while (i <= 10) {
+                try {
+                    String message = "Message " + i++;
+                    queue.put(message); // Blocks if queue is full
+                    System.out.println(Thread.currentThread().getName() + " produced: " + message);
+                    Thread.sleep(100);
+                } catch (InterruptedException ignored) {}
+            }
+        };
+
+        Runnable consumer = () -> {
+            int i = 1;
+            while (i <= 10) {
+                try {
+                    String message = queue.take(); // Blocks if queue is empty
+                    System.out.println(Thread.currentThread().getName() + " consumed: " + message);
+                    Thread.sleep(150);
+                } catch (InterruptedException ignored) {}
+            }
+        };
+
+        new Thread(producer, "Producer").start();
+        new Thread(consumer, "Consumer").start();
+    }
+}
+
+
+or
+
+
+// using ReentrantLock
+
+import java.util.LinkedList;
+import java.util.Queue;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
+
+class MessageQueueLock {
+    private final Queue<String> queue = new LinkedList<>();
+    private final int capacity;
+    private final ReentrantLock lock = new ReentrantLock();
+    private final Condition notFull = lock.newCondition();
+    private final Condition notEmpty = lock.newCondition();
+
+    public MessageQueueLock(int capacity) {
+        this.capacity = capacity;
+    }
+
+    public void put(String message) throws InterruptedException {
+        lock.lock();
+        try {
+            while (queue.size() == capacity) {
+                notFull.await();
+            }
+            queue.add(message);
+            System.out.println(Thread.currentThread().getName() + " produced: " + message);
+            notEmpty.signal(); // Signal a waiting consumer
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public String get() throws InterruptedException {
+        lock.lock();
+        try {
+            while (queue.isEmpty()) {
+                notEmpty.await();
+            }
+            String message = queue.poll();
+            System.out.println(Thread.currentThread().getName() + " consumed: " + message);
+            notFull.signal(); // Signal a waiting producer
+            return message;
+        } finally {
+            lock.unlock();
+        }
+    }
+}
+
+public class ProducerConsumerReentrantLock {
+    public static void main(String[] args) {
+        MessageQueueLock mq = new MessageQueueLock(5);
+
+        Runnable producer = () -> {
+            int i = 1;
+            while (i <= 10) {
+                try {
+                    mq.put("Message " + i++);
+                    Thread.sleep(100);
+                } catch (InterruptedException ignored) {}
+            }
+        };
+
+        Runnable consumer = () -> {
+            int i = 1;
+            while (i <= 10) {
+                try {
+                    mq.get();
+                    Thread.sleep(150);
+                } catch (InterruptedException ignored) {}
+            }
+        };
+
+        new Thread(producer, "Producer").start();
+        new Thread(consumer, "Consumer").start();
+    }
+}
+
+
 
 ------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 
