@@ -821,6 +821,21 @@ Avoid shared state; use single-threaded executors or actor-like models:
 ExecutorService executor = Executors.newSingleThreadExecutor();
 executor.submit(() -> doWork());
 
+synchronized is slower while lock is faster
+
+| Feature            | `synchronized`                                | `Lock` (`ReentrantLock`)       |
+| ------------------ | --------------------------------------------- | ------------------------------ |
+| Syntax             | Language-level                                | API-level                      |
+| Reentrancy         | Yes                                           | Yes                            |
+| Fairness           | No                                            | Optional                       |
+| Interruptible Lock | No                                            | Yes (`lockInterruptibly()`)    |
+| Timeout Support    | No                                            | Yes (`tryLock(timeout, unit)`) |
+| Condition Support  | Single wait/notify                            | Multiple via `Condition`       |
+| Deadlock Handling  | Harder to control                             | Easier with `tryLock`          |
+| Performance        | Comparable; `Lock` better for high contention |                                |
+| Simplicity         | Very simple                                   | More verbose/flexible          |
+ --------------------------------------------- --------------------------------------------- --------------------------------------------- ---------------------------------------------
+
 
 
 What is a blocking queue?
