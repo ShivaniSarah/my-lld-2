@@ -1,1 +1,77 @@
+In Java, both synchronized and Lock (from java.util.concurrent.locks) are used for thread synchronization — to control access to shared resources in a multithreaded environment. However, there are several important differences between them:
+
+🔒 synchronized (Keyword - Built-in Monitor Locks)
+
+Type: Language-level construct.
+
+Usage: Implicit locking via synchronized blocks or methods.
+
+Reentrancy: Supports reentrancy automatically.
+
+Fairness: No built-in support for fair ordering of threads.
+
+Interruptible: Not interruptible while waiting to acquire the lock.
+
+Timeouts: Cannot specify timeout to acquire a lock.
+
+Condition Variables: Only one wait set per object using wait(), notify(), notifyAll().
+
+Ease of Use: Simple and concise.
+
+Example:
+
+synchronized (someObject) {
+    // critical section
+}
+
+
+🔐 Lock (Interface - java.util.concurrent.locks.Lock)
+
+
+
+Type: API-level synchronization (more flexible and feature-rich).
+
+Usage: Explicit locking and unlocking.
+
+Reentrancy: ReentrantLock supports reentrancy.
+
+Fairness: Can be fair (new ReentrantLock(true)) or non-fair.
+
+Interruptible: Can acquire lock interruptibly via lockInterruptibly().
+
+Timeouts: Supports tryLock(timeout, unit) to wait for a lock for a limited time.
+
+Condition Variables: Supports multiple condition variables via newCondition().
+
+Responsibility: Requires manual unlocking — lock() must be paired with unlock().
+
+Example:
+
+Lock lock = new ReentrantLock();
+lock.lock();
+try {
+    // critical section
+} finally {
+    lock.unlock();
+}
+
+🔁 Summary Table
+
+
+| Feature            | `synchronized`                                | `Lock` (`ReentrantLock`)       |
+| ------------------ | --------------------------------------------- | ------------------------------ |
+| Syntax             | Language-level                                | API-level                      |
+| Reentrancy         | Yes                                           | Yes                            |
+| Fairness           | No                                            | Optional                       |
+| Interruptible Lock | No                                            | Yes (`lockInterruptibly()`)    |
+| Timeout Support    | No                                            | Yes (`tryLock(timeout, unit)`) |
+| Condition Support  | Single wait/notify                            | Multiple via `Condition`       |
+| Deadlock Handling  | Harder to control                             | Easier with `tryLock`          |
+| Performance        | Comparable; `Lock` better for high contention |                                |
+| Simplicity         | Very simple                                   | More verbose/flexible          |
+
+
+
+
+
 
