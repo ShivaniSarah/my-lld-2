@@ -30,6 +30,19 @@ Violation of business rules
 
 Corrupt data states
 
+Linearizable Consistency
+Eventual Consistency
+Causal Consistency
+Quorum
+Data Consistency Levels Tradeoffs
+Transaction Isolation Levels - Read Uncommitted Data
+Read Committed
+Repeatable Reads
+Serializable Isolation Level
+Transaction Level Implementations
+Conclusion - Transaction Isolation
+
+
 ✅ 3. Isolation — "Each transaction is independent"
 Definition:
 Even if transactions run concurrently, their outcome must be the same as if they had executed serially (one after the other).
