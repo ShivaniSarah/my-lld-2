@@ -784,18 +784,43 @@ public class GeekClass
 }
 
 
- Disadvantage:  Performance issues will arise as during the execution of one thread all the other threads are put to a  blocking state  and do note they are not in  waiting state  . This causes a  performance drop if the time taken for one thread is too long. 
+ Disadvantage:  Performance issues will arise as during the execution of one thread all the other threads are put to a  blocking state  and do note they are not in  waiting state  .
+This causes a  performance drop if the time taken for one thread is too long. 
 
 
 
- When multiple threads are working on the same data, and the value of our data is changing, that scenario is not thread-safe, and we will get inconsistent results. When a thread is already working on an object and preventing another thread from working on the same object, this process is called Thread-Safety. Now there are several ways to achieve thread-safety in our program namely as follows:
+When multiple threads are working on the same data, and the value of our data is changing, that scenario is not thread-safe,
+and we will get inconsistent results.
+When a thread is already working on an object and preventing another thread from working on the same object,
+this process is called Thread-Safety. 
+performance issues due to:
 
-Using Synchronization
-Using Volatile Keyword
-Using Atomic Variable
-Using Final Keyword
-ReentrantLock
-ReadWriteLock
+Thread contention: Only one thread can hold the lock, causing others to wait.
+
+Context switching overhead: Waiting threads consume CPU cycles during lock acquisition/release.
+
+Limited scalability: As concurrency increases, performance can degrade significantly.
+
+Now there are several ways to achieve thread-safety in our program namely as follows:
+
+1. Using Volatile Keyword
+2. Using Atomic Variable
+3. Using Final Keyword
+4. Using locks like ReentrantLock
+5. ReadWriteLock
+6. Use ConcurrentHashMap
+7. Use Immutable Objects
+8. Design objects to be immutable where possible:
+( record User(String name, int age) {} )
+9. Use Thread-Local Variables
+Use ThreadLocal<T> to provide separate variables per thread:
+ThreadLocal<DateFormat> formatter = ThreadLocal.withInitial(() ->
+        new SimpleDateFormat("yyyy-MM-dd"));
+10. 6. Use Executors and Message Passing
+Avoid shared state; use single-threaded executors or actor-like models:
+ExecutorService executor = Executors.newSingleThreadExecutor();
+executor.submit(() -> doWork());
+
 
 
 What is a blocking queue?
