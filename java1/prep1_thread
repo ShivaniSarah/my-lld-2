@@ -808,6 +808,8 @@ ReentrantLock tracks a “hold count” which is a value that starts at 1 when a
 
 Using Volatile Keyword
 
+volatile is not on thread cache it is stored in memory.
+
 class SharedObj
 {
    // volatile keyword here makes sure that
@@ -828,6 +830,7 @@ is not for atomicity, but for visibility and ordering guarantees.
 Without volatile, it's possible for one thread to see a partially constructed Logger object due to reordering optimizations by the compiler or CPU.
 
 2. Instruction Reordering Prevention:
+
 In Java, the construction of an object like new Logger(logConfig) is not atomic:
 
 Allocate memory
