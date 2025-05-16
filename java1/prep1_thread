@@ -820,6 +820,7 @@ ThreadLocal<DateFormat> formatter = ThreadLocal.withInitial(() ->
 Avoid shared state; use single-threaded executors or actor-like models:
 ExecutorService executor = Executors.newSingleThreadExecutor();
 executor.submit(() -> doWork());
+11. BlockingQueue
 
 synchronized is slower while lock is faster
 
