@@ -94,6 +94,7 @@ public class Main {
 
     public static void main(String[] args) throws Exception{
         NumberPrinter printer = new NumberPrinter();
+        NumberPrinter printer2 = new NumberPrinter();
 
         Thread oddThread = new Thread(printer::printOdd, "Odd-Thread");
         Thread evenThread = new Thread(printer::printEven, "Even-Thread");
@@ -107,15 +108,15 @@ public class Main {
             }, "Even-Thread");
         Thread block3 = new Thread(() -> {
             try {
-                printer.blockPrinter3();
+                printer2.blockPrinter3();
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
         }, "Even-Thread");
-        Thread th5 = new Thread( () -> printer.method5());
+        Thread th5 = new Thread( () -> printer2.method5());
 
         Thread th6 = new Thread( () ->
-                    printer.blockPrinter4());
+                    printer2.blockPrinter4());
 
 
         printer.method5();
