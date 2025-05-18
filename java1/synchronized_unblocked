@@ -1,0 +1,94 @@
+package org.example;
+
+class NumberPrinter {
+    private int number = 1;
+    private final int MAX = 10;
+    private final Object lock = new Object();
+    private final Object lock2 = new Object();
+
+    public void method5()  {
+//        synchronized (this) {
+            // This will block the printer's threads!
+            System.out.println("5 block start");
+//            Thread.sleep(10000);
+//            System.out.println("1 block end");
+//        }
+    }
+
+    public void blockPrinter() throws InterruptedException {
+        synchronized (this) {
+            // This will block the printer's threads!
+            System.out.println("1 block start");
+            Thread.sleep(10000);
+            System.out.println("1 block end");
+        }
+    }
+    public void blockPrinter2() throws InterruptedException {
+        synchronized (this) {
+            System.out.println("2 block start");
+            Thread.sleep(10000);
+            System.out.println("2 block end");
+        }
+    }
+    public void printOdd() {
+        synchronized (lock) {
+            while (number <= MAX) {
+                if (number % 2 == 0) {
+                    try {
+                        lock.wait();
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+                } else {
+                    System.out.println(Thread.currentThread().getName() + " - " + number);
+                    number++;
+                    lock.notify();
+                }
+            }
+        }
+    }
+
+    public void printEven() {
+        synchronized (lock) {
+            while (number <= MAX) {
+                if (number % 2 != 0) {
+                    try {
+                        lock.wait();
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+                } else {
+                    System.out.println(Thread.currentThread().getName() + " - " + number);
+                    number++;
+                    lock.notify();
+                }
+            }
+        }
+    }
+}
+
+public class Main {
+
+    public static void main(String[] args) throws Exception{
+        NumberPrinter printer = new NumberPrinter();
+
+        Thread oddThread = new Thread(printer::printOdd, "Odd-Thread");
+        Thread evenThread = new Thread(printer::printEven, "Even-Thread");
+
+        Thread block = new Thread(() -> {
+                try {
+                    printer.blockPrinter();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }, "Even-Thread");
+        Thread th5 = new Thread( () -> printer.method5());
+        oddThread.start();
+        evenThread.start();
+        block.start();
+
+        printer.blockPrinter2();
+        th5.start();
+//        printer.method5();
+    }
+}
