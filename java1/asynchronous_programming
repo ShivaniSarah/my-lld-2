@@ -1,0 +1,72 @@
+These terms—Future, CompletableFuture, Promise, Callable, CompletionStage—are related concepts in
+asynchronous programming and concurrency in Java (and more broadly in programming). 
+Here’s how they connect and differ, focusing mostly on Java:
+
+1. Future
+Represents the result of an asynchronous computation that may not be done yet.
+
+Provides methods to check if the task is complete, wait for it (get()), or cancel it.
+
+Limitation: You can’t easily chain or compose futures; blocking calls (get()) are common.
+
+Example: ExecutorService.submit(Callable) returns a Future.
+
+2. Callable
+A functional interface representing a task that returns a result and may throw an exception.
+
+Like Runnable but with a return value.
+
+Used to submit tasks to executor services that return Futures.
+
+java
+Copy
+Edit
+Callable<String> task = () -> "Result";
+Future<String> future = executor.submit(task);
+3. CompletableFuture
+Extends Future with a powerful, non-blocking API.
+
+Can be explicitly completed by a thread (manually or automatically).
+
+Supports functional-style chaining and composition of asynchronous tasks.
+
+Implements CompletionStage interface.
+
+Example:
+
+java
+Copy
+Edit
+CompletableFuture.supplyAsync(() -> "Hello")
+    .thenApply(s -> s + " World")
+    .thenAccept(System.out::println);
+4. CompletionStage
+An interface introduced in Java 8 that defines a stage of a possibly asynchronous computation.
+
+Provides many methods for composing, combining, or consuming stages.
+
+CompletableFuture implements this interface.
+
+Promotes a declarative, functional style of async programming.
+
+5. Promise
+Not a built-in Java class, but a general programming concept (borrowed from JavaScript).
+
+Represents a writable Future — something that will be completed in the future by some code.
+
+CompletableFuture in Java acts like a Promise + Future — you can complete it (fulfill or fail) and consumers can attach callbacks.
+
+
+
+Summary Table
+
+| Concept           | Java Class/Interface                     | Key Role                               | Blocking?   | Supports Chaining? |
+| ----------------- | ---------------------------------------- | -------------------------------------- | ----------- | ------------------ |
+| Future            | `java.util.concurrent.Future`            | Read-only handle for async computation | Yes (get()) | No                 |
+| Callable          | `java.util.concurrent.Callable`          | Task that returns a result             | N/A         | N/A                |
+| CompletableFuture | `java.util.concurrent.CompletableFuture` | Writable future supporting chaining    | No          | Yes                |
+| CompletionStage   | `java.util.concurrent.CompletionStage`   | Async computation stage abstraction    | No          | Yes                |
+| Promise           | Concept (not Java class)                 | Writable future (produce value)        | No          | Yes (conceptually) |
+
+
+
