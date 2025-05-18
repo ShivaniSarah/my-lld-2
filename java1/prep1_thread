@@ -783,8 +783,63 @@ public class GeekClass
     }
 }
 
+--------------------------
 
- Disadvantage:  Performance issues will arise as during the execution of one thread all the other threads are put to a  blocking state  and do note they are not in  waiting state  .
+
+
+synchronized(this) only blocks other threads trying to acquire the same lock — i.e., synchronized(this) or a synchronized method on the same object.
+
+synchronized(this) does not block access to:
+
+Other synchronized blocks using different locks (like synchronized(lock)).
+
+Non-synchronized methods — they run without acquiring any lock.
+
+
+class Printer {
+    public synchronized void methodA() {
+        // synchronized(this)
+    }
+
+    public void methodB() {
+        synchronized (this) {
+            // also synchronized(this)
+        }
+    }
+
+    public void methodC() {
+        // NOT synchronized — free to run anytime
+    }
+
+    public void methodD() {
+        synchronized (someOtherLock) {
+            // independent lock — not blocked by synchronized(this)
+        }
+    }
+}
+
+
+methodA() and methodB() will block each other.
+
+methodC() runs freely — no blocking.
+
+methodD() uses a different lock — no blocking with synchronized(this).
+
+
+| What is blocked by `synchronized(this)`?                       | Blocked?                            |
+| -------------------------------------------------------------- | ----------------------------------- |
+| Another `synchronized(this)` block                             | ✅ Yes                               |
+| `synchronized` instance method (`public synchronized void...`) | ✅ Yes                               |
+| A block using a different lock (e.g. `synchronized(lock)`)     | ❌ No                                |
+| A non-synchronized method                                      | ❌ No                                |
+| A static synchronized method                                   | ❌ No *(it locks class, not object)* |
+
+
+
+------------------------------
+
+
+Disadvantage:  Performance issues will arise as during the execution of one thread all the other threads are put to a  blocking state  and do note they are not in  waiting state  .
 This causes a  performance drop if the time taken for one thread is too long. 
 
 
