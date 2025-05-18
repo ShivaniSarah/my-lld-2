@@ -127,8 +127,35 @@ public class Main {
         block3.start();
         th6.start();
         printer.blockPrinter2();
-
-
-
+        
     }
 }
+
+
+
+o/p
+
+
+
+5 block start
+5 block end
+5 block start
+5 block end
+1 block start
+2 block start
+4 block start
+Odd-Thread - 1
+Even-Thread - 2
+Odd-Thread - 3
+Even-Thread - 4
+Odd-Thread - 5
+Even-Thread - 6
+Odd-Thread - 7
+Even-Thread - 8
+Odd-Thread - 9
+Even-Thread - 10
+4 block end
+1 block end
+3 block start
+2 block end
+3 block end
