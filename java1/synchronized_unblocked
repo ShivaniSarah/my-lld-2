@@ -10,17 +10,27 @@ class NumberPrinter {
 //        synchronized (this) {
             // This will block the printer's threads!
             System.out.println("5 block start");
+        System.out.println("5 block end");
 //            Thread.sleep(10000);
 //            System.out.println("1 block end");
 //        }
     }
 
     public void blockPrinter() throws InterruptedException {
-        synchronized (this) {
+        synchronized (NumberPrinter.class) {
             // This will block the printer's threads!
             System.out.println("1 block start");
             Thread.sleep(10000);
             System.out.println("1 block end");
+        }
+    }
+
+    public void blockPrinter3() throws InterruptedException {
+        synchronized (NumberPrinter.class) {
+            // This will block the printer's threads!
+            System.out.println("3 block start");
+            Thread.sleep(10000);
+            System.out.println("3 block end");
         }
     }
     public void blockPrinter2() throws InterruptedException {
@@ -30,6 +40,19 @@ class NumberPrinter {
             System.out.println("2 block end");
         }
     }
+    public void blockPrinter4()  {
+            synchronized (this) {
+                try {
+                    System.out.println("4 block start");
+                    Thread.sleep(10000);
+                    System.out.println("4 block end");
+                }
+                catch(InterruptedException e){
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+
     public void printOdd() {
         synchronized (lock) {
             while (number <= MAX) {
@@ -82,13 +105,29 @@ public class Main {
                     throw new RuntimeException(e);
                 }
             }, "Even-Thread");
+        Thread block3 = new Thread(() -> {
+            try {
+                printer.blockPrinter3();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }, "Even-Thread");
         Thread th5 = new Thread( () -> printer.method5());
+
+        Thread th6 = new Thread( () ->
+                    printer.blockPrinter4());
+
+
+        printer.method5();
         oddThread.start();
         evenThread.start();
-        block.start();
-
-        printer.blockPrinter2();
         th5.start();
-//        printer.method5();
+        block.start();
+        block3.start();
+        th6.start();
+        printer.blockPrinter2();
+
+
+
     }
 }
