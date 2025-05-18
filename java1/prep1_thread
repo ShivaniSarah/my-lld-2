@@ -835,6 +835,36 @@ methodD() uses a different lock — no blocking with synchronized(this).
 | A static synchronized method                                   | ❌ No *(it locks class, not object)* |
 
 
+🔍 What does that mean for your code?
+
+synchronized (NumberPrinter.class) { ... }
+Blocks other threads trying to synchronized(NumberPrinter.class) — even on different instances.
+
+Does not block threads doing synchronized(this) or synchronized(lock).
+
+
+Is using synchronized(NumberPrinter.class) the same as creating a static final Object lock and synchronizing on it from all instances?
+
+✅ Short Answer: Yes — it's functionally equivalent.
+Both approaches will synchronize across all instances of the class because they use a shared static object as the lock.
+
+
+class NumberPrinter {
+    private static final Object CLASS_LOCK = new Object();
+
+    public void someMethod() {
+        synchronized (CLASS_LOCK) {
+            // critical section
+        }
+    }
+}
+
+This locks on CLASS_LOCK, a static field.
+
+Also shared across all instances.
+
+All threads locking on this will block each other.
+
 
 ------------------------------
 
