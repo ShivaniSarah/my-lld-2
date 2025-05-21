@@ -1,0 +1,74 @@
+What are the different thread states in Java?
+
+
+ChatGPT said:
+In Java, threads can exist in one of six states, as defined in the java.lang.Thread.State enum.
+
+🧵 Java Thread States
+
+| State           | When It Happens                                                                                               |
+| --------------- | ------------------------------------------------------------------------------------------------------------- |
+| `NEW`           | Thread object is created, but `start()` hasn’t been called yet                                                |
+| `RUNNABLE`      | Thread is ready to run or running (depends on OS scheduler)                                                   |
+| `BLOCKED`       | Thread is waiting to acquire a monitor lock (e.g., trying to `synchronized`)                                  |
+| `WAITING`       | Thread is waiting **indefinitely** for another thread to signal it (`wait()`, `join()`, `LockSupport.park()`) |
+| `TIMED_WAITING` | Thread is waiting for a specified time (`sleep()`, `wait(timeout)`, `join(timeout)`)                          |
+| `TERMINATED`    | Thread has finished execution (either normally or due to an exception)                                        |
+
+
+
+🔁 State Transitions Diagram (Simplified)
+pgsql
+Copy
+Edit
+NEW  → start() → RUNNABLE → (Running by CPU)
+         ↑                     ↓
+         |                  BLOCKED (monitor lock)
+         |                  WAITING (wait/join)
+         |                  TIMED_WAITING (sleep, wait(timeout))
+         ↓
+     TERMINATED (after run() completes)
+🔍 Examples of Each State
+1. NEW
+java
+Copy
+Edit
+Thread t = new Thread(() -> {});
+// Not started yet → State: NEW
+2. RUNNABLE
+java
+Copy
+Edit
+t.start(); // After this, state becomes RUNNABLE
+3. BLOCKED
+java
+Copy
+Edit
+synchronized(lock) {
+    // Another thread already holds the lock → BLOCKED
+}
+4. WAITING
+java
+Copy
+Edit
+thread.join();  // waits for another thread to finish
+5. TIMED_WAITING
+java
+Copy
+Edit
+Thread.sleep(1000); // waits for 1 second
+6. TERMINATED
+
+// After thread finishes run()
+🧠 Summary Table
+
+| State           | Triggering Method                      | Description                 |
+| --------------- | -------------------------------------- | --------------------------- |
+| `NEW`           | Thread created                         | Not started                 |
+| `RUNNABLE`      | `start()`                              | Ready/running               |
+| `BLOCKED`       | Enters `synchronized` but lock is held | Waiting for monitor         |
+| `WAITING`       | `wait()`, `join()`, `park()`           | Waiting indefinitely        |
+| `TIMED_WAITING` | `sleep()`, `wait(ms)`, `join(ms)`      | Waiting for a specific time |
+| `TERMINATED`    | `run()` completes or exception thrown  | Thread is done              |
+
+
