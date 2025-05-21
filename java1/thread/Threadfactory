@@ -1,0 +1,68 @@
+threadFactory
+
+
+ChatGPT said:
+In Java, a ThreadFactory is an interface used to create new threads on demand, typically to allow custom thread creation behavior when working with executors like Executors.newFixedThreadPool() or Executors.newCachedThreadPool().
+
+📘 Interface Definition
+java
+Copy
+Edit
+public interface ThreadFactory {
+    Thread newThread(Runnable r);
+}
+✅ Why Use a ThreadFactory?
+To customize thread names (helpful for debugging).
+
+To set thread priority or daemon status.
+
+To track threads or wrap them with monitoring logic.
+
+To enforce a consistent thread creation policy.
+
+🧱 Example: Custom ThreadFactory
+java
+Copy
+Edit
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
+
+public class CustomThreadFactory implements ThreadFactory {
+    private final AtomicInteger threadNumber = new AtomicInteger(1);
+    private final String namePrefix;
+
+    public CustomThreadFactory(String baseName) {
+        this.namePrefix = baseName + "-thread-";
+    }
+
+    @Override
+    public Thread newThread(Runnable r) {
+        Thread t = new Thread(r, namePrefix + threadNumber.getAndIncrement());
+        t.setDaemon(false); // can set true if you want daemon threads
+        t.setPriority(Thread.NORM_PRIORITY);
+        return t;
+    }
+}
+🔧 Using with ExecutorService
+java
+Copy
+Edit
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+public class Example {
+    public static void main(String[] args) {
+        ExecutorService executor = Executors.newFixedThreadPool(
+            3, new CustomThreadFactory("WorkerPool"));
+
+        executor.submit(() -> System.out.println(Thread.currentThread().getName()));
+        executor.shutdown();
+    }
+}
+This will print:
+
+cpp
+Copy
+Edit
+WorkerPool-thread-1
+Let me know if you want a version that supports logging, metrics, or wraps uncaught exceptions.
