@@ -1,0 +1,69 @@
+Difference between ReentrantLock and synchronized block.
+
+🔍 Difference Between ReentrantLock and synchronized in Java
+Both ReentrantLock and synchronized are used to achieve mutual exclusion in multithreading — but they differ in flexibility, features, and usage.
+
+🔁 Basic Comparison
+| Feature                   | `synchronized`                      | `ReentrantLock`                                     |
+| ------------------------- | ----------------------------------- | --------------------------------------------------- |
+| **Location**              | Java keyword                        | Class in `java.util.concurrent.locks`               |
+| **Explicit Locking**      | No (handled by JVM)                 | Yes (must call `lock()` and `unlock()` manually)    |
+| **Interruptible Locking** | ❌ Not possible                      | ✅ `lockInterruptibly()` allows it                   |
+| **Try Lock**              | ❌ Not supported                     | ✅ `tryLock()` is supported                          |
+| **Timeout Support**       | ❌ No                                | ✅ Can try to acquire lock with timeout              |
+| **Fairness**              | ❌ JVM dependent                     | ✅ Can create fair locks (`new ReentrantLock(true)`) |
+| **Condition Variables**   | ❌ Uses `wait()/notify()` on objects | ✅ Uses `Condition` objects for finer control        |
+| **Performance**           | Slightly better for simple cases    | Better in highly contended scenarios                |
+| **Readability**           | ✅ Very concise                      | ❌ More verbose, requires discipline                 |
+
+
+🧠 Example: synchronized
+
+public synchronized void increment() {
+    count++;
+}
+
+// or
+public void increment() {
+    synchronized(this) {
+        count++;
+    }
+}
+
+
+Automatically acquires and releases the intrinsic lock.
+
+🔧 Example: ReentrantLock
+
+private final ReentrantLock lock = new ReentrantLock();
+
+public void increment() {
+    lock.lock();
+    try {
+        count++;
+    } finally {
+        lock.unlock(); // always unlock in finally block!
+    }
+}
+
+
+Gives more control but requires manual lock management.
+
+✅ When to Use What?
+
+| Use Case                                   | Recommendation                                 |
+| ------------------------------------------ | ---------------------------------------------- |
+| Simple synchronization                     | Use `synchronized` (cleaner, less error-prone) |
+| Need to interrupt or timeout while locking | Use `ReentrantLock`                            |
+| Need fair access policy (FIFO)             | Use `ReentrantLock(true)`                      |
+| Complex wait/notify control                | Use `ReentrantLock` with `Condition`           |
+| Avoiding deadlock with try/acquire logic   | Use `ReentrantLock.tryLock()`                  |
+
+
+🔚 Summary
+Use **synchronized** for simplicity and safety.
+
+Use **ReentrantLock** for flexibility and advanced control.
+
+Let me know if you want to see both in action with a working Java program!
+
