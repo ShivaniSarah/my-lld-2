@@ -1,3 +1,15 @@
+Note:
+
+To keep things unblocked, synchronozed method/ block will compete with other threads that call the syncronized method/block for
+the same object
+To keep things unblocked, static synchronozed method will compete with other threads that call the static syncronized method or block for
+all objects of the class.
+To keep things unblocked, synchronozed method on a lock object variable  will compete with other threads that call the syncronized method 
+or block for that lock object varaibale. 
+
+
+
+
 package org.example;
 
 class NumberPrinter {
