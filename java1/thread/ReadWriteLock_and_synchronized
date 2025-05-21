@@ -1,0 +1,299 @@
+ReadWriteLock and synchronized
+
+🔍 ReadWriteLock vs synchronized in Java
+Both ReadWriteLock and synchronized are used for thread synchronization, but they serve different concurrency patterns.
+
+⚖️ Key Difference
+
+| Feature                   | `synchronized`                        | `ReadWriteLock` (e.g. `ReentrantReadWriteLock`)       |
+| ------------------------- | ------------------------------------- | ----------------------------------------------------- |
+| **Lock Type**             | Exclusive lock (one thread at a time) | Shared read lock / exclusive write lock               |
+| **Read Concurrency**      | ❌ Not allowed                         | ✅ Multiple readers allowed if no writer               |
+| **Write Concurrency**     | ❌ Only one thread allowed             | ✅ Only one writer allowed (blocks readers & writers)  |
+| **Granularity**           | Coarse                                | Fine-grained (read vs. write separation)              |
+| **Use Case**              | Simple thread-safe code               | High-read/low-write access patterns (caches, lookups) |
+| **Interruptible/Timeout** | ❌ No                                  | ✅ Yes (via `lockInterruptibly()` and `tryLock()`)     |
+
+
+🔧 synchronized Example (All threads blocked except one):
+
+public synchronized int get(int index) {
+    return list.get(index);
+}
+
+public synchronized void put(int index, int value) {
+    list.set(index, value);
+}
+
+
+Both read and write operations block all other threads.
+
+Simple, but not efficient for read-heavy workloads.
+
+🔧 ReadWriteLock Example:
+
+private final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
+private final Lock readLock = rwLock.readLock();
+private final Lock writeLock = rwLock.writeLock();
+
+public int get(int index) {
+    readLock.lock();
+    try {
+        return list.get(index);
+    } finally {
+        readLock.unlock();
+    }
+}
+
+public void put(int index, int value) {
+    writeLock.lock();
+    try {
+        list.set(index, value);
+    } finally {
+        writeLock.unlock();
+    }
+}
+
+Multiple threads can read concurrently, improving performance.
+
+Write locks are exclusive: blocks all reads and writes.
+
+✅ When to Use What?
+| Situation                             | Prefer This     |
+| ------------------------------------- | --------------- |
+| Simple code with low contention       | `synchronized`  |
+| High concurrency, read-heavy workload | `ReadWriteLock` |
+| Need read/write separation            | `ReadWriteLock` |
+| Simple locking with minimal overhead  | `synchronized`  |
+
+
+🧠 Summary
+synchronized: Always exclusive. Easy to use, but not efficient in high-concurrency scenarios.
+
+ReadWriteLock: Offers better throughput for read-heavy systems by allowing concurrent reads and exclusive writes.
+
+✅ Scenario
+Suppose we have a shared resource: a Map<Integer, String>. Multiple threads frequently read from it, and occasionally write to it.
+
+If we use synchronized, every read blocks all others, even though reads don’t change data. This causes performance bottlenecks.
+
+With ReadWriteLock, multiple threads can read in parallel — only writes are exclusive.
+
+🔧 Java Example using ReentrantReadWriteLock
+
+import java.util.concurrent.locks.*;
+import java.util.*;
+
+public class SharedCache {
+    private final Map<Integer, String> cache = new HashMap<>();
+    private final ReadWriteLock rwLock = new ReentrantReadWriteLock();
+    private final Lock readLock = rwLock.readLock();
+    private final Lock writeLock = rwLock.writeLock();
+
+    public String read(int key) {
+        readLock.lock();
+        try {
+            System.out.println(Thread.currentThread().getName() + " reading key " + key);
+            return cache.get(key);
+        } finally {
+            readLock.unlock();
+        }
+    }
+
+    public void write(int key, String value) {
+        writeLock.lock();
+        try {
+            System.out.println(Thread.currentThread().getName() + " writing key " + key);
+            cache.put(key, value);
+        } finally {
+            writeLock.unlock();
+        }
+    }
+
+    public static void main(String[] args) {
+        SharedCache sharedCache = new SharedCache();
+
+        // Writer thread
+        Thread writer = new Thread(() -> {
+            for (int i = 0; i < 5; i++) {
+                sharedCache.write(i, "Value" + i);
+                try { Thread.sleep(100); } catch (InterruptedException ignored) {}
+            }
+        });
+
+        // Reader threads
+        Runnable readerTask = () -> {
+            for (int i = 0; i < 5; i++) {
+                sharedCache.read(i);
+                try { Thread.sleep(50); } catch (InterruptedException ignored) {}
+            }
+        };
+
+        Thread reader1 = new Thread(readerTask);
+        Thread reader2 = new Thread(readerTask);
+        Thread reader3 = new Thread(readerTask);
+
+        // Start threads
+        writer.start();
+        reader1.start();
+        reader2.start();
+        reader3.start();
+    }
+}
+
+
+✅ How ReadWriteLock Helps:
+🚀 Without ReadWriteLock (just synchronized):
+All threads (readers and writers) queue up one at a time.
+
+Poor performance with many concurrent readers.
+
+🚀 With ReadWriteLock:
+Multiple readers can access the read() method concurrently.
+
+Writers still have exclusive access, so data remains safe.
+
+Boosts throughput in read-heavy systems, like:
+
+Caches
+
+Product catalogs
+
+Configuration services
+
+🧠 Summary
+
+| Action    | Lock Type   | Concurrent? |
+| --------- | ----------- | ----------- |
+| `read()`  | `readLock`  | ✅ Yes       |
+| `write()` | `writeLock` | ❌ No        |
+
+
+Use ReadWriteLock when:
+
+You have more reads than writes
+
+You want to allow concurrent reads without blocking
+
+
+
+package org.example;
+
+import java.util.concurrent.locks.*;
+import java.util.*;
+
+public class Main {
+    private final Map<Integer, String> cache = new HashMap<>();
+    private final ReadWriteLock rwLock = new ReentrantReadWriteLock();
+    private final Lock readLock = rwLock.readLock();
+    private final Lock writeLock = rwLock.writeLock();
+
+    public String read(int key) {
+        readLock.lock();
+        try {
+            System.out.println(Thread.currentThread().getName() + " reading key " + key+ ":"+cache.get(key));
+            return cache.get(key);
+        } finally {
+            readLock.unlock();
+        }
+    }
+
+    public void write(int key, String value) {
+        writeLock.lock();
+        try {
+            System.out.println(Thread.currentThread().getName() + " writing key " + key+":"+value);
+            cache.put(key, value);
+        } finally {
+            writeLock.unlock();
+        }
+    }
+
+    public static void main(String[] args) {
+        Main sharedCache = new Main();
+
+        // Writer thread
+        Thread writer = new Thread(() -> {
+            for (int i = 0; i < 5; i++) {
+                sharedCache.write(i, "Value" + i);
+                try { Thread.sleep(50); } catch (InterruptedException ignored) {}
+            }
+        });
+
+        // Reader threads
+        Runnable readerTask = () -> {
+            for (int i = 0; i < 5; i++) {
+                sharedCache.read(i);
+                try { Thread.sleep(51); } catch (InterruptedException ignored) {}
+            }
+        };
+
+        Thread reader1 = new Thread(readerTask);
+        Thread reader2 = new Thread(readerTask);
+        Thread reader3 = new Thread(readerTask);
+
+        // Start threads
+        writer.start();
+        reader1.start();
+        reader2.start();
+        reader3.start();
+    }
+}
+
+
+
+o/p
+
+
+
+Thread-2 reading key 0:null
+Thread-3 reading key 0:null
+Thread-1 reading key 0:null
+Thread-0 writing key 0:Value0
+Thread-2 reading key 1:null
+Thread-3 reading key 1:null
+Thread-0 writing key 1:Value1
+Thread-1 reading key 1:Value1
+Thread-0 writing key 2:Value2
+Thread-2 reading key 2:Value2
+Thread-3 reading key 2:Value2
+Thread-1 reading key 2:Value2
+Thread-2 reading key 3:null
+Thread-0 writing key 3:Value3
+Thread-1 reading key 3:Value3
+Thread-3 reading key 3:Value3
+Thread-0 writing key 4:Value4
+Thread-2 reading key 4:Value4
+Thread-3 reading key 4:Value4
+Thread-1 reading key 4:Value4
+
+
+🔁 Behavior of ReadWriteLock
+
+| Current Lock Held | Incoming Reader (`readLock.lock()`) | Incoming Writer (`writeLock.lock()`) |
+| ----------------- | ----------------------------------- | ------------------------------------ |
+| No Lock           | Proceeds                            | Proceeds                             |
+| Read Lock(s) held | Proceeds                            | Waits (until all readers are done)   |
+| Write Lock held   | **Waits** (blocks)                  | Waits (if another writer holds it)   |
+
+
+This guarantees data consistency. You don’t want readers reading half-written or inconsistent data, so:
+
+readLock waits for writeLock to be released
+
+writeLock waits for all readLocks to be released
+
+
+🧪 Bonus: Want Non-blocking Behavior?
+If you want the reader to not wait but check whether it can acquire the lock, use tryLock():
+
+if (readLock.tryLock()) {
+    try {
+        return cache.get(key);
+    } finally {
+        readLock.unlock();
+    }
+} else {
+    // return fallback or null or skip read
+    return null;
+}
+
