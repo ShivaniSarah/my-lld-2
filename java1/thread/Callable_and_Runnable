@@ -1,0 +1,270 @@
+The main difference between Callable and Runnable in Java lies in:
+
+| Feature           | `Runnable`                      | `Callable<V>`                    |
+| ----------------- | ------------------------------- | -------------------------------- |
+| **Return value**  | Cannot return a result          | Can return a result (`V`)        |
+| **Exceptions**    | Cannot throw checked exceptions | Can throw checked exceptions     |
+| **Introduced in** | Java 1.0                        | Java 5 (with concurrency API)    |
+| **Used with**     | `Thread`, `Executor`            | `ExecutorService` (via `submit`) |
+
+
+🧵 Runnable Example
+
+Runnable task = () -> {
+    System.out.println("Runnable is running");
+};
+new Thread(task).start();
+
+
+No result
+
+No checked exceptions allowed
+
+
+ ✅ Callable Example
+
+Callable<Integer> task = () -> {
+    Thread.sleep(500);
+    return 42;
+};
+
+ExecutorService executor = Executors.newSingleThreadExecutor();
+Future<Integer> future = executor.submit(task);
+
+System.out.println("Result: " + future.get());  // blocks until result is ready
+
+
+Returns a value (42)
+
+Can throw InterruptedException
+
+🧠 Summary
+| Use `Runnable` when: | You don’t need a result or checked exceptions    |
+| -------------------- | ------------------------------------------------ |
+| Use `Callable` when: | You need a result or to throw checked exceptions |
+
+
+Here's a side-by-side Java example demonstrating the difference between Runnable and Callable using an ExecutorService:
+
+import java.util.concurrent.*;
+
+public class RunnableVsCallableDemo {
+
+    public static void main(String[] args) throws Exception {
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+
+        // 🔹 Runnable Task (No return value)
+        Runnable runnableTask = () -> {
+            System.out.println("Runnable is running.");
+        };
+
+        // 🔹 Callable Task (Returns a value)
+        Callable<String> callableTask = () -> {
+            Thread.sleep(1000); // simulate delay
+            return "Callable result";
+        };
+
+        // 🔹 Submit both tasks
+        Future<?> runnableFuture = executor.submit(runnableTask);   // returns Future<?> but value is always null
+        Future<String> callableFuture = executor.submit(callableTask); // returns actual result
+
+        // 🔹 Wait for completion
+        runnableFuture.get();  // will return null
+        String result = callableFuture.get();  // returns "Callable result"
+
+        System.out.println("Callable returned: " + result);
+
+        executor.shutdown();
+    }
+}
+
+
+🧠 Output:
+
+Runnable is running.
+Callable returned: Callable result
+
+
+🔍 What's happening?
+
+| Task     | Future Result       | Notes                     |
+| -------- | ------------------- | ------------------------- |
+| Runnable | `null`              | No return value           |
+| Callable | `"Callable result"` | Returns value after delay |
+
+
+
+
+Here’s an enhanced version of the previous example that includes:
+
+✅ Runnable and Callable submission
+
+⚠️ Exception handling
+
+⏳ Timeout with Future.get(timeout, unit)
+
+
+
+import java.util.concurrent.*;
+
+public class RunnableVsCallableAdvancedDemo {
+
+    public static void main(String[] args) {
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+
+        // 🔹 Runnable Task (does NOT throw checked exceptions or return a result)
+        Runnable runnableTask = () -> {
+            System.out.println("Runnable is running.");
+        };
+
+        // 🔹 Callable Task (returns a result and may throw exceptions)
+        Callable<String> callableTask = () -> {
+            Thread.sleep(2000); // Simulate delay
+            if (true) {
+                throw new Exception("Something went wrong in Callable!");
+            }
+            return "Callable result";
+        };
+
+        try {
+            // 🔹 Submit tasks
+            Future<?> runnableFuture = executor.submit(runnableTask);
+            Future<String> callableFuture = executor.submit(callableTask);
+
+            // 🔹 Wait for Runnable to finish (always returns null)
+            System.out.println("Runnable finished with: " + runnableFuture.get());
+
+            // 🔹 Try getting Callable result with timeout
+            String result = callableFuture.get(1, TimeUnit.SECONDS);  // 1 sec timeout
+            System.out.println("Callable returned: " + result);
+
+        } catch (TimeoutException e) {
+            System.out.println("Callable timed out!");
+        } catch (ExecutionException e) {
+            System.out.println("Callable threw exception: " + e.getCause());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            System.out.println("Thread was interrupted");
+        } finally {
+            executor.shutdown();
+        }
+    }
+}
+
+
+🧠 Possible Output:
+
+Runnable is running.
+Runnable finished with: null
+Callable threw exception: java.lang.Exception: Something went wrong in Callable!
+
+
+Or, if the Callable takes too long:
+
+
+Runnable is running.
+Runnable finished with: null
+Callable timed out!
+🔍 Key Points:
+Future.get(timeout, unit) throws TimeoutException if result isn't ready in time.
+
+Exceptions inside a Callable are wrapped in ExecutionException.
+
+Runnable's Future always returns null if successful.
+
+
+Here's an advanced example where both Runnable and Callable tasks are:
+
+Monitored for timeouts
+
+Canceled if they exceed the timeout
+
+Retried optionally
+
+✅ Runnable and Callable with Timeout + Cancel + Retry Logic
+
+import java.util.concurrent.*;
+
+public class RetryTimeoutDemo {
+
+    static final ExecutorService executor = Executors.newFixedThreadPool(2);
+
+    public static void main(String[] args) {
+        try {
+            System.out.println("🔁 Attempting Runnable:");
+            runWithTimeoutAndRetry(() -> System.out.println("Runnable running..."), 2, 1);
+
+            System.out.println("\n🔁 Attempting Callable:");
+            String result = callWithTimeoutAndRetry(() -> {
+                Thread.sleep(2000); // Simulate long-running task
+                return "Callable result";
+            }, 2, 2);
+
+            System.out.println("✅ Final Callable Result: " + result);
+
+        } catch (Exception e) {
+            System.out.println("❌ Final failure: " + e.getMessage());
+        } finally {
+            executor.shutdown();
+        }
+    }
+
+    // 🔹 Retry logic for Runnable (no result)
+    static void runWithTimeoutAndRetry(Runnable task, int timeoutSec, int maxRetries) throws Exception {
+        int attempts = 0;
+        while (attempts <= maxRetries) {
+            Future<?> future = executor.submit(task);
+            try {
+                future.get(timeoutSec, TimeUnit.SECONDS);
+                System.out.println("✅ Runnable completed");
+                return;
+            } catch (TimeoutException e) {
+                future.cancel(true);
+                System.out.println("⚠️ Runnable timed out. Retrying... (" + (attempts + 1) + ")");
+            } catch (Exception e) {
+                future.cancel(true);
+                throw e;
+            }
+            attempts++;
+        }
+        throw new TimeoutException("Runnable failed after retries");
+    }
+
+    // 🔹 Retry logic for Callable (with result)
+    static <T> T callWithTimeoutAndRetry(Callable<T> task, int timeoutSec, int maxRetries) throws Exception {
+        int attempts = 0;
+        while (attempts <= maxRetries) {
+            Future<T> future = executor.submit(task);
+            try {
+                return future.get(timeoutSec, TimeUnit.SECONDS);
+            } catch (TimeoutException e) {
+                future.cancel(true);
+                System.out.println("⚠️ Callable timed out. Retrying... (" + (attempts + 1) + ")");
+            } catch (ExecutionException e) {
+                future.cancel(true);
+                throw e.getCause();
+            }
+            attempts++;
+        }
+        throw new TimeoutException("Callable failed after retries");
+    }
+}
+
+
+🔍 What This Example Shows
+Runnable and Callable are both wrapped in retry logic.
+
+Each run has a timeout, after which the task is canceled using future.cancel(true).
+
+The code retries up to maxRetries if timeouts occur.
+
+Callable result is returned if successful, or exception is thrown after all retries.
+
+🧠 Use Cases
+Network calls
+
+Long computations
+
+External services where timeouts and retries are essential
+
+Would you like to add exponential backoff to the retries or track stats (e.g., attempt durations)?
