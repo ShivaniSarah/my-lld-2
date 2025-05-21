@@ -267,6 +267,60 @@ Thread-3 reading key 4:Value4
 Thread-1 reading key 4:Value4
 
 
+that means  when exclusive lock is acquired for write then reading thread waits or return null ?
+
+
+ChatGPT said:
+Great question!
+
+✅ When a write lock (exclusive) is held, reading threads will wait, not return null.
+🔁 Behavior of ReadWriteLock
+Let’s break it down:
+| Current Lock Held | Incoming Reader (`readLock.lock()`) | Incoming Writer (`writeLock.lock()`) |
+| ----------------- | ----------------------------------- | ------------------------------------ |
+| No Lock           | Proceeds                            | Proceeds                             |
+| Read Lock(s) held | Proceeds                            | Waits (until all readers are done)   |
+| Write Lock held   | **Waits** (blocks)                  | Waits (if another writer holds it)   |
+
+
+🔎 So in your case:
+If a writer thread calls writeLock.lock() and is in the middle of updating the map, and at the same time a reader thread calls:
+
+readLock.lock();
+try {
+    return cache.get(key);
+}
+
+
+Then the reader thread will block and wait until the write lock is released.
+It does not return null — it doesn’t get access to the cache until the writer finishes.
+
+💡 Why is this Important?
+This guarantees data consistency. You don’t want readers reading half-written or inconsistent data, so:
+
+readLock waits for writeLock to be released
+
+writeLock waits for all readLocks to be released
+
+🧪 Bonus: Want Non-blocking Behavior?
+If you want the reader to not wait but check whether it can acquire the lock, use tryLock():
+
+if (readLock.tryLock()) {
+    try {
+        return cache.get(key);
+    } finally {
+        readLock.unlock();
+    }
+} else {
+    // return fallback or null or skip read
+    return null;
+}
+
+
+
+
+
+
 🔁 Behavior of ReadWriteLock
 
 | Current Lock Held | Incoming Reader (`readLock.lock()`) | Incoming Writer (`writeLock.lock()`) |
