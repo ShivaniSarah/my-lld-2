@@ -30,7 +30,9 @@ Considered deprecated for practical use in favor of higher-level concurrency fra
 java
 Copy
 Edit
-public class ThreadGroupExample {
+package org.example;
+
+public class Main {
     public static void main(String[] args) {
         // Create a parent ThreadGroup
         ThreadGroup group = new ThreadGroup("MyThreadGroup");
@@ -39,6 +41,7 @@ public class ThreadGroupExample {
         Thread t1 = new Thread(group, () -> {
             try {
                 Thread.sleep(5000);
+                System.out.println(Thread.currentThread().getName() + " was completed.");
             } catch (InterruptedException e) {
                 System.out.println(Thread.currentThread().getName() + " was interrupted.");
             }
@@ -47,6 +50,7 @@ public class ThreadGroupExample {
         Thread t2 = new Thread(group, () -> {
             try {
                 Thread.sleep(5000);
+                System.out.println(Thread.currentThread().getName() + " was completed.");
             } catch (InterruptedException e) {
                 System.out.println(Thread.currentThread().getName() + " was interrupted.");
             }
@@ -67,6 +71,21 @@ public class ThreadGroupExample {
         group.interrupt();
     }
 }
+
+
+o/p
+
+
+java.lang.ThreadGroup[name=MyThreadGroup,maxpri=10]
+    Thread[Thread-1,5,MyThreadGroup]
+    Thread[Thread-2,5,MyThreadGroup]
+Interrupting all threads in the group...
+Thread-1 was interrupted.
+Thread-2 was interrupted.
+
+Process finished with exit code 0
+
+
 🔍 What This Does:
 Creates a ThreadGroup named MyThreadGroup.
 
