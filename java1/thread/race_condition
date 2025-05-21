@@ -1,0 +1,96 @@
+What is a race condition? How can you prevent it?
+
+⚠️ What is a Race Condition in Java?
+A race condition occurs when two or more threads access shared data at the same time, and the outcome depends on the timing of their execution.
+
+If at least one thread modifies the data, and there is no proper synchronization, it can lead to inconsistent or incorrect results.
+
+🧠 Example of a Race Condition
+
+class Counter {
+    private int count = 0;
+
+    public void increment() {
+        count++;  // Not atomic! (read → modify → write)
+    }
+
+    public int getCount() {
+        return count;
+    }
+}
+
+
+
+If two threads call increment() simultaneously:
+
+Both read the same value (say 5)
+
+Both increment it to 6
+
+Both write 6
+
+Expected result: 7, Actual result: 6 → ❌ race condition!
+
+🔒 How to Prevent Race Conditions
+✅ 1. Use synchronized
+Make access to critical sections thread-safe:
+public synchronized void increment() {
+    count++;
+}
+
+Or use a synchronized block:
+public void increment() {
+    synchronized(this) {
+        count++;
+    }
+}
+
+✅ 2. Use Locks (ReentrantLock)
+For more advanced control than synchronized:
+private final ReentrantLock lock = new ReentrantLock();
+
+public void increment() {
+    lock.lock();
+    try {
+        count++;
+    } finally {
+        lock.unlock();
+    }
+}
+
+✅ 3. Use Atomic Variables
+For simple counters or flags, use classes from java.util.concurrent.atomic:
+private final AtomicInteger count = new AtomicInteger(0);
+
+public void increment() {
+    count.incrementAndGet();  // atomic operation
+}
+
+✅ 4. Use Thread-Safe Data Structures
+Use concurrent collections like:
+
+ConcurrentHashMap
+
+CopyOnWriteArrayList
+
+BlockingQueue
+
+
+✅ 5. Minimize Shared State
+Prefer immutable objects
+
+Use local variables within threads
+
+Avoid global/shared mutable variables
+
+🔁 Summary
+
+| Concept            | Description                                                      |
+| ------------------ | ---------------------------------------------------------------- |
+| **Race Condition** | Bug due to multiple threads accessing shared state unsafely      |
+| **Impact**         | Inconsistent or incorrect program behavior                       |
+| **Prevention**     | Synchronization, locks, atomic variables, thread-safe structures |
+
+
+
+
