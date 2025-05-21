@@ -1,3 +1,5 @@
+Preempting resources means taking resources away from one process and allocating them to another process. This is often done to resolve deadlocks or to ensure fairness in resource allocation. 
+
 Q1. What is a deadlock? How do you avoid it?
 
 A deadlock is a situation in concurrent programming where a set of threads or processes are blocked because each is waiting for a resource that the other holds, creating a circular dependency and preventing further progress.
