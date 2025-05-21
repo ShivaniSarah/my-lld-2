@@ -1,0 +1,98 @@
+What is the Fork/Join framework? When would you use it?
+
+What is the Fork/Join framework? When would you use it?
+
+
+ChatGPT said:
+✅ What is the Fork/Join Framework in Java?
+The Fork/Join Framework is a Java concurrency framework designed for parallelism, where a task is split (forked) into smaller subtasks that are processed concurrently, and then the results are combined (joined).
+
+📦 Introduced in Java 7 under java.util.concurrent.
+
+🔧 Core Idea
+Divide and conquer large problems by breaking them into smaller subproblems, solving them in parallel, and then combining results.
+
+⚙️ Components
+ForkJoinPool – A specialized thread pool optimized for recursive, divide-and-conquer tasks.
+
+ForkJoinTask – Abstract base for tasks. Two main subclasses:
+
+RecursiveAction – for tasks that don’t return a result
+
+RecursiveTask<V> – for tasks that return a result
+
+🧠 When to Use It
+
+| Scenario                              | Use Fork/Join? |
+| ------------------------------------- | -------------- |
+| Large problem that can be divided     | ✅ Yes          |
+| CPU-bound computations (not I/O)      | ✅ Yes          |
+| Recursive algorithms (like quicksort) | ✅ Yes          |
+| Simple tasks or I/O-bound tasks       | ❌ No           |
+
+
+✳️ Example: Sum of an Array Using RecursiveTask
+
+import java.util.concurrent.*;
+
+public class ForkJoinSum extends RecursiveTask<Long> {
+    private static final int THRESHOLD = 3;
+    private final long[] numbers;
+    private final int start, end;
+
+    public ForkJoinSum(long[] numbers, int start, int end) {
+        this.numbers = numbers;
+        this.start = start;
+        this.end = end;
+    }
+
+    @Override
+    protected Long compute() {
+        int length = end - start;
+        if (length <= THRESHOLD) {
+            long sum = 0;
+            for (int i = start; i < end; i++) sum += numbers[i];
+            return sum;
+        }
+
+        int mid = start + length / 2;
+        ForkJoinSum left = new ForkJoinSum(numbers, start, mid);
+        ForkJoinSum right = new ForkJoinSum(numbers, mid, end);
+
+        left.fork();                  // Run left task asynchronously
+        long rightResult = right.compute();  // Compute right in current thread
+        long leftResult = left.join();       // Wait for left task
+
+        return leftResult + rightResult;
+    }
+
+    public static void main(String[] args) {
+        long[] arr = {1, 2, 3, 4, 5, 6, 7, 8};
+
+        ForkJoinPool pool = new ForkJoinPool();
+        ForkJoinSum task = new ForkJoinSum(arr, 0, arr.length);
+        long result = pool.invoke(task);
+
+        System.out.println("Total sum: " + result);
+    }
+}
+
+
+✅ Benefits
+Uses work-stealing: idle threads can "steal" work from busy threads.
+
+Optimized for multi-core processors.
+
+Handles recursive, parallelizable workloads efficiently.
+
+🛑 Avoid If:
+Your task is I/O-bound or not parallelizable.
+
+Tasks are too small and create overhead without gain.
+
+You need to wait/block on external resources (network, DB, etc.)
+
+
+
+Would you like a real-world example like parallel merge sort or matrix multiplication using Fork/Join?
+
