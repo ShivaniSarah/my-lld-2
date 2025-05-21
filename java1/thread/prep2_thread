@@ -1,0 +1,327 @@
+Q1. What is a deadlock? How do you avoid it?
+
+A deadlock is a situation in concurrent programming where a set of threads or processes are blocked because each is waiting for a resource that the other holds, creating a circular dependency and preventing further progress.
+
+Classic Example
+Consider two threads and two resources:
+
+Thread A holds Resource 1 and waits for Resource 2
+
+Thread B holds Resource 2 and waits for Resource 1
+
+Neither can proceed, resulting in a deadlock.
+
+Four Necessary Conditions for Deadlock (Coffman Conditions)
+Mutual Exclusion – Resources are held exclusively.
+
+Hold and Wait – A thread holds a resource and waits for others.
+
+No Preemption – Resources cannot be forcibly taken away.
+
+Circular Wait – A circular chain of waiting threads exists.
+
+Deadlock occurs only if all four conditions hold simultaneously.
+
+
+💡 Scenario:
+You have two threads and two resources (locks):
+
+Thread A
+
+Thread B
+
+Resource R1 (e.g., a lock on File 1)
+
+Resource R2 (e.g., a lock on File 2)
+
+1. Mutual Exclusion
+Definition: A resource can be held by only one thread at a time.
+
+Example:
+
+Thread A acquires R1
+
+Thread B acquires R2
+
+Now, neither thread can access the other’s resource because each resource is locked exclusively.
+
+2. Hold and Wait
+Definition: A thread is holding one resource and waiting for another.
+
+Example:
+
+Thread A holds R1, and waits for R2
+
+Thread B holds R2, and waits for R1
+
+Now, both threads are holding one resource and waiting for another that the other thread owns.
+
+3. No Preemption
+Definition: Resources cannot be forcibly taken away from a thread. They must be released voluntarily.
+
+Example:
+
+Neither thread can force the other to release the lock.
+
+Thread A cannot force Thread B to give up R2, and vice versa.
+
+So, both are stuck waiting.
+
+4. Circular Wait
+Definition: There exists a circular chain of threads, each waiting for a resource held by the next thread in the chain.
+
+Example:
+
+Thread A → waiting for R2 (held by B)
+
+Thread B → waiting for R1 (held by A)
+
+So, the wait forms a cycle:
+A → B → A → circular wait
+
+🧨 Result: DEADLOCK
+Because all four conditions are satisfied, the system is deadlocked.
+Neither thread can proceed, and they wait forever.
+
+🔁 Visual Representation
+
+Thread A: holds R1 ———> waiting for R2
+Thread B: holds R2 ———> waiting for R1
+This forms a deadlock.
+
+✅ Deadlock Avoidance Example (Ordering Locks)
+
+// Always acquire R1 before R2
+synchronized(R1) {
+    synchronized(R2) {
+        // Safe critical section
+    }
+}
+If all threads follow this global order, circular wait cannot happen, and deadlock is avoided.
+
+
+Ways to Avoid Deadlock
+
+1. Avoid Circular Wait (Ordering Resources)
+Impose a global ordering of resource acquisition.
+
+Always acquire resources in a predefined order.
+
+Example: If all threads acquire Lock A before Lock B, circular wait is prevented.
+
+2. Avoid Hold and Wait
+Acquire all needed resources at once.
+
+Or release currently held resources if the next required one isn’t available.
+
+Downsides: Can lead to lower resource utilization.
+
+3. Use Try-Lock with Timeout
+Instead of blocking indefinitely, try to acquire a lock with a timeout.
+
+If a lock isn’t acquired within the time limit, release any held locks and retry.
+
+4. Deadlock Detection and Recovery
+Detect cycles in the resource allocation graph.
+
+Recover by terminating one or more threads or preempting resources.
+
+Used in systems like databases or OS-level process management.
+
+5. Use Concurrency Libraries
+High-level concurrency utilities like ReentrantLock with tryLock(), semaphores, or Java's java.util.concurrent package can help manage locks more safely.
+
+Example in Java (Avoiding Deadlock Using tryLock):
+
+if (lock1.tryLock()) {
+    try {
+        if (lock2.tryLock()) {
+            try {
+                // critical section
+            } finally {
+                lock2.unlock();
+            }
+        }
+    } finally {
+        lock1.unlock();
+    }
+}
+Summary
+Deadlock is a serious concurrency problem, but you can prevent it by breaking at least one of the four conditions. Good design, disciplined locking order, and defensive programming can help you avoid it altogether.
+
+
+Here is a complete Java example that demonstrates deadlock avoidance by always acquiring locks in a fixed global order (R1 before R2). This prevents circular wait, one of the four Coffman conditions.
+
+
+public class DeadlockAvoidanceExample {
+
+    private static final Object R1 = new Object();
+    private static final Object R2 = new Object();
+
+    public static void main(String[] args) {
+        Thread thread1 = new Thread(() -> {
+            acquireLocks("Thread-1");
+        });
+
+        Thread thread2 = new Thread(() -> {
+            acquireLocks("Thread-2");
+        });
+
+        thread1.start();
+        thread2.start();
+    }
+
+    private static void acquireLocks(String threadName) {
+        System.out.println(threadName + " trying to lock R1");
+        synchronized (R1) {
+            System.out.println(threadName + " locked R1");
+
+            try {
+                // Simulate some work with R1
+                Thread.sleep(50);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+
+            System.out.println(threadName + " trying to lock R2");
+            synchronized (R2) {
+                System.out.println(threadName + " locked R2");
+                System.out.println(threadName + " entered critical section");
+
+                // Simulate critical section work
+                try {
+                    Thread.sleep(50);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+
+                System.out.println(threadName + " exiting critical section");
+            }
+            System.out.println(threadName + " released R2");
+        }
+        System.out.println(threadName + " released R1");
+    }
+}
+
+o/p
+
+Thread-1 trying to lock R1
+Thread-1 locked R1
+Thread-2 trying to lock R1
+Thread-1 trying to lock R2
+Thread-1 locked R2
+Thread-1 entered critical section
+Thread-1 exiting critical section
+Thread-1 released R2
+Thread-2 locked R1
+Thread-1 released R1
+Thread-2 trying to lock R2
+Thread-2 locked R2
+Thread-2 entered critical section
+Thread-2 exiting critical section
+Thread-2 released R2
+Thread-2 released R1
+
+
+Here is a complete Java example using ReentrantLock and tryLock() to avoid deadlock by using timeout-based locking. This approach ensures that if a thread cannot acquire all needed locks within a short time, it will release what it holds and try again later, breaking the circular wait condition.
+
+
+
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.TimeUnit;
+
+package org.example;
+
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.TimeUnit;
+
+public class Main {
+
+    private static final Lock lock1 = new ReentrantLock();
+    private static final Lock lock2 = new ReentrantLock();
+
+    public static void main(String[] args) {
+        Thread t1 = new Thread(() -> work("Thread-1", lock1, lock2));
+        Thread t2 = new Thread(() -> work("Thread-2", lock2, lock1));
+
+        t1.start();
+        t2.start();
+    }
+
+    private static void work(String name, Lock firstLock, Lock secondLock) {
+        while (true) {
+            boolean gotFirst = false;
+            boolean gotSecond = false;
+
+            try {
+                gotFirst = firstLock.tryLock(50, TimeUnit.MILLISECONDS);
+                if (gotFirst) {
+                    System.out.println(name + " acquired first lock");
+
+                    gotSecond = secondLock.tryLock(50, TimeUnit.MILLISECONDS);
+                    if (gotSecond) {
+                        System.out.println(name + " acquired second lock");
+                        System.out.println(name + " entered critical section");
+
+                        // Simulate critical section
+                        Thread.sleep(100);
+
+                        System.out.println(name + " exiting critical section");
+                        break; // Work done, exit loop
+                    }
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                System.out.println(name + " was interrupted");
+            } finally {
+                if (gotSecond) {
+                    secondLock.unlock();
+                    System.out.println(name + " released second lock");
+                }
+                if (gotFirst) {
+                    firstLock.unlock();
+                    System.out.println(name + " released first lock");
+                }
+            }
+
+            // Wait before retrying to reduce contention
+            try {
+                Thread.sleep(10);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+    }
+}
+
+
+o/p
+
+Thread-2 acquired first lock
+Thread-1 acquired first lock
+Thread-2 acquired second lock
+Thread-1 released first lock
+Thread-2 entered critical section
+Thread-2 exiting critical section
+Thread-1 acquired first lock
+Thread-2 released second lock
+Thread-1 acquired second lock
+Thread-1 entered critical section
+Thread-2 released first lock
+Thread-1 exiting critical section
+Thread-1 released second lock
+Thread-1 released first lock
+
+
+
+🔍 How It Avoids Deadlock:
+tryLock(timeout) tries to acquire the lock but gives up after the specified time.
+
+If it can't get both locks, the thread releases any held lock and tries again later.
+
+This avoids circular wait and ensures progress without blocking forever.
+
+
+
