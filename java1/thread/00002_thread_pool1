@@ -11,13 +11,15 @@ Uses BlockingQueue to hold submitted tasks.
 Graceful shutdown support (optional, but added here).
 
 
-🧱 1. SimpleThreadPool.java
+
+package org.example;
+
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.List;
 import java.util.ArrayList;
 
-public class SimpleThreadPool {
+class SimpleThreadPool {
     private final BlockingQueue<Runnable> taskQueue;
     private final List<Worker> workers;
     private volatile boolean isShutdown = false;
@@ -64,10 +66,6 @@ public class SimpleThreadPool {
     }
 }
 
-
-
-
-🚀 2. Main.java – Test the Pool
 public class Main {
     public static void main(String[] args) throws InterruptedException {
         SimpleThreadPool pool = new SimpleThreadPool(3);
