@@ -1,0 +1,138 @@
+Print FooBar Alternately
+
+One thread prints "foo", another prints "bar" — ensure the output is "foobarfoobar...".
+
+
+use multithreading in java
+
+
+Sure! Here’s a simple Java example using two threads printing "foo" and "bar" alternately, ensuring the output is like foobarfoobar....
+
+I’ll use a shared Semaphore approach for clear alternating control:
+
+
+package org.example;
+
+class FooBar {
+    private final int n;
+    private boolean fooTurn = true; // flag to track whose turn
+
+    public FooBar(int n) {
+        this.n = n;
+    }
+
+    public synchronized void foo(Runnable printFoo) throws InterruptedException {
+        for (int i = 0; i < n; i++) {
+            while (!fooTurn) {
+                wait();
+            }
+            printFoo.run();
+            fooTurn = false;
+            notifyAll();
+        }
+    }
+
+    public synchronized void bar(Runnable printBar) throws InterruptedException {
+        for (int i = 0; i < n; i++) {
+            while (fooTurn) {
+                wait();
+            }
+            printBar.run();
+            fooTurn = true;
+            notifyAll();
+        }
+    }
+
+    public static void main(String[] args) {
+        FooBar fooBar = new FooBar(5);
+
+        Thread t1 = new Thread(() -> {
+            try {
+                fooBar.foo(() -> System.out.print("foo"));
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        });
+
+        Thread t2 = new Thread(() -> {
+            try {
+                fooBar.bar(() -> System.out.print("bar"));
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        });
+
+        t1.start();
+        t2.start();
+    }
+}
+
+
+
+
+or
+
+
+
+
+
+import java.util.concurrent.Semaphore;
+
+public class FooBar {
+    private final int n;
+    private final Semaphore fooSem = new Semaphore(1);
+    private final Semaphore barSem = new Semaphore(0);
+
+    public FooBar(int n) {
+        this.n = n;
+    }
+
+    public void foo(Runnable printFoo) throws InterruptedException {
+        for (int i = 0; i < n; i++) {
+            fooSem.acquire();        // wait for foo turn
+            printFoo.run();          // print "foo"
+            barSem.release();        // allow bar to run
+        }
+    }
+
+    public void bar(Runnable printBar) throws InterruptedException {
+        for (int i = 0; i < n; i++) {
+            barSem.acquire();        // wait for bar turn
+            printBar.run();          // print "bar"
+            fooSem.release();        // allow foo to run
+        }
+    }
+
+    public static void main(String[] args) {
+        FooBar fooBar = new FooBar(5);
+
+        Thread threadFoo = new Thread(() -> {
+            try {
+                fooBar.foo(() -> System.out.print("foo"));
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        });
+
+        Thread threadBar = new Thread(() -> {
+            try {
+                fooBar.bar(() -> System.out.print("bar"));
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        });
+
+        threadFoo.start();
+        threadBar.start();
+    }
+}
+
+
+
+Output:
+
+
+foobarfoobarfoobarfoobarfoobar
+
+
+
