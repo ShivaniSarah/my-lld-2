@@ -1,0 +1,133 @@
+Design a Concurrent Cache with Expiry
+
+Entries expire after a TTL (Time to Live). Use background threads to evict expired entries.
+
+
+using multithreading in jvaa
+
+
+ChatGPT said:
+Here’s a thread-safe concurrent cache with expiry in Java using:
+
+ConcurrentHashMap for thread-safe storage,
+
+Scheduled background thread to evict expired entries,
+
+TTL per entry,
+
+Basic put, get, and remove operations.
+
+Implementation:
+
+import java.util.Map;
+import java.util.concurrent.*;
+
+public class ExpiringCache<K, V> {
+
+    private static class CacheEntry<V> {
+        final V value;
+        final long expiryTime; // epoch millis
+
+        CacheEntry(V value, long expiryTime) {
+            this.value = value;
+            this.expiryTime = expiryTime;
+        }
+
+        boolean isExpired() {
+            return System.currentTimeMillis() > expiryTime;
+        }
+    }
+
+    private final ConcurrentHashMap<K, CacheEntry<V>> map = new ConcurrentHashMap<>();
+    private final ScheduledExecutorService cleaner = Executors.newSingleThreadScheduledExecutor();
+    private final long ttlMillis;
+
+    public ExpiringCache(long ttlMillis, long cleanupIntervalMillis) {
+        this.ttlMillis = ttlMillis;
+
+        // Schedule cleanup task to run periodically
+        cleaner.scheduleAtFixedRate(this::evictExpiredEntries,
+                cleanupIntervalMillis,
+                cleanupIntervalMillis,
+                TimeUnit.MILLISECONDS);
+    }
+
+    public void put(K key, V value) {
+        long expiryTime = System.currentTimeMillis() + ttlMillis;
+        map.put(key, new CacheEntry<>(value, expiryTime));
+    }
+
+    public V get(K key) {
+        CacheEntry<V> entry = map.get(key);
+        if (entry == null || entry.isExpired()) {
+            map.remove(key);
+            return null;
+        }
+        return entry.value;
+    }
+
+    public void remove(K key) {
+        map.remove(key);
+    }
+
+    public int size() {
+        return map.size();
+    }
+
+    private void evictExpiredEntries() {
+        long now = System.currentTimeMillis();
+        for (Map.Entry<K, CacheEntry<V>> entry : map.entrySet()) {
+            if (entry.getValue().expiryTime <= now) {
+                map.remove(entry.getKey());
+            }
+        }
+    }
+
+    public void shutdown() {
+        cleaner.shutdown();
+    }
+
+    // Test example
+    public static void main(String[] args) throws InterruptedException {
+        ExpiringCache<String, String> cache = new ExpiringCache<>(3000, 1000);
+        cache.put("key1", "value1");
+        cache.put("key2", "value2");
+
+        System.out.println("Initial size: " + cache.size()); // 2
+        System.out.println("key1: " + cache.get("key1")); // value1
+
+        Thread.sleep(3500);
+
+        System.out.println("After TTL expiry:");
+        System.out.println("key1: " + cache.get("key1")); // null
+        System.out.println("Size: " + cache.size()); // 0
+
+        cache.shutdown();
+    }
+}
+
+
+Explanation:
+
+Each entry stores its own expiry timestamp.
+
+put() inserts/updates with a fresh expiry time.
+
+get() returns null if the entry is expired and removes it eagerly.
+
+A scheduled background thread runs every cleanupIntervalMillis to remove expired entries proactively.
+
+ConcurrentHashMap ensures thread-safe concurrent access.
+
+shutdown() to cleanly stop the background thread.
+
+Want me to add features like:
+
+Per-entry custom TTL?
+
+Maximum cache size with eviction policy (LRU, LFU)?
+
+Listener/callback on eviction?
+
+Strong/weak reference support?
+
