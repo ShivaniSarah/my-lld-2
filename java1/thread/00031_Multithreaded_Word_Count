@@ -1,0 +1,108 @@
+Multithreaded Word Count
+
+Given a large file, use multiple threads to count word frequencies.
+
+
+
+ChatGPT said:
+Here’s a multithreaded word count implementation in Java. It reads a large file, splits it into chunks, processes them in parallel, and merges the word frequencies:
+
+✅ Features:
+Uses a thread pool (ExecutorService)
+
+Each thread handles a portion of lines
+
+Final word counts are merged thread-safely
+
+📄 MultithreadedWordCount.java
+
+import java.io.*;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.regex.Pattern;
+
+public class MultithreadedWordCount {
+    private static final int THREAD_COUNT = 4;
+    private static final Pattern WORD_PATTERN = Pattern.compile("\\W+");
+
+    public static void main(String[] args) throws Exception {
+        File file = new File("largefile.txt");
+        ExecutorService executor = Executors.newFixedThreadPool(THREAD_COUNT);
+        List<Future<Map<String, Integer>>> futures = new ArrayList<>();
+
+        // Split file into line batches
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            List<String> batch = new ArrayList<>();
+            String line;
+            int batchSize = 500; // lines per thread
+
+            while ((line = reader.readLine()) != null) {
+                batch.add(line);
+                if (batch.size() >= batchSize) {
+                    futures.add(executor.submit(new WordCountTask(batch)));
+                    batch = new ArrayList<>();
+                }
+            }
+
+            if (!batch.isEmpty()) {
+                futures.add(executor.submit(new WordCountTask(batch)));
+            }
+        }
+
+        // Combine results
+        Map<String, Integer> globalCount = new ConcurrentHashMap<>();
+        for (Future<Map<String, Integer>> future : futures) {
+            Map<String, Integer> localCount = future.get();
+            localCount.forEach((word, count) ->
+                globalCount.merge(word, count, Integer::sum));
+        }
+
+        executor.shutdown();
+
+        // Print top 10 most frequent words
+        globalCount.entrySet().stream()
+            .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
+            .limit(10)
+            .forEach(e -> System.out.println(e.getKey() + ": " + e.getValue()));
+    }
+
+    static class WordCountTask implements Callable<Map<String, Integer>> {
+        private final List<String> lines;
+
+        WordCountTask(List<String> lines) {
+            this.lines = lines;
+        }
+
+        @Override
+        public Map<String, Integer> call() {
+            Map<String, Integer> count = new HashMap<>();
+            for (String line : lines) {
+                for (String word : WORD_PATTERN.split(line.toLowerCase())) {
+                    if (!word.isEmpty()) {
+                        count.merge(word, 1, Integer::sum);
+                    }
+                }
+            }
+            return count;
+        }
+    }
+}
+
+
+📌 How it works:
+Reads largefile.txt in batches of lines
+
+Each batch is submitted as a Callable that counts words
+
+Word frequencies from all threads are merged with merge()
+
+🚀 Want more?
+I can help you:
+
+Read huge files with RandomAccessFile or memory mapping
+
+Count frequencies in distributed systems
+
+Save results to a file or database
+
+Add progress display
