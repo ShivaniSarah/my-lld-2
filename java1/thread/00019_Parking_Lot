@@ -1,0 +1,445 @@
+Design a Parking Lot with concurrency (multiple cars entering/exiting).
+
+using multithreading in java
+
+
+ChatGPT said:
+Updated saved memory
+Here's a modular, multithreaded Parking Lot system in Java using concurrency primitives like Semaphore and ConcurrentHashMap. It simulates multiple cars entering and exiting concurrently, managing slot allocation safely.
+
+✅ Features:
+Fixed total slots.
+
+Thread-safe car entry/exit.
+
+Fairness using Semaphore.
+
+Logs for entry/exit simulation.
+
+
+
+package org.example;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+import java.util.Map;
+import java.util.concurrent.*;
+
+class ParkingLot {
+    private final int capacity;
+    private final Semaphore semaphore;
+    private final Map<String, Integer> parkedCars = new ConcurrentHashMap<>();
+    private final BlockingQueue<Integer> availableSlots;
+
+    public ParkingLot(int capacity) {
+        this.capacity = capacity;
+        this.semaphore = new Semaphore(capacity, true);
+        this.availableSlots = new LinkedBlockingQueue<>();
+        for (int i = 1; i <= capacity; i++) {
+            availableSlots.offer(i);
+        }
+    }
+
+    public boolean tryPark(String carId) throws InterruptedException {
+        if (semaphore.tryAcquire(5, TimeUnit.SECONDS)) {
+            Integer slot = availableSlots.take();
+            parkedCars.put(carId, slot);
+            System.out.printf("Car %s parked in slot %d%n", carId, slot);
+            return true;
+        } else {
+            System.out.printf("Car %s failed to park (lot full)%n", carId);
+            return false;
+        }
+    }
+
+    public void exit(String carId) {
+        Integer slot = parkedCars.remove(carId);
+        if (slot != null) {
+            availableSlots.offer(slot);
+            semaphore.release();
+            System.out.printf("Car %s exited from slot %d%n", carId, slot);
+        } else {
+            System.out.printf("Car %s was not found in the lot%n", carId);
+        }
+    }
+
+    public int getAvailableSlots() {
+        return semaphore.availablePermits();
+    }
+}
+
+class Car implements Runnable {
+    private final String carId;
+    private final ParkingLot lot;
+
+    public Car(String carId, ParkingLot lot) {
+        this.carId = carId;
+        this.lot = lot;
+    }
+
+    @Override
+    public void run() {
+        try {
+            if (lot.tryPark(carId)) {
+                Thread.sleep((long) (Math.random() * 5000)); // simulate parking duration
+                lot.exit(carId);
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            System.out.println("Car " + carId + " was interrupted.");
+        }
+    }
+}
+
+
+
+public class Main {
+    public static void main(String[] args) {
+        ParkingLot lot = new ParkingLot(5);
+        ExecutorService executor = Executors.newFixedThreadPool(10);
+
+        for (int i = 1; i <= 10; i++) {
+            executor.execute(new Car("CAR" + i, lot));
+        }
+
+        executor.shutdown();
+    }
+}
+
+o/p
+
+
+Car CAR1 parked in slot 1
+Car CAR5 parked in slot 5
+Car CAR4 parked in slot 4
+Car CAR3 parked in slot 3
+Car CAR2 parked in slot 2
+Car CAR3 exited from slot 3
+Car CAR6 parked in slot 3
+Car CAR2 exited from slot 2
+Car CAR7 parked in slot 2
+Car CAR5 exited from slot 5
+Car CAR9 parked in slot 5
+Car CAR1 exited from slot 1
+Car CAR8 parked in slot 1
+Car CAR6 exited from slot 3
+Car CAR10 parked in slot 3
+Car CAR4 exited from slot 4
+Car CAR10 exited from slot 3
+Car CAR7 exited from slot 2
+Car CAR8 exited from slot 1
+Car CAR9 exited from slot 5
+
+
+
+
+
+-----------------
+
+
+
+
+Would you like to extend this with features like:
+
+EV charging slots
+
+Parking fee calculation
+
+Entry/exit logs with timestamps
+
+UI/API interface for real-world integration?
+
+
+
+Here’s a full Java implementation of a concurrent Parking Lot system with:
+
+Multiple slots (normal and EV)
+
+Thread-safe car entry/exit
+
+Parking fee calculation by time
+
+Entry/exit logs with timestamps
+
+CLI interface simulating API
+
+
+
+
+
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.locks.*;
+
+class ParkingLotSystem {
+
+    enum SlotType { NORMAL, EV }
+
+    enum VehicleType { CAR, BIKE }
+
+    static class Vehicle {
+        final String plateNumber;
+        final VehicleType type;
+        final boolean isEV;
+
+        Vehicle(String plateNumber, VehicleType type, boolean isEV) {
+            this.plateNumber = plateNumber;
+            this.type = type;
+            this.isEV = isEV;
+        }
+    }
+
+    static class Slot {
+        final int slotId;
+        final SlotType slotType;
+        volatile boolean isOccupied;
+
+        Slot(int id, SlotType type) {
+            this.slotId = id;
+            this.slotType = type;
+            this.isOccupied = false;
+        }
+
+        @Override
+        public String toString() {
+            return "Slot{" +
+                    "id=" + slotId +
+                    ", type=" + slotType +
+                    ", occupied=" + isOccupied +
+                    '}';
+        }
+    }
+
+    static class Ticket {
+        final String ticketId;
+        final Vehicle vehicle;
+        final Slot slot;
+        final LocalDateTime entryTime;
+        LocalDateTime exitTime;
+
+        Ticket(String ticketId, Vehicle vehicle, Slot slot) {
+            this.ticketId = ticketId;
+            this.vehicle = vehicle;
+            this.slot = slot;
+            this.entryTime = LocalDateTime.now();
+        }
+    }
+
+    static class LogEntry {
+        final String vehiclePlate;
+        final LocalDateTime entryTime;
+        final LocalDateTime exitTime;
+        final double fee;
+
+        LogEntry(String plate, LocalDateTime entry, LocalDateTime exit, double fee) {
+            this.vehiclePlate = plate;
+            this.entryTime = entry;
+            this.exitTime = exit;
+            this.fee = fee;
+        }
+
+        @Override
+        public String toString() {
+            DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            return String.format("Vehicle %s entered at %s, exited at %s, Fee: ₹%.2f",
+                    vehiclePlate, entryTime.format(fmt), exitTime.format(fmt), fee);
+        }
+    }
+
+    static class ParkingLotManager {
+        private final List<Slot> normalSlots = new ArrayList<>();
+        private final List<Slot> evSlots = new ArrayList<>();
+
+        private final Map<String, Ticket> activeTickets = new ConcurrentHashMap<>();
+        private final List<LogEntry> logs = Collections.synchronizedList(new ArrayList<>());
+
+        // Locks for concurrency control
+        private final ReentrantLock normalLock = new ReentrantLock();
+        private final ReentrantLock evLock = new ReentrantLock();
+
+        // Pricing config: ₹10 per hour for normal, ₹15 per hour for EV slots
+        private static final double NORMAL_RATE_PER_HOUR = 10;
+        private static final double EV_RATE_PER_HOUR = 15;
+
+        public ParkingLotManager(int normalCount, int evCount) {
+            for (int i = 1; i <= normalCount; i++) normalSlots.add(new Slot(i, SlotType.NORMAL));
+            for (int i = 1; i <= evCount; i++) evSlots.add(new Slot(i, SlotType.EV));
+        }
+
+        public Ticket parkVehicle(Vehicle vehicle) throws Exception {
+            Slot assignedSlot = null;
+
+            if (vehicle.isEV) {
+                assignedSlot = allocateSlot(evSlots, evLock);
+                if (assignedSlot == null) {
+                    // fallback: EV vehicle can park in normal slot if no EV slots free
+                    assignedSlot = allocateSlot(normalSlots, normalLock);
+                }
+            } else {
+                assignedSlot = allocateSlot(normalSlots, normalLock);
+            }
+
+            if (assignedSlot == null) {
+                throw new Exception("No parking slot available for vehicle " + vehicle.plateNumber);
+            }
+
+            Ticket ticket = new Ticket(UUID.randomUUID().toString(), vehicle, assignedSlot);
+            activeTickets.put(vehicle.plateNumber, ticket);
+            System.out.println("Vehicle " + vehicle.plateNumber + " parked at slot " + assignedSlot.slotId + " (" + assignedSlot.slotType + ")");
+            return ticket;
+        }
+
+        private Slot allocateSlot(List<Slot> slots, ReentrantLock lock) {
+            lock.lock();
+            try {
+                for (Slot slot : slots) {
+                    if (!slot.isOccupied) {
+                        slot.isOccupied = true;
+                        return slot;
+                    }
+                }
+                return null;
+            } finally {
+                lock.unlock();
+            }
+        }
+
+        public double exitVehicle(String plateNumber) throws Exception {
+            Ticket ticket = activeTickets.remove(plateNumber);
+            if (ticket == null) throw new Exception("Vehicle " + plateNumber + " not found in parking");
+
+            ticket.exitTime = LocalDateTime.now();
+            double fee = calculateFee(ticket);
+            releaseSlot(ticket.slot);
+            logs.add(new LogEntry(plateNumber, ticket.entryTime, ticket.exitTime, fee));
+            System.out.println("Vehicle " + plateNumber + " exited from slot " + ticket.slot.slotId + ". Fee: ₹" + fee);
+            return fee;
+        }
+
+        private void releaseSlot(Slot slot) {
+            ReentrantLock lock = (slot.slotType == SlotType.EV) ? evLock : normalLock;
+            lock.lock();
+            try {
+                slot.isOccupied = false;
+            } finally {
+                lock.unlock();
+            }
+        }
+
+        private double calculateFee(Ticket ticket) {
+            Duration duration = Duration.between(ticket.entryTime, ticket.exitTime);
+            double hours = Math.ceil(duration.toMinutes() / 60.0);
+            if (hours == 0) hours = 1; // Minimum 1 hour charge
+
+            double rate = (ticket.slot.slotType == SlotType.EV) ? EV_RATE_PER_HOUR : NORMAL_RATE_PER_HOUR;
+            return rate * hours;
+        }
+
+        public void printLogs() {
+            synchronized (logs) {
+                if (logs.isEmpty()) {
+                    System.out.println("No logs available.");
+                } else {
+                    logs.forEach(System.out::println);
+                }
+            }
+        }
+    }
+
+    // CLI to simulate API calls
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        ParkingLotManager manager = new ParkingLotManager(5, 2); // 5 normal slots, 2 EV slots
+
+        System.out.println("Parking Lot System Started.");
+        System.out.println("Commands:\n park <plate> <CAR/BIKE> <true|false (EV)>\n exit <plate>\n logs\n quit");
+
+        ExecutorService threadPool = Executors.newCachedThreadPool();
+
+        while (true) {
+            System.out.print("> ");
+            String line = scanner.nextLine();
+            if (line == null || line.trim().isEmpty()) continue;
+
+            String[] parts = line.trim().split("\\s+");
+            String cmd = parts[0].toLowerCase();
+
+            try {
+                switch (cmd) {
+                    case "park":
+                        if (parts.length != 4) {
+                            System.out.println("Usage: park <plate> <CAR/BIKE> <true|false (EV)>");
+                            break;
+                        }
+                        String plate = parts[1];
+                        VehicleType vType = VehicleType.valueOf(parts[2].toUpperCase());
+                        boolean isEV = Boolean.parseBoolean(parts[3]);
+
+                        Vehicle vehicle = new Vehicle(plate, vType, isEV);
+
+                        threadPool.submit(() -> {
+                            try {
+                                manager.parkVehicle(vehicle);
+                            } catch (Exception e) {
+                                System.out.println("Error: " + e.getMessage());
+                            }
+                        });
+                        break;
+
+                    case "exit":
+                        if (parts.length != 2) {
+                            System.out.println("Usage: exit <plate>");
+                            break;
+                        }
+                        String exitPlate = parts[1];
+                        threadPool.submit(() -> {
+                            try {
+                                manager.exitVehicle(exitPlate);
+                            } catch (Exception e) {
+                                System.out.println("Error: " + e.getMessage());
+                            }
+                        });
+                        break;
+
+                    case "logs":
+                        manager.printLogs();
+                        break;
+
+                    case "quit":
+                        threadPool.shutdownNow();
+                        System.out.println("Exiting...");
+                        return;
+
+                    default:
+                        System.out.println("Unknown command");
+                }
+            } catch (Exception ex) {
+                System.out.println("Error: " + ex.getMessage());
+            }
+        }
+    }
+}
+
+
+
+
+o/p
+
+
+Parking Lot System Started.
+Commands:
+ park <plate> <CAR/BIKE> <true|false (EV)>
+ exit <plate>
+ logs
+ quit
+> park ABC123 CAR false
+> Vehicle ABC123 parked at slot 1 (NORMAL)
+exit ABC123
+> Vehicle ABC123 exited from slot 1. Fee: ₹10.0
+park EV123 CAR true
+> Vehicle EV123 parked at slot 1 (EV)
+
