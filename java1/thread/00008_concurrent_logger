@@ -1,0 +1,120 @@
+Design a Concurrent Logger system using multithreading in java
+
+Here is a simple and thread-safe Concurrent Logger system in Java using multithreading. The logger will:
+
+✅ Features:
+
+Be non-blocking for writers (producers)
+
+Write logs sequentially in the background
+
+Use a BlockingQueue to queue logs
+
+Be thread-safe for concurrent usage
+
+Simulate writing logs to console or file
+
+
+
+package org.example;
+
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+class ConcurrentLogger {
+    private final BlockingQueue<String> logQueue = new LinkedBlockingQueue<>();
+    private final AtomicBoolean isRunning = new AtomicBoolean(true);
+    private final Thread loggerThread;
+
+    public ConcurrentLogger() {
+        loggerThread = new Thread(() -> {
+            while (isRunning.get() || !logQueue.isEmpty()) {
+                try {
+                    String message = logQueue.take();
+                    writeLog(message);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        });
+        loggerThread.start();
+    }
+
+    public void log(String message) {
+        if (isRunning.get()) {
+            logQueue.offer(Thread.currentThread().getName() + " => " + message);
+        }
+    }
+
+    private void writeLog(String message) {
+        // Simulate writing to a file or external system
+        System.out.println("[LOG] " + message);
+    }
+
+    public void shutdown() {
+        isRunning.set(false);
+        loggerThread.interrupt();
+        try {
+            loggerThread.join();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        ConcurrentLogger logger = new ConcurrentLogger();
+
+        Runnable task = () -> {
+            for (int i = 1; i <= 5; i++) {
+                logger.log("Log message " + i);
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        };
+
+        Thread t1 = new Thread(task, "Thread-A");
+        Thread t2 = new Thread(task, "Thread-B");
+        Thread t3 = new Thread(task, "Thread-C");
+
+        t1.start();
+        t2.start();
+        t3.start();
+
+        try {
+            t1.join();
+            t2.join();
+            t3.join();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
+        logger.shutdown();
+        System.out.println("Logger shutdown.");
+    }
+}
+
+
+o/p
+
+[LOG] Thread-B => Log message 1
+[LOG] Thread-C => Log message 1
+[LOG] Thread-A => Log message 1
+[LOG] Thread-C => Log message 2
+[LOG] Thread-B => Log message 2
+[LOG] Thread-A => Log message 2
+[LOG] Thread-C => Log message 3
+[LOG] Thread-A => Log message 3
+[LOG] Thread-B => Log message 3
+[LOG] Thread-C => Log message 4
+[LOG] Thread-B => Log message 4
+[LOG] Thread-A => Log message 4
+[LOG] Thread-C => Log message 5
+[LOG] Thread-B => Log message 5
+[LOG] Thread-A => Log message 5
+Logger shutdown.
