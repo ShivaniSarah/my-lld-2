@@ -1,0 +1,69 @@
+Implement a CountDownLatch-like mechanism. java
+
+
+ChatGPT said:
+Here’s a simple custom implementation of a CountDownLatch-like class in Java without using java.util.concurrent.CountDownLatch. It provides the core await() and countDown() behavior:
+
+The constructor sets the initial count.
+
+await() blocks the thread while count > 0.
+
+countDown() decreases the count by 1 and calls notifyAll() when the count reaches zero to wake up waiting threads.
+
+getCount() returns the current count (optional helper).
+
+This mimics the standard CountDownLatch: the main thread waits until all worker threads call countDown() before proceeding.
+
+
+
+package org.example;
+
+class MyCountDownLatch {
+    private int count;
+
+    public MyCountDownLatch(int count) {
+        if (count < 0) throw new IllegalArgumentException("count cannot be negative");
+        this.count = count;
+    }
+
+    public synchronized void await() throws InterruptedException {
+        while (count > 0) {
+            wait();
+        }
+    }
+
+    public synchronized void countDown() {
+        if (count > 0) {
+            count--;
+            if (count == 0) {
+                notifyAll();
+            }
+        }
+    }
+
+    public synchronized int getCount() {
+        return count;
+    }
+}
+public class Main {
+    public static void main(String[] args) throws InterruptedException {
+        MyCountDownLatch latch = new MyCountDownLatch(3);
+
+        Runnable task = () -> {
+            System.out.println(Thread.currentThread().getName() + " running");
+            try {
+                Thread.sleep(1000); // simulate work
+            } catch (InterruptedException e) {}
+            System.out.println(Thread.currentThread().getName() + " done");
+            latch.countDown();
+        };
+
+        new Thread(task, "Thread-1").start();
+        new Thread(task, "Thread-2").start();
+        new Thread(task, "Thread-3").start();
+
+        System.out.println("Main thread waiting");
+        latch.await();
+        System.out.println("All threads finished, main thread proceeding");
+    }
+}
