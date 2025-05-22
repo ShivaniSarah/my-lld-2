@@ -1,0 +1,134 @@
+Implement Semaphore or use Java’s Semaphore class.
+
+
+ChatGPT said:
+Here's a clean implementation of a thread-safe bounded resource controller using Java’s built-in Semaphore from java.util.concurrent. This example models a classic scenario: controlling access to a limited number of permits (like database connections, print jobs, etc.).
+
+✅ Example: Using Java's Semaphore to Limit Concurrent Access
+
+import java.util.concurrent.*;
+
+public class SemaphoreExample {
+    private static final int MAX_CONCURRENT_USERS = 3;
+    private final Semaphore semaphore = new Semaphore(MAX_CONCURRENT_USERS);
+
+    public void accessResource(String threadName) {
+        try {
+            System.out.println(threadName + " is trying to acquire a permit...");
+            semaphore.acquire(); // Blocks if no permits are available
+            System.out.println(threadName + " acquired a permit.");
+
+            // Simulate work
+            Thread.sleep(2000);
+
+            System.out.println(threadName + " releasing permit.");
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } finally {
+            semaphore.release();
+        }
+    }
+
+    public static void main(String[] args) {
+        SemaphoreExample controller = new SemaphoreExample();
+        ExecutorService pool = Executors.newFixedThreadPool(10);
+
+        for (int i = 0; i < 10; i++) {
+            final String threadName = "Thread-" + i;
+            pool.execute(() -> controller.accessResource(threadName));
+        }
+
+        pool.shutdown();
+    }
+}
+
+
+🔍 Output Behavior:
+
+Only 3 threads at a time can access the resource.
+
+Others wait until a permit becomes available.
+
+💡 Use Cases for Semaphore:
+Connection pool limiters
+
+Rate-limiting APIs
+
+Controlling access to limited resources (printers, file handles)
+
+Building fair queues or access order (new Semaphore(n, true) for fairness)
+
+Would you like an example of implementing a custom semaphore from scratch (with wait/notify) for learning purposes?
+
+Here’s a simple custom Semaphore implementation in Java using wait() and notifyAll() to manage permits manually:
+
+
+public class SimpleSemaphore {
+    private int permits;
+
+    public SimpleSemaphore(int initialPermits) {
+        if (initialPermits < 0) throw new IllegalArgumentException("Permits cannot be negative");
+        this.permits = initialPermits;
+    }
+
+    // Acquire a permit, blocking if none are available
+    public synchronized void acquire() throws InterruptedException {
+        while (permits == 0) {
+            wait();
+        }
+        permits--;
+    }
+
+    // Release a permit and notify waiting threads
+    public synchronized void release() {
+        permits++;
+        notifyAll();
+    }
+
+    // Try to acquire permit without blocking, return true if successful
+    public synchronized boolean tryAcquire() {
+        if (permits > 0) {
+            permits--;
+            return true;
+        }
+        return false;
+    }
+
+    public static void main(String[] args) {
+        SimpleSemaphore semaphore = new SimpleSemaphore(3);
+
+        Runnable task = () -> {
+            String name = Thread.currentThread().getName();
+            try {
+                System.out.println(name + " trying to acquire permit...");
+                semaphore.acquire();
+                System.out.println(name + " acquired permit!");
+                Thread.sleep(2000);
+                System.out.println(name + " releasing permit.");
+                semaphore.release();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        };
+
+        for (int i = 0; i < 10; i++) {
+            new Thread(task, "Thread-" + i).start();
+        }
+    }
+}
+
+
+
+How it works:
+
+acquire() waits (blocks) if no permits available.
+
+release() adds a permit and notifies all waiting threads.
+
+tryAcquire() attempts to get permit immediately without waiting.
+
+This mimics Java’s Semaphore behavior but is simpler and for learning purposes only.
+
+Want me to help integrate this into a bigger system or explain the code step-by-step?
+
+
