@@ -2,7 +2,8 @@ Implement Semaphore or use Java’s Semaphore class.
 
 
 ChatGPT said:
-Here's a clean implementation of a thread-safe bounded resource controller using Java’s built-in Semaphore from java.util.concurrent. This example models a classic scenario: controlling access to a limited number of permits (like database connections, print jobs, etc.).
+Here's a clean implementation of a thread-safe bounded resource controller using Java’s built-in Semaphore from java.util.concurrent.
+This example models a classic scenario: controlling access to a limited number of permits (like database connections, print jobs, etc.).
 
 ✅ Example: Using Java's Semaphore to Limit Concurrent Access
 
