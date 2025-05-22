@@ -1,0 +1,167 @@
+Design a messaging queue (like Kafka Lite) using multithreading in java
+
+
+ChatGPT said:
+Designing a lightweight Kafka-like messaging queue involves implementing a producer-consumer architecture with topics, message queues, and multithreaded consumers. Below is a simplified version in Java that supports:
+
+✅ Features:
+Multiple topics
+
+Producers can publish messages to a topic
+
+Consumers can subscribe to a topic and consume messages using separate threads
+
+Thread-safe with synchronized access to queues
+
+🧱 Structure Overview
+java
+Copy
+Edit
+KafkaLite
+ ├── TopicManager
+ ├── Topic (holds message queue)
+ ├── Producer
+ ├── ConsumerWorker (Runnable)
+✅ Code: KafkaLite.java (Messaging Queue System)
+
+
+
+package org.example;
+
+import java.util.*;
+import java.util.concurrent.*;
+
+class KafkaLite {
+    private final Map<String, Topic> topics = new ConcurrentHashMap<>();
+
+    public void createTopic(String topicName) {
+        topics.putIfAbsent(topicName, new Topic(topicName));
+    }
+
+    public void publish(String topicName, String message) {
+        Topic topic = topics.get(topicName);
+        if (topic != null) {
+            topic.publish(message);
+        } else {
+            throw new IllegalArgumentException("Topic does not exist: " + topicName);
+        }
+    }
+
+    public void subscribe(String topicName, String consumerName) {
+        Topic topic = topics.get(topicName);
+        if (topic != null) {
+            ConsumerWorker consumer = new ConsumerWorker(consumerName, topic);
+            new Thread(consumer).start();
+        } else {
+            throw new IllegalArgumentException("Topic does not exist: " + topicName);
+        }
+    }
+
+    static class Topic {
+        private final String name;
+        private final BlockingQueue<String> messages = new LinkedBlockingQueue<>();
+
+        public Topic(String name) {
+            this.name = name;
+        }
+
+        public void publish(String message) {
+            try {
+                messages.put(message);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+
+        public String consume() throws InterruptedException {
+            return messages.take(); // blocks if queue is empty
+        }
+    }
+
+    static class ConsumerWorker implements Runnable {
+        private final String consumerName;
+        private final Topic topic;
+
+        public ConsumerWorker(String consumerName, Topic topic) {
+            this.consumerName = consumerName;
+            this.topic = topic;
+        }
+
+        @Override
+        public void run() {
+            try {
+                while (true) {
+                    String msg = topic.consume();
+                    System.out.println(consumerName + " consumed from " + topic.name + ": " + msg);
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                System.out.println(consumerName + " stopped.");
+            }
+        }
+    }
+}
+
+
+public class Main {
+    public static void main(String[] args) {
+        KafkaLite broker = new KafkaLite();
+
+        broker.createTopic("orders");
+        broker.createTopic("logs");
+
+        broker.subscribe("orders", "Consumer-1");
+        broker.subscribe("logs", "Consumer-2");
+
+        Runnable producer1 = () -> {
+            for (int i = 1; i <= 5; i++) {
+                broker.publish("orders", "Order#" + i);
+                System.out.println("Produced Order#" + i);
+                sleep(300);
+            }
+        };
+
+        Runnable producer2 = () -> {
+            for (int i = 1; i <= 5; i++) {
+                broker.publish("logs", "LogEvent#" + i);
+                System.out.println("Produced LogEvent#" + i);
+                sleep(500);
+            }
+        };
+
+        new Thread(producer1).start();
+        new Thread(producer2).start();
+    }
+
+    private static void sleep(long ms) {
+        try {
+            Thread.sleep(ms);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
+}
+
+o/p
+
+
+Produced Order#1
+Produced LogEvent#1
+Consumer-1 consumed from orders: Order#1
+Consumer-2 consumed from logs: LogEvent#1
+Produced Order#2
+Consumer-1 consumed from orders: Order#2
+Produced LogEvent#2
+Consumer-2 consumed from logs: LogEvent#2
+Produced Order#3
+Consumer-1 consumed from orders: Order#3
+Produced Order#4
+Consumer-1 consumed from orders: Order#4
+Produced LogEvent#3
+Consumer-2 consumed from logs: LogEvent#3
+Produced Order#5
+Consumer-1 consumed from orders: Order#5
+Produced LogEvent#4
+Consumer-2 consumed from logs: LogEvent#4
+Produced LogEvent#5
+Consumer-2 consumed from logs: LogEvent#5
