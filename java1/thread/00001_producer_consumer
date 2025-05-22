@@ -214,6 +214,71 @@ public class Main {
 }
 
 
+Note : Producer can be written like these ways also:
+
+
+class Producer implements Runnable {
+    private final SharedBuffer buffer;
+    private static final int MAX_ITEMS = 10;
+
+    public Producer(SharedBuffer buffer) {
+        this.buffer = buffer;
+    }
+
+    public void run() {
+        int item = 0;
+        while ( true) {
+            try {
+                buffer.produce(item++, Thread.currentThread().getName());
+                Thread.sleep(500); // simulate production time
+                if(item > MAX_ITEMS){
+                    Thread.currentThread().interrupt();
+                    break;
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+        System.out.println(Thread.currentThread().getName() + " finished producing.");
+    }
+}
+
+
+or
+
+
+class Producer implements Runnable {
+    private final SharedBuffer buffer;
+    private static final int MAX_ITEMS = 10;
+
+    public Producer(SharedBuffer buffer) {
+        this.buffer = buffer;
+    }
+
+    public void run() {
+        int item = 0;
+
+        try{
+            while ( true) {
+                    buffer.produce(item++, Thread.currentThread().getName());
+
+                    Thread.sleep(500); // simulate production time
+                    if(item > MAX_ITEMS && !Thread.currentThread().isInterrupted()){
+                        Thread.currentThread().interrupt();
+                        break;
+                    }
+
+            }
+        }
+        catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
+        System.out.println(Thread.currentThread().getName() + " finished producing.");
+    }
+}
+
+
 
 
 Key Concepts Used
