@@ -1,19 +1,21 @@
-
 public class Singleton {
+
+    // Volatile ensures visibility + prevents instruction reordering
     private static volatile Singleton instance;
 
-    private Singleton() {}
+    // Private constructor prevents external instantiation
+    private Singleton() {
+        // Heavy initialization if needed
+    }
 
     public static Singleton getInstance() {
-        if (instance == null) {
+        if (instance == null) { // First check (no locking)
             synchronized (Singleton.class) {
-                if (instance == null) {
-                    instance = new Singleton(); // efficient and thread-safe
+                if (instance == null) { // Second check (with lock)
+                    instance = new Singleton(); // Safe publication
                 }
             }
         }
         return instance;
     }
 }
-
-
