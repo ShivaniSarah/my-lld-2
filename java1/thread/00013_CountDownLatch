@@ -67,3 +67,33 @@ public class Main {
         System.out.println("All threads finished, main thread proceeding");
     }
 }
+
+
+
+The aim of implementing a CountDownLatch-like mechanism is to provide a synchronization aid that allows one or more threads to wait until a set of operations performed by other threads completes.
+
+More specifically:
+You initialize the latch with a count representing how many events or threads need to complete.
+
+Threads that call await() will block (wait) until this count reaches zero.
+
+Other threads call countDown() when they finish their work, decreasing the count by one.
+
+When the count hits zero, all waiting threads are released and can continue.
+
+Why use such a mechanism?
+To coordinate multiple threads in complex concurrent programs.
+
+To ensure that some work doesn’t proceed until other tasks are completed.
+
+Common in scenarios like:
+
+Waiting for multiple worker threads to finish initialization before starting main processing.
+
+Waiting for a group of tasks to complete before moving on.
+
+Coordinating phases in parallel algorithms.
+
+In short:
+It helps threads wait for other threads to finish a set of actions before proceeding.
+
