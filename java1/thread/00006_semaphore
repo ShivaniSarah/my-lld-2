@@ -132,6 +132,34 @@ This mimics Java’s Semaphore behavior but is simpler and for learning purposes
 
 Want me to help integrate this into a bigger system or explain the code step-by-step?
 
+class SimpleSemaphore {
+    int permits;          // Number of available permits (state)
+    Queue<Thread> waitQueue = new LinkedList<>();  // Waiting threads queue
+
+    SimpleSemaphore(int initialPermits) {
+        permits = initialPermits;
+    }
+
+    void acquire() throws InterruptedException {
+        synchronized(this) {
+            while (permits == 0) {        // No permits available
+                waitQueue.add(Thread.currentThread());
+                this.wait();              // Block current thread
+                waitQueue.remove(Thread.currentThread());
+            }
+            permits--;                   // Acquire a permit
+        }
+    }
+
+    void release() {
+        synchronized(this) {
+            permits++;                   // Release a permit
+            if (!waitQueue.isEmpty()) {
+                this.notify();           // Wake up one waiting thread
+            }
+        }
+    }
+}
 
 
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
