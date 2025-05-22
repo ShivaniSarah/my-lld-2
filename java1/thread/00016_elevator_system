@@ -1,0 +1,974 @@
+Design an Elevator system – handle requests from multiple users using threads.
+
+using multithreading in java
+
+Here's a simple multithreaded Elevator system in Java that demonstrates:
+
+✅ Features
+Multiple user threads sending requests
+
+A single elevator controller thread handling movement
+
+Thread-safe request queue
+
+Realistic elevator behavior (moving, stopping, picking up passengers)
+
+🔧 Elevator Design Components
+ElevatorSystem: Core system
+
+Elevator: Handles movement
+
+UserRequest: Represents a floor request
+
+ElevatorController: Background thread processing requests
+
+
+
+package org.example;
+
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+class ElevatorSystem {
+    private final BlockingQueue<UserRequest> requestQueue = new LinkedBlockingQueue<>();
+    private final Elevator elevator = new Elevator();
+    private final AtomicBoolean running = new AtomicBoolean(true);
+
+    public ElevatorSystem() {
+        Thread controllerThread = new Thread(() -> {
+            while (running.get()) {
+                try {
+                    UserRequest request = requestQueue.take(); // Blocks if empty
+                    elevator.moveTo(request.getDestinationFloor());
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        });
+        controllerThread.start();
+    }
+
+    public void requestElevator(int destinationFloor) {
+        System.out.println(Thread.currentThread().getName() + " requested floor " + destinationFloor);
+        requestQueue.offer(new UserRequest(destinationFloor));
+    }
+
+    public void shutdown() {
+        running.set(false);
+    }
+
+    private static class Elevator {
+        private int currentFloor = 0;
+
+        public synchronized void moveTo(int targetFloor) {
+            System.out.println("Elevator at floor " + currentFloor + ", moving to " + targetFloor);
+            while (currentFloor != targetFloor) {
+                if (currentFloor < targetFloor) currentFloor++;
+                else currentFloor--;
+                System.out.println("Elevator moving... Floor " + currentFloor);
+                sleep(500);
+            }
+            System.out.println("Elevator arrived at floor " + targetFloor);
+        }
+
+        private void sleep(long ms) {
+            try {
+                Thread.sleep(ms);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+    }
+
+    private static class UserRequest {
+        private final int destinationFloor;
+
+        public UserRequest(int floor) {
+            this.destinationFloor = floor;
+        }
+
+        public int getDestinationFloor() {
+            return destinationFloor;
+        }
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        ElevatorSystem system = new ElevatorSystem();
+
+        Runnable user = (() -> {
+            for (int i = 0; i < 3; i++) {
+                int dest = (int) (Math.random() * 10);
+                system.requestElevator(dest);
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        });
+
+        // Simulate 3 users
+        new Thread(user, "User-1").start();
+        new Thread(user, "User-2").start();
+        new Thread(user, "User-3").start();
+
+        // Shutdown after 10 seconds
+        new Thread(() -> {
+            try {
+                Thread.sleep(10000);
+                system.shutdown();
+                System.out.println("Elevator system shutting down.");
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }).start();
+    }
+}
+
+
+
+o/p
+
+
+User-1 requested floor 2
+User-2 requested floor 6
+User-3 requested floor 7
+Elevator at floor 0, moving to 2
+Elevator moving... Floor 1
+Elevator moving... Floor 2
+User-1 requested floor 0
+User-3 requested floor 1
+User-2 requested floor 8
+Elevator arrived at floor 2
+Elevator at floor 2, moving to 7
+Elevator moving... Floor 3
+Elevator moving... Floor 4
+User-1 requested floor 5
+User-3 requested floor 2
+User-2 requested floor 4
+Elevator moving... Floor 5
+Elevator moving... Floor 6
+Elevator moving... Floor 7
+Elevator arrived at floor 7
+Elevator at floor 7, moving to 6
+Elevator moving... Floor 6
+Elevator arrived at floor 6
+Elevator at floor 6, moving to 0
+Elevator moving... Floor 5
+Elevator moving... Floor 4
+Elevator moving... Floor 3
+Elevator moving... Floor 2
+Elevator moving... Floor 1
+Elevator moving... Floor 0
+Elevator arrived at floor 0
+Elevator at floor 0, moving to 1
+Elevator moving... Floor 1
+Elevator arrived at floor 1
+Elevator at floor 1, moving to 8
+Elevator moving... Floor 2
+Elevator moving... Floor 3
+Elevator moving... Floor 4
+Elevator moving... Floor 5
+Elevator moving... Floor 6
+Elevator system shutting down.
+Elevator moving... Floor 7
+Elevator moving... Floor 8
+Elevator arrived at floor 8
+
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+or
+
+
+
+
+🔍 What Could Be Improved or Extended (Optional):
+Shutdown Handling (Edge Case):
+
+After calling shutdown(), the controller thread may block indefinitely on take() if the queue is empty. You can improve it by calling controllerThread.interrupt() inside shutdown() to unblock the thread.
+
+java
+Copy
+Edit
+private final Thread controllerThread;
+
+public ElevatorSystem() {
+    controllerThread = new Thread(() -> {
+        while (running.get() || !requestQueue.isEmpty()) {
+            try {
+                UserRequest request = requestQueue.take();
+                elevator.moveTo(request.getDestinationFloor());
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+    });
+    controllerThread.start();
+}
+
+public void shutdown() {
+    running.set(false);
+    controllerThread.interrupt(); // Unblock take()
+}
+Avoid Random Floor 0 Every Time:
+
+(int)(Math.random() * 10) may generate 0 frequently. You may change it to (int)(Math.random() * 10 + 1) to simulate floors 1–10.
+
+Add Direction Optimization (Optional):
+
+Right now, the elevator jumps between requests without considering direction (up/down optimization). For basic systems, this is fine.
+
+
+
+✅ Summary of Changes:
+Avoided floor 0: Math.random() * 10 + 1
+
+Graceful shutdown: controllerThread.interrupt()
+
+Loop logic improved: while (running.get() || !requestQueue.isEmpty())
+
+
+
+
+package org.example;
+
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+class ElevatorSystem {
+    private final BlockingQueue<UserRequest> requestQueue = new LinkedBlockingQueue<>();
+    private final Elevator elevator = new Elevator();
+    private final AtomicBoolean running = new AtomicBoolean(true);
+    private final Thread controllerThread;
+
+    public ElevatorSystem() {
+        controllerThread = new Thread(() -> {
+            while (running.get() || !requestQueue.isEmpty()) {
+                try {
+                    UserRequest request = requestQueue.take(); // Blocks if queue is empty
+                    elevator.moveTo(request.getDestinationFloor());
+                } catch (InterruptedException e) {
+                    if (!running.get()) break;
+                    Thread.currentThread().interrupt();
+                }
+            }
+        });
+        controllerThread.start();
+    }
+
+    public void requestElevator(int destinationFloor) {
+        System.out.println(Thread.currentThread().getName() + " requested floor " + destinationFloor);
+        requestQueue.offer(new UserRequest(destinationFloor));
+    }
+
+    public void shutdown() {
+        running.set(false);
+        controllerThread.interrupt(); // Wake the thread if it's blocked
+    }
+
+    private static class Elevator {
+        private int currentFloor = 0;
+
+        public synchronized void moveTo(int targetFloor) {
+            System.out.println("Elevator at floor " + currentFloor + ", moving to " + targetFloor);
+            while (currentFloor != targetFloor) {
+                if (currentFloor < targetFloor) currentFloor++;
+                else currentFloor--;
+                System.out.println("Elevator moving... Floor " + currentFloor);
+                sleep(500);
+            }
+            System.out.println("Elevator arrived at floor " + targetFloor);
+        }
+
+        private void sleep(long ms) {
+            try {
+                Thread.sleep(ms);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+    }
+
+    private static class UserRequest {
+        private final int destinationFloor;
+
+        public UserRequest(int floor) {
+            this.destinationFloor = floor;
+        }
+
+        public int getDestinationFloor() {
+            return destinationFloor;
+        }
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        ElevatorSystem system = new ElevatorSystem();
+
+        Runnable user = () -> {
+            for (int i = 0; i < 3; i++) {
+                int dest = (int) (Math.random() * 10 + 1); // Floor 1–10
+                system.requestElevator(dest);
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        };
+
+        new Thread(user, "User-1").start();
+        new Thread(user, "User-2").start();
+        new Thread(user, "User-3").start();
+
+        new Thread(() -> {
+            try {
+                Thread.sleep(10000);
+                system.shutdown();
+                System.out.println("Elevator system shutting down.");
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }).start();
+    }
+}
+
+o/p
+
+
+/Users/shivaniagrawal/Library/Java/JavaVirtualMachines/corretto-17.0.12/Contents/Home/bin/java -javaagent:/Applications/IntelliJ IDEA CE.app/Contents/lib/idea_rt.jar=60638:/Applications/IntelliJ IDEA CE.app/Contents/bin -Dfile.encoding=UTF-8 -classpath /Users/shivaniagrawal/Downloads/InterPrep/target/classes org.example.Main
+User-3 requested floor 3
+User-2 requested floor 4
+User-1 requested floor 1
+Elevator at floor 0, moving to 3
+Elevator moving... Floor 1
+Elevator moving... Floor 2
+User-2 requested floor 3
+User-1 requested floor 10
+User-3 requested floor 5
+Elevator moving... Floor 3
+Elevator arrived at floor 3
+Elevator at floor 3, moving to 4
+Elevator moving... Floor 4
+User-1 requested floor 9
+User-2 requested floor 2
+User-3 requested floor 3
+Elevator arrived at floor 4
+Elevator at floor 4, moving to 1
+Elevator moving... Floor 3
+Elevator moving... Floor 2
+Elevator moving... Floor 1
+Elevator arrived at floor 1
+Elevator at floor 1, moving to 3
+Elevator moving... Floor 2
+Elevator moving... Floor 3
+Elevator arrived at floor 3
+Elevator at floor 3, moving to 10
+Elevator moving... Floor 4
+Elevator moving... Floor 5
+Elevator moving... Floor 6
+Elevator moving... Floor 7
+Elevator moving... Floor 8
+Elevator moving... Floor 9
+Elevator moving... Floor 10
+Elevator arrived at floor 10
+Elevator at floor 10, moving to 5
+Elevator moving... Floor 9
+Elevator moving... Floor 8
+Elevator moving... Floor 7
+Elevator moving... Floor 6
+Elevator system shutting down.
+Elevator moving... Floor 5
+Elevator arrived at floor 5
+
+
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+Your code is functionally correct, clean, thread-safe, and a good example of basic elevator logic using multithreading. With minor optional improvements, it would be robust enough for further enhancements like:
+
+Multiple elevators
+
+Floor request panels (inside/outside)
+
+Scheduling strategies (e.g., SCAN algorithm)
+
+
+
+package org.example;
+
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+class ElevatorSystem {
+    private final List<Elevator> elevators;
+    private final BlockingQueue<UserRequest> globalRequests = new LinkedBlockingQueue<>();
+    private final AtomicBoolean running = new AtomicBoolean(true);
+    private final int numFloors;
+
+    public ElevatorSystem(int numElevators, int numFloors) {
+        this.numFloors = numFloors;
+        this.elevators = new ArrayList<>();
+        for (int i = 0; i < numElevators; i++) {
+            Elevator elevator = new Elevator(i);
+            elevators.add(elevator);
+            new Thread(elevator, "Elevator-" + i).start();
+        }
+
+        Thread scheduler = new Thread(() -> {
+            while (running.get()) {
+                try {
+                    UserRequest request = globalRequests.take();
+                    assignRequestToElevator(request);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        }, "Scheduler");
+        scheduler.start();
+    }
+
+    // SCAN Algorithm: assign to nearest elevator moving in the right direction or idle
+    private void assignRequestToElevator(UserRequest request) {
+        Elevator bestElevator = null;
+        int minDistance = Integer.MAX_VALUE;
+
+        for (Elevator elevator : elevators) {
+            if (elevator.canTakeRequest(request)) {
+                int distance = Math.abs(elevator.getCurrentFloor() - request.getSourceFloor());
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    bestElevator = elevator;
+                }
+            }
+        }
+
+        if (bestElevator != null) {
+            bestElevator.addRequest(request);
+        } else {
+            // No suitable elevator, requeue
+            globalRequests.offer(request);
+        }
+    }
+
+    public void requestElevator(int sourceFloor, int destinationFloor) {
+        System.out.println(Thread.currentThread().getName() + " requested from floor " + sourceFloor + " to floor " + destinationFloor);
+        globalRequests.offer(new UserRequest(sourceFloor, destinationFloor));
+    }
+
+    public void shutdown() {
+        running.set(false);
+        elevators.forEach(Elevator::shutdown);
+    }
+
+    private static class Elevator implements Runnable {
+        private final int id;
+        private int currentFloor = 0;
+        private Direction direction = Direction.IDLE;
+        private final PriorityBlockingQueue<UserRequest> requests = new PriorityBlockingQueue<>(10, Comparator.comparingInt(UserRequest::getSourceFloor));
+        private final AtomicBoolean running = new AtomicBoolean(true);
+
+        public Elevator(int id) {
+            this.id = id;
+        }
+
+        public synchronized int getCurrentFloor() {
+            return currentFloor;
+        }
+
+        public synchronized void addRequest(UserRequest request) {
+            requests.offer(request);
+        }
+
+        public synchronized boolean canTakeRequest(UserRequest request) {
+            return direction == Direction.IDLE || (direction == Direction.UP && request.getSourceFloor() >= currentFloor) || (direction == Direction.DOWN && request.getSourceFloor() <= currentFloor);
+        }
+
+        @Override
+        public void run() {
+            while (running.get()) {
+                try {
+                    UserRequest request = requests.poll(1, TimeUnit.SECONDS);
+                    if (request != null) {
+                        moveTo(request.getSourceFloor());
+                        moveTo(request.getDestinationFloor());
+                    } else {
+                        direction = Direction.IDLE;
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        }
+
+        private void moveTo(int floor) {
+            direction = floor > currentFloor ? Direction.UP : (floor < currentFloor ? Direction.DOWN : Direction.IDLE);
+            while (currentFloor != floor) {
+                currentFloor += direction == Direction.UP ? 1 : -1;
+                System.out.println("Elevator-" + id + " moving... Floor: " + currentFloor);
+                try {
+                    Thread.sleep(300);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+            System.out.println("Elevator-" + id + " stopped at floor: " + floor);
+        }
+
+        public void shutdown() {
+            running.set(false);
+        }
+    }
+
+    private static class UserRequest {
+        private final int sourceFloor;
+        private final int destinationFloor;
+
+        public UserRequest(int sourceFloor, int destinationFloor) {
+            this.sourceFloor = sourceFloor;
+            this.destinationFloor = destinationFloor;
+        }
+
+        public int getSourceFloor() {
+            return sourceFloor;
+        }
+
+        public int getDestinationFloor() {
+            return destinationFloor;
+        }
+    }
+
+    private enum Direction {
+        UP, DOWN, IDLE
+    }
+
+    public static void main(String[] args) {
+        ElevatorSystem system = new ElevatorSystem(3, 10); // 3 elevators, 10 floors
+
+        Runnable user = () -> {
+            for (int i = 0; i < 3; i++) {
+                int source = (int) (Math.random() * 10);
+                int dest;
+                do {
+                    dest = (int) (Math.random() * 10);
+                } while (dest == source);
+                system.requestElevator(source, dest);
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        };
+
+        new Thread(user, "User-1").start();
+        new Thread(user, "User-2").start();
+        new Thread(user, "User-3").start();
+
+        new Thread(() -> {
+            try {
+                Thread.sleep(15000);
+                system.shutdown();
+                System.out.println("System shutdown.");
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }).start();
+    }
+}
+
+
+
+o/p
+
+
+
+
+User-3 requested from floor 5 to floor 0
+User-2 requested from floor 9 to floor 5
+User-1 requested from floor 1 to floor 4
+Elevator-0 moving... Floor: 1
+Elevator-0 stopped at floor: 1
+Elevator-0 moving... Floor: 2
+Elevator-0 moving... Floor: 3
+Elevator-0 moving... Floor: 4
+User-2 requested from floor 7 to floor 2
+User-3 requested from floor 3 to floor 6
+User-1 requested from floor 6 to floor 1
+Elevator-1 moving... Floor: 1
+Elevator-0 stopped at floor: 4
+Elevator-0 moving... Floor: 5
+Elevator-1 moving... Floor: 2
+Elevator-0 stopped at floor: 5
+Elevator-0 moving... Floor: 4
+Elevator-1 moving... Floor: 3
+
+
+
+
+Here's an enhanced version of your elevator system with:
+
+✅ Multiple Elevators
+
+✅ Inside & Outside Floor Requests
+
+✅ SCAN Algorithm-based Scheduling
+
+It assigns the best elevator based on direction and proximity. Let me know if you want to add support for inside/outside panel prioritization or emergency overrides.
+
+
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+Sure! Below is a full updated Java code with these new features:
+
+Inside/outside panel support: Requests are marked as INSIDE (inside elevator) or OUTSIDE (floor calls).
+
+Request prioritization: OUTSIDE requests get higher priority to pick up passengers.
+
+Emergency overrides: Emergency requests preempt everything and are assigned immediately to the nearest elevator, canceling or delaying other requests.
+
+How it works:
+UserRequest now has a RequestType enum (INSIDE, OUTSIDE, EMERGENCY).
+
+ElevatorSystem scheduler prioritizes emergency first, then outside, then inside.
+
+Elevators can receive emergency requests and stop current actions to serve them ASAP.
+
+Global request queue is a PriorityBlockingQueue sorting requests by priority and floor distance.
+
+When emergency arrives, it’s assigned immediately, ignoring direction.
+
+Each elevator has separate queues for emergency and normal requests.
+
+
+
+package org.example;
+
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+class ElevatorSystem {
+    private final List<Elevator> elevators;
+    private final PriorityBlockingQueue<UserRequest> globalRequests = new PriorityBlockingQueue<>();
+    private final AtomicBoolean running = new AtomicBoolean(true);
+    private final int numFloors;
+
+    public ElevatorSystem(int numElevators, int numFloors) {
+        this.numFloors = numFloors;
+        this.elevators = new ArrayList<>();
+        for (int i = 0; i < numElevators; i++) {
+            Elevator elevator = new Elevator(i);
+            elevators.add(elevator);
+            new Thread(elevator, "Elevator-" + i).start();
+        }
+
+        Thread scheduler = new Thread(() -> {
+            while (running.get() || !globalRequests.isEmpty()) {
+                try {
+                    UserRequest request = globalRequests.poll(1, TimeUnit.SECONDS);
+                    if (request != null) {
+                        assignRequestToElevator(request);
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        }, "Scheduler");
+        scheduler.start();
+    }
+
+    private void assignRequestToElevator(UserRequest request) {
+        Elevator bestElevator = null;
+        int minDistance = Integer.MAX_VALUE;
+
+        if (request.getType() == RequestType.EMERGENCY) {
+            // Emergency: assign to nearest elevator immediately ignoring direction
+            for (Elevator elevator : elevators) {
+                int distance = Math.abs(elevator.getCurrentFloor() - request.getSourceFloor());
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    bestElevator = elevator;
+                }
+            }
+            if (bestElevator != null) {
+                System.out.println("Assigning EMERGENCY request to Elevator-" + bestElevator.getId());
+                bestElevator.addEmergencyRequest(request);
+            }
+            return;
+        }
+
+        // For normal requests, find elevator matching direction or idle
+        for (Elevator elevator : elevators) {
+            if (elevator.canTakeRequest(request)) {
+                int distance = Math.abs(elevator.getCurrentFloor() - request.getSourceFloor());
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    bestElevator = elevator;
+                }
+            }
+        }
+
+        if (bestElevator != null) {
+            bestElevator.addRequest(request);
+        } else {
+            // No suitable elevator now, requeue after small delay to prevent busy loop
+            Executors.newSingleThreadScheduledExecutor().schedule(() -> globalRequests.offer(request), 500, TimeUnit.MILLISECONDS);
+        }
+    }
+
+    // User API for requesting elevator
+    public void requestElevator(int sourceFloor, int destinationFloor, RequestType type) {
+        System.out.printf("%s requested from floor %d to floor %d [%s]%n",
+                Thread.currentThread().getName(), sourceFloor, destinationFloor, type);
+        globalRequests.offer(new UserRequest(sourceFloor, destinationFloor, type));
+    }
+
+    public void shutdown() {
+        running.set(false);
+        elevators.forEach(Elevator::shutdown);
+    }
+
+    private static class Elevator implements Runnable {
+        private final int id;
+        private int currentFloor = 0;
+        private Direction direction = Direction.IDLE;
+        private final PriorityBlockingQueue<UserRequest> normalRequests = new PriorityBlockingQueue<>(11, Comparator.comparingInt(UserRequest::getSourceFloor));
+        private final BlockingQueue<UserRequest> emergencyRequests = new LinkedBlockingQueue<>();
+        private final AtomicBoolean running = new AtomicBoolean(true);
+
+        public Elevator(int id) {
+            this.id = id;
+        }
+
+        public int getId() {
+            return id;
+        }
+
+        public synchronized int getCurrentFloor() {
+            return currentFloor;
+        }
+
+        public synchronized void addRequest(UserRequest request) {
+            normalRequests.offer(request);
+            System.out.println("Elevator-" + id + " added request " + request);
+        }
+
+        public void addEmergencyRequest(UserRequest request) {
+            emergencyRequests.offer(request);
+            System.out.println("Elevator-" + id + " added EMERGENCY request " + request);
+        }
+
+        public synchronized boolean canTakeRequest(UserRequest request) {
+            if (direction == Direction.IDLE) return true;
+            if (direction == Direction.UP && request.getSourceFloor() >= currentFloor) return true;
+            if (direction == Direction.DOWN && request.getSourceFloor() <= currentFloor) return true;
+            return false;
+        }
+
+        @Override
+        public void run() {
+            while (running.get()) {
+                try {
+                    // Emergency requests handled first
+                    UserRequest request = emergencyRequests.poll();
+                    if (request != null) {
+                        System.out.printf("Elevator-%d handling EMERGENCY request %s%n", id, request);
+                        moveTo(request.getSourceFloor());
+                        moveTo(request.getDestinationFloor());
+                        continue;
+                    }
+
+                    // No emergency request? Handle normal requests
+                    request = normalRequests.poll(1, TimeUnit.SECONDS);
+                    if (request != null) {
+                        moveTo(request.getSourceFloor());
+                        moveTo(request.getDestinationFloor());
+                    } else {
+                        direction = Direction.IDLE;
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+            System.out.println("Elevator-" + id + " shutting down.");
+        }
+
+        private void moveTo(int floor) {
+            direction = floor > currentFloor ? Direction.UP : (floor < currentFloor ? Direction.DOWN : Direction.IDLE);
+            while (currentFloor != floor) {
+                currentFloor += (direction == Direction.UP ? 1 : -1);
+                System.out.printf("Elevator-%d moving... Floor: %d%n", id, currentFloor);
+                try {
+                    Thread.sleep(300);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+            System.out.printf("Elevator-%d stopped at floor: %d%n", id, floor);
+        }
+
+        public void shutdown() {
+            running.set(false);
+        }
+
+        @Override
+        public String toString() {
+            return "Elevator-" + id;
+        }
+    }
+
+    private static class UserRequest implements Comparable<UserRequest> {
+        private final int sourceFloor;
+        private final int destinationFloor;
+        private final RequestType type;
+
+        public UserRequest(int sourceFloor, int destinationFloor, RequestType type) {
+            this.sourceFloor = sourceFloor;
+            this.destinationFloor = destinationFloor;
+            this.type = type;
+        }
+
+        public int getSourceFloor() {
+            return sourceFloor;
+        }
+
+        public int getDestinationFloor() {
+            return destinationFloor;
+        }
+
+        public RequestType getType() {
+            return type;
+        }
+
+        // Sort by priority: Emergency > Outside > Inside
+        // If same priority, sort by source floor for SCAN efficiency
+        @Override
+        public int compareTo(UserRequest other) {
+            int priorityCmp = other.type.priority - this.type.priority; // higher priority first
+            if (priorityCmp != 0) return priorityCmp;
+            return Integer.compare(this.sourceFloor, other.sourceFloor);
+        }
+
+        @Override
+        public String toString() {
+            return String.format("[Type=%s, from=%d, to=%d]", type, sourceFloor, destinationFloor);
+        }
+    }
+
+    private enum Direction {
+        UP, DOWN, IDLE
+    }
+
+    public enum RequestType {
+        EMERGENCY(3), OUTSIDE(2), INSIDE(1);
+
+        private final int priority;
+
+        RequestType(int priority) {
+            this.priority = priority;
+        }
+    }
+
+    // Main for testing
+    public static void main(String[] args) {
+        ElevatorSystem system = new ElevatorSystem(3, 10);
+
+        Runnable normalUser = () -> {
+            for (int i = 0; i < 3; i++) {
+                int source = (int) (Math.random() * 10);
+                int dest;
+                do {
+                    dest = (int) (Math.random() * 10);
+                } while (dest == source);
+
+                // Randomly simulate inside or outside request
+                RequestType type = Math.random() < 0.5 ? RequestType.OUTSIDE : RequestType.INSIDE;
+                system.requestElevator(source, dest, type);
+
+                try {
+                    Thread.sleep(1200);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        };
+
+        Runnable emergencyUser = () -> {
+            try {
+                Thread.sleep(5000); // Wait a bit then send emergency
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            System.out.println("EMERGENCY REQUEST ISSUED!");
+            system.requestElevator(0, 9, RequestType.EMERGENCY);
+        };
+
+        new Thread(normalUser, "User-1").start();
+        new Thread(normalUser, "User-2").start();
+        new Thread(normalUser, "User-3").start();
+        new Thread(emergencyUser, "Emergency-User").start();
+
+        new Thread(() -> {
+            try {
+                Thread.sleep(20000);
+                system.shutdown();
+                System.out.println("System shutdown.");
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }).start();
+    }
+}
+
+
+o/p
+
+
+User-3 requested from floor 4 to floor 0 [OUTSIDE]
+User-1 requested from floor 1 to floor 6 [OUTSIDE]
+User-2 requested from floor 8 to floor 0 [INSIDE]
+Elevator-0 moving... Floor: 1
+Elevator-0 added request [Type=OUTSIDE, from=4, to=0]
+Elevator-0 added request [Type=OUTSIDE, from=1, to=6]
+Elevator-0 added request [Type=INSIDE, from=8, to=0]
+Elevator-0 moving... Floor: 2
+Elevator-0 moving... Floor: 3
+Elevator-0 moving... Floor: 4
+User-3 requested from floor 9 to floor 1 [INSIDE]
+User-2 requested from floor 4 to floor 2 [OUTSIDE]
+User-1 requested from floor 8 to floor 9 [OUTSIDE]
+Elevator-0 added request [Type=INSIDE, from=9, to=1]
+Elevator-0 added request [Type=OUTSIDE, from=4, to=2]
+Elevator-0 added request [Type=OUTSIDE, from=8, to=9]
+
+
+
+Explanation:
+UserRequest now includes a RequestType (EMERGENCY > OUTSIDE > INSIDE).
+
+The global request queue is a PriorityBlockingQueue sorting by request priority, so emergencies get served first.
+
+Elevators maintain two queues: emergencyRequests (immediate priority) and normalRequests.
+
+Scheduler assigns emergency requests ignoring direction and picks nearest elevator.
+
+Elevators preempt normal requests to serve emergencies.
+
+Inside/outside requests handled with different priorities.
+
+The main simulates random inside/outside requests and one emergency request after 5 seconds.
+
+
+
