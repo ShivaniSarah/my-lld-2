@@ -1,0 +1,191 @@
+Implement Future / Promise
+
+Design a system to represent a result of an asynchronous computation.
+
+How will you support timeout, cancellation, and chaining?
+
+
+
+mutithreading in java
+
+Great question! Here's a custom simplified Future/Promise system in Java with multithreading support, including:
+
+Timeout support
+
+Cancellation
+
+Chaining (thenApply style)
+
+Core ideas:
+A Promise holds the result or exception.
+
+You can register callbacks that run when the result is ready.
+
+Supports waiting with timeout.
+
+Can be cancelled.
+
+Supports chaining to transform results.
+
+
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.*;
+import java.util.function.Function;
+
+public class SimpleFuture<T> {
+    private T result;
+    private Throwable exception;
+    private boolean isDone = false;
+    private boolean isCancelled = false;
+    private final List<Runnable> listeners = new ArrayList<>();
+
+    public synchronized boolean cancel() {
+        if (isDone) return false;
+        isCancelled = true;
+        isDone = true;
+        notifyAll();
+        runListeners();
+        return true;
+    }
+
+    public synchronized boolean isCancelled() {
+        return isCancelled;
+    }
+
+    public synchronized boolean isDone() {
+        return isDone;
+    }
+
+    // Wait indefinitely
+    public synchronized T get() throws InterruptedException, ExecutionException {
+        while (!isDone) wait();
+        if (isCancelled) throw new CancellationException();
+        if (exception != null) throw new ExecutionException(exception);
+        return result;
+    }
+
+    // Wait with timeout
+    public synchronized T get(long timeout, TimeUnit unit)
+            throws InterruptedException, TimeoutException, ExecutionException {
+        if (!isDone) {
+            unit.timedWait(this, timeout);
+        }
+        if (!isDone) throw new TimeoutException();
+        if (isCancelled) throw new CancellationException();
+        if (exception != null) throw new ExecutionException(exception);
+        return result;
+    }
+
+    // Set result, mark done, notify waiters & listeners
+    protected synchronized void complete(T value) {
+        if (isDone) return;
+        result = value;
+        isDone = true;
+        notifyAll();
+        runListeners();
+    }
+
+    // Set exception, mark done, notify waiters & listeners
+    protected synchronized void completeExceptionally(Throwable ex) {
+        if (isDone) return;
+        exception = ex;
+        isDone = true;
+        notifyAll();
+        runListeners();
+    }
+
+    // Register a listener to run when completed
+    public synchronized void whenComplete(Runnable listener) {
+        if (isDone) {
+            listener.run();
+        } else {
+            listeners.add(listener);
+        }
+    }
+
+    private void runListeners() {
+        for (Runnable r : listeners) {
+            try {
+                r.run();
+            } catch (Exception ignored) {}
+        }
+        listeners.clear();
+    }
+
+    // Chain futures, transform result asynchronously
+    public <U> SimpleFuture<U> thenApply(Function<T, U> fn) {
+        SimpleFuture<U> nextFuture = new SimpleFuture<>();
+        this.whenComplete(() -> {
+            try {
+                if (this.isCancelled()) {
+                    nextFuture.cancel();
+                } else if (this.exception != null) {
+                    nextFuture.completeExceptionally(this.exception);
+                } else {
+                    U newVal = fn.apply(this.result);
+                    nextFuture.complete(newVal);
+                }
+            } catch (Throwable t) {
+                nextFuture.completeExceptionally(t);
+            }
+        });
+        return nextFuture;
+    }
+
+    // Factory method to run async task
+    public static <V> SimpleFuture<V> supplyAsync(Callable<V> task, Executor executor) {
+        SimpleFuture<V> future = new SimpleFuture<>();
+        executor.execute(() -> {
+            try {
+                V val = task.call();
+                future.complete(val);
+            } catch (Throwable t) {
+                future.completeExceptionally(t);
+            }
+        });
+        return future;
+    }
+
+
+    // Simple usage demo
+    public static void main(String[] args) {
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+
+        SimpleFuture<Integer> future = SimpleFuture.supplyAsync(() -> {
+            Thread.sleep(1000);
+            return 10;
+        }, executor);
+
+        SimpleFuture<String> chained = future.thenApply(val -> "Result is: " + (val * 2));
+
+        chained.whenComplete(() -> {
+            try {
+                System.out.println(chained.get());
+            } catch (Exception e) {
+                System.err.println("Failed: " + e);
+            }
+            executor.shutdown();
+        });
+    }
+}
+
+
+
+Explanation
+SimpleFuture tracks result, exception, isDone, isCancelled.
+
+get() waits for completion; supports timeout.
+
+cancel() sets cancelled state and notifies.
+
+thenApply chains computation on completion.
+
+whenComplete registers listeners to run when done.
+
+supplyAsync runs a task in an executor, returns a SimpleFuture.
+
+This mimics Java’s standard CompletableFuture but from scratch for learning.
+
+Want me to help build on top with completeOnTimeout, handle, or integrate with callbacks better?
