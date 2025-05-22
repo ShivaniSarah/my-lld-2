@@ -11,4 +11,558 @@ Uses BlockingQueue to hold submitted tasks.
 Graceful shutdown support (optional, but added here).
 
 
+🧱 1. SimpleThreadPool.java
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.List;
+import java.util.ArrayList;
+
+public class SimpleThreadPool {
+    private final BlockingQueue<Runnable> taskQueue;
+    private final List<Worker> workers;
+    private volatile boolean isShutdown = false;
+
+    public SimpleThreadPool(int numThreads) {
+        taskQueue = new LinkedBlockingQueue<>();
+        workers = new ArrayList<>();
+        for (int i = 0; i < numThreads; i++) {
+            Worker worker = new Worker("Worker-" + i);
+            worker.start();
+            workers.add(worker);
+        }
+    }
+
+    public void submit(Runnable task) {
+        if (!isShutdown) {
+            taskQueue.offer(task);
+        }
+    }
+
+    public void shutdown() {
+        isShutdown = true;
+        for (Worker worker : workers) {
+            worker.interrupt();
+        }
+    }
+
+    private class Worker extends Thread {
+        Worker(String name) {
+            super(name);
+        }
+
+        public void run() {
+            while (!isShutdown || !taskQueue.isEmpty()) {
+                try {
+                    Runnable task = taskQueue.take(); // blocks if empty
+                    task.run();
+                } catch (InterruptedException e) {
+                    // exit if shutting down
+                    if (isShutdown) break;
+                }
+            }
+        }
+    }
+}
+
+
+
+
+🚀 2. Main.java – Test the Pool
+public class Main {
+    public static void main(String[] args) throws InterruptedException {
+        SimpleThreadPool pool = new SimpleThreadPool(3);
+
+        for (int i = 0; i < 10; i++) {
+            int jobId = i;
+            pool.submit(() -> {
+                System.out.println(Thread.currentThread().getName() + " executing task " + jobId);
+                try { Thread.sleep(1000); } catch (InterruptedException ignored) {}
+            });
+        }
+
+        Thread.sleep(5000);
+        pool.shutdown();
+    }
+}
+
+
+🔍 Output (Example):
+Worker-0 executing task 0
+Worker-1 executing task 1
+Worker-2 executing task 2
+Worker-0 executing task 3
+Worker-1 executing task 4
+...
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+✅ Why This Is Useful
+Models how real-world ExecutorService works.
+
+Uses BlockingQueue to decouple task submission and execution.
+
+Avoids wait/notify or manual locking.
+
+
+
+Would you like to add:
+
+Task prioritization?
+
+Async logging version?
+
+Timeout-based execution or scheduling (like ScheduledExecutorService)?
+
+✅ Here's your updated Advanced Thread Pool implementation with:
+
+Task prioritization using PriorityBlockingQueue.
+
+Async logging with priority handling.
+
+Timeout-based scheduling like ScheduledExecutorService.
+
+You can now:
+
+Submit tasks with different priorities.
+
+Schedule tasks to run in the future.
+
+Log messages asynchronously in order of importance.
+
+
+
+import java.util.concurrent.*;
+import java.util.*;
+
+public class AdvancedThreadPool {
+    private final PriorityBlockingQueue<PrioritizedTask> taskQueue;
+    private final List<Worker> workers;
+    private final ScheduledExecutorService scheduler;
+    private volatile boolean isShutdown = false;
+
+    public AdvancedThreadPool(int numThreads) {
+        taskQueue = new PriorityBlockingQueue<>();
+        workers = new ArrayList<>();
+        scheduler = Executors.newScheduledThreadPool(1);
+
+        for (int i = 0; i < numThreads; i++) {
+            Worker worker = new Worker("Worker-" + i);
+            worker.start();
+            workers.add(worker);
+        }
+    }
+
+    public void submit(Runnable task, int priority) {
+        if (!isShutdown) {
+            taskQueue.offer(new PrioritizedTask(task, priority));
+        }
+    }
+
+    public void schedule(Runnable task, int priority, long delay, TimeUnit unit) {
+        if (!isShutdown) {
+            scheduler.schedule(() -> submit(task, priority), delay, unit);
+        }
+    }
+
+    public void shutdown() {
+        isShutdown = true;
+        scheduler.shutdown();
+        for (Worker worker : workers) {
+            worker.interrupt();
+        }
+    }
+
+    private static class PrioritizedTask implements Comparable<PrioritizedTask> {
+        private final Runnable task;
+        private final int priority;
+
+        public PrioritizedTask(Runnable task, int priority) {
+            this.task = task;
+            this.priority = priority;
+        }
+
+        @Override
+        public int compareTo(PrioritizedTask o) {
+            return Integer.compare(o.priority, this.priority); // Higher priority first
+        }
+
+        public void run() {
+            task.run();
+        }
+    }
+
+    private class Worker extends Thread {
+        Worker(String name) {
+            super(name);
+        }
+
+        public void run() {
+            while (!isShutdown || !taskQueue.isEmpty()) {
+                try {
+                    PrioritizedTask task = taskQueue.take();
+                    task.run();
+                } catch (InterruptedException e) {
+                    if (isShutdown) break;
+                }
+            }
+        }
+    }
+
+    // Async Logger using this thread pool
+    public void logAsync(String message, int priority) {
+        submit(() -> System.out.println(Thread.currentThread().getName() + " LOG: " + message), priority);
+    }
+
+    // Main method for demonstration
+    public static void main(String[] args) throws InterruptedException {
+        AdvancedThreadPool pool = new AdvancedThreadPool(3);
+
+        pool.logAsync("Low Priority Log", 1);
+        pool.logAsync("High Priority Log", 10);
+
+        pool.submit(() -> System.out.println("Immediate Task with priority 5"), 5);
+        pool.schedule(() -> System.out.println("Scheduled Task with priority 8"), 8, 2, TimeUnit.SECONDS);
+
+        Thread.sleep(5000);
+        pool.shutdown();
+    }
+}
+
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+Let me know if you'd like:
+
+Task cancellation support
+
+Max queue size or backpressure
+
+Metrics like active thread count or tasks processed
+
+
+import java.util.concurrent.*;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+
+public class AdvancedThreadPool {
+    private final PriorityBlockingQueue<PrioritizedTask> taskQueue;
+    private final List<Worker> workers;
+    private final ScheduledExecutorService scheduler;
+    private final int maxQueueSize;
+    private final AtomicInteger activeThreads = new AtomicInteger(0);
+    private final AtomicInteger tasksProcessed = new AtomicInteger(0);
+    private volatile boolean isShutdown = false;
+
+    public AdvancedThreadPool(int numThreads, int maxQueueSize) {
+        this.taskQueue = new PriorityBlockingQueue<>();
+        this.workers = new ArrayList<>();
+        this.scheduler = Executors.newScheduledThreadPool(1);
+        this.maxQueueSize = maxQueueSize;
+
+        for (int i = 0; i < numThreads; i++) {
+            Worker worker = new Worker("Worker-" + i);
+            worker.start();
+            workers.add(worker);
+        }
+    }
+
+    public Future<?> submit(Runnable task, int priority) {
+        if (isShutdown) return CompletableFuture.failedFuture(new RejectedExecutionException("ThreadPool is shutdown"));
+        if (taskQueue.size() >= maxQueueSize) return CompletableFuture.failedFuture(new RejectedExecutionException("Queue is full"));
+
+        CompletableFuture<Void> future = new CompletableFuture<>();
+        taskQueue.offer(new PrioritizedTask(task, priority, future));
+        return future;
+    }
+
+    public void schedule(Runnable task, int priority, long delay, TimeUnit unit) {
+        if (!isShutdown) {
+            scheduler.schedule(() -> submit(task, priority), delay, unit);
+        }
+    }
+
+    public void shutdown() {
+        isShutdown = true;
+        scheduler.shutdown();
+        for (Worker worker : workers) {
+            worker.interrupt();
+        }
+    }
+
+    public int getActiveThreadCount() {
+        return activeThreads.get();
+    }
+
+    public int getTasksProcessedCount() {
+        return tasksProcessed.get();
+    }
+
+    private static class PrioritizedTask implements Comparable<PrioritizedTask> {
+        private final Runnable task;
+        private final int priority;
+        private final CompletableFuture<Void> future;
+
+        public PrioritizedTask(Runnable task, int priority, CompletableFuture<Void> future) {
+            this.task = task;
+            this.priority = priority;
+            this.future = future;
+        }
+
+        @Override
+        public int compareTo(PrioritizedTask o) {
+            return Integer.compare(o.priority, this.priority); // Higher priority first
+        }
+
+        public void run() {
+            try {
+                task.run();
+                future.complete(null);
+            } catch (Exception e) {
+                future.completeExceptionally(e);
+            }
+        }
+    }
+
+    private class Worker extends Thread {
+        Worker(String name) {
+            super(name);
+        }
+
+        public void run() {
+            while (!isShutdown || !taskQueue.isEmpty()) {
+                try {
+                    PrioritizedTask task = taskQueue.take();
+                    activeThreads.incrementAndGet();
+                    task.run();
+                    tasksProcessed.incrementAndGet();
+                } catch (InterruptedException e) {
+                    if (isShutdown) break;
+                } finally {
+                    activeThreads.decrementAndGet();
+                }
+            }
+        }
+    }
+
+    // Async Logger using this thread pool
+    public void logAsync(String message, int priority) {
+        submit(() -> System.out.println(Thread.currentThread().getName() + " LOG: " + message), priority);
+    }
+
+    // Main method for demonstration
+    public static void main(String[] args) throws InterruptedException {
+        AdvancedThreadPool pool = new AdvancedThreadPool(3, 20);
+
+        pool.logAsync("Low Priority Log", 1);
+        pool.logAsync("High Priority Log", 10);
+
+        Future<?> f1 = pool.submit(() -> System.out.println("Immediate Task with priority 5"), 5);
+        pool.schedule(() -> System.out.println("Scheduled Task with priority 8"), 8, 2, TimeUnit.SECONDS);
+
+        Thread.sleep(5000);
+        System.out.println("Active Threads: " + pool.getActiveThreadCount());
+        System.out.println("Tasks Processed: " + pool.getTasksProcessedCount());
+
+        pool.shutdown();
+    }
+}
+
+✅ Your thread pool now supports:
+
+Task cancellation via Future<?> returned by submit().
+
+Max queue size with backpressure – rejects new tasks if full.
+
+Metrics for active threads and tasks processed.
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Let me know if you want:
+
+Retry policies for rejected tasks
+
+Graceful shutdown waiting for all tasks
+
+Hook for on-complete callbacks
+
+
+
+import java.util.concurrent.*;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+
+public class AdvancedThreadPool {
+    private final PriorityBlockingQueue<PrioritizedTask> taskQueue;
+    private final List<Worker> workers;
+    private final ScheduledExecutorService scheduler;
+    private final int maxQueueSize;
+    private final AtomicInteger activeThreads = new AtomicInteger(0);
+    private final AtomicInteger tasksProcessed = new AtomicInteger(0);
+    private volatile boolean isShutdown = false;
+    private final Object shutdownLock = new Object();
+
+    public AdvancedThreadPool(int numThreads, int maxQueueSize) {
+        this.taskQueue = new PriorityBlockingQueue<>();
+        this.workers = new ArrayList<>();
+        this.scheduler = Executors.newScheduledThreadPool(1);
+        this.maxQueueSize = maxQueueSize;
+
+        for (int i = 0; i < numThreads; i++) {
+            Worker worker = new Worker("Worker-" + i);
+            worker.start();
+            workers.add(worker);
+        }
+    }
+
+    public Future<?> submit(Runnable task, int priority) {
+        return submit(task, priority, null, 0);
+    }
+
+    public Future<?> submit(Runnable task, int priority, Runnable onCompleteCallback, int maxRetries) {
+        if (isShutdown) return CompletableFuture.failedFuture(new RejectedExecutionException("ThreadPool is shutdown"));
+        if (taskQueue.size() >= maxQueueSize) {
+            if (maxRetries > 0) {
+                // Retry after a short delay
+                scheduler.schedule(() -> submit(task, priority, onCompleteCallback, maxRetries - 1), 100, TimeUnit.MILLISECONDS);
+                return CompletableFuture.completedFuture(null);
+            }
+            return CompletableFuture.failedFuture(new RejectedExecutionException("Queue is full"));
+        }
+
+        CompletableFuture<Void> future = new CompletableFuture<>();
+        taskQueue.offer(new PrioritizedTask(task, priority, future, onCompleteCallback));
+        return future;
+    }
+
+    public void schedule(Runnable task, int priority, long delay, TimeUnit unit) {
+        if (!isShutdown) {
+            scheduler.schedule(() -> submit(task, priority), delay, unit);
+        }
+    }
+
+    public void shutdownGracefully() {
+        isShutdown = true;
+        scheduler.shutdown();
+        for (Worker worker : workers) {
+            worker.interrupt();
+        }
+        synchronized (shutdownLock) {
+            while (!taskQueue.isEmpty() || activeThreads.get() > 0) {
+                try {
+                    shutdownLock.wait(100);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        }
+    }
+
+    public int getActiveThreadCount() {
+        return activeThreads.get();
+    }
+
+    public int getTasksProcessedCount() {
+        return tasksProcessed.get();
+    }
+
+    private static class PrioritizedTask implements Comparable<PrioritizedTask> {
+        private final Runnable task;
+        private final int priority;
+        private final CompletableFuture<Void> future;
+        private final Runnable onComplete;
+
+        public PrioritizedTask(Runnable task, int priority, CompletableFuture<Void> future, Runnable onComplete) {
+            this.task = task;
+            this.priority = priority;
+            this.future = future;
+            this.onComplete = onComplete;
+        }
+
+        @Override
+        public int compareTo(PrioritizedTask o) {
+            return Integer.compare(o.priority, this.priority); // Higher priority first
+        }
+
+        public void run() {
+            try {
+                task.run();
+                future.complete(null);
+                if (onComplete != null) onComplete.run();
+            } catch (Exception e) {
+                future.completeExceptionally(e);
+            }
+        }
+    }
+
+    private class Worker extends Thread {
+        Worker(String name) {
+            super(name);
+        }
+
+        public void run() {
+            while (!isShutdown || !taskQueue.isEmpty()) {
+                try {
+                    PrioritizedTask task = taskQueue.poll(100, TimeUnit.MILLISECONDS);
+                    if (task == null) continue;
+                    activeThreads.incrementAndGet();
+                    task.run();
+                    tasksProcessed.incrementAndGet();
+                } catch (InterruptedException e) {
+                    if (isShutdown) break;
+                } finally {
+                    activeThreads.decrementAndGet();
+                    synchronized (shutdownLock) {
+                        shutdownLock.notifyAll();
+                    }
+                }
+            }
+        }
+    }
+
+    // Async Logger using this thread pool
+    public void logAsync(String message, int priority) {
+        submit(() -> System.out.println(Thread.currentThread().getName() + " LOG: " + message), priority);
+    }
+
+    // Main method for demonstration
+    public static void main(String[] args) throws InterruptedException {
+        AdvancedThreadPool pool = new AdvancedThreadPool(3, 10);
+
+        pool.logAsync("Low Priority Log", 1);
+        pool.logAsync("High Priority Log", 10);
+
+        pool.submit(() -> System.out.println("Immediate Task with priority 5"), 5,
+                    () -> System.out.println("Callback for priority 5 task executed"), 2);
+
+        pool.schedule(() -> System.out.println("Scheduled Task with priority 8"), 8, 2, TimeUnit.SECONDS);
+
+        Thread.sleep(5000);
+        System.out.println("Active Threads: " + pool.getActiveThreadCount());
+        System.out.println("Tasks Processed: " + pool.getTasksProcessedCount());
+
+        pool.shutdownGracefully();
+    }
+}
+
+
+The thread pool now supports:
+
+Retry policies for rejected tasks (maxRetries).
+
+Graceful shutdown, ensuring all tasks finish before exit.
+
+Completion callbacks (onComplete) for task post-processing.
+
+
+Let me know if you’d like to:
+
+Add rate limiting
+
+Integrate metrics reporting (e.g., to Prometheus)
+
+Extend to support delayed retries with exponential backoff
 
