@@ -1,0 +1,1059 @@
+Design a traffic light system – managing multiple intersections.
+
+using multithreading in java
+
+Sure! Here's a multithreaded Java design for a traffic light system managing multiple intersections.
+
+Goals & Features:
+Each Intersection has its own traffic lights controlling multiple directions (e.g., North-South and East-West).
+
+Traffic lights cycle through states: GREEN, YELLOW, RED with configurable durations.
+
+Intersections run independently in their own threads.
+
+Central controller can start/stop all intersections.
+
+The system simulates real-world timing with threads sleeping between state changes.
+
+Thread-safe state transitions and printing of current light states.
+
+Key Classes:
+TrafficLightState enum: GREEN, YELLOW, RED.
+
+TrafficLight: models one directional light at an intersection.
+
+Intersection: contains multiple TrafficLights (e.g., NS and EW), runs state transitions in its own thread.
+
+TrafficController: manages multiple intersections, starts/stops them.
+
+
+
+package org.example;
+
+import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+class TrafficLightSystem {
+
+    enum TrafficLightState {
+        GREEN, YELLOW, RED
+    }
+
+    static class TrafficLight {
+        private final String direction;
+        private TrafficLightState state;
+
+        public TrafficLight(String direction) {
+            this.direction = direction;
+            this.state = TrafficLightState.RED;
+        }
+
+        public synchronized TrafficLightState getState() {
+            return state;
+        }
+
+        public synchronized void setState(TrafficLightState state) {
+            this.state = state;
+            System.out.printf("  Light %s is now %s%n", direction, state);
+        }
+
+        public String getDirection() {
+            return direction;
+        }
+    }
+
+    static class Intersection implements Runnable {
+        private final String name;
+        private final TrafficLight nsLight; // North-South
+        private final TrafficLight ewLight; // East-West
+        private final int greenDuration;    // milliseconds
+        private final int yellowDuration;   // milliseconds
+        private final AtomicBoolean running = new AtomicBoolean(true);
+
+        public Intersection(String name, int greenDuration, int yellowDuration) {
+            this.name = name;
+            this.greenDuration = greenDuration;
+            this.yellowDuration = yellowDuration;
+            this.nsLight = new TrafficLight("North-South");
+            this.ewLight = new TrafficLight("East-West");
+            nsLight.setState(TrafficLightState.GREEN);
+            ewLight.setState(TrafficLightState.RED);
+        }
+
+        public void shutdown() {
+            running.set(false);
+        }
+
+        @Override
+        public void run() {
+            try {
+                while (running.get()) {
+                    cycleLights();
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            System.out.println(name + " stopped.");
+        }
+
+        private void cycleLights() throws InterruptedException {
+            // NS green, EW red
+            printStatus();
+            Thread.sleep(greenDuration);
+
+            // NS yellow, EW red
+            nsLight.setState(TrafficLightState.YELLOW);
+            ewLight.setState(TrafficLightState.RED);
+            printStatus();
+            Thread.sleep(yellowDuration);
+
+            // NS red, EW green
+            nsLight.setState(TrafficLightState.RED);
+            ewLight.setState(TrafficLightState.GREEN);
+            printStatus();
+            Thread.sleep(greenDuration);
+
+            // NS red, EW yellow
+            nsLight.setState(TrafficLightState.RED);
+            ewLight.setState(TrafficLightState.YELLOW);
+            printStatus();
+            Thread.sleep(yellowDuration);
+        }
+
+        private void printStatus() {
+            System.out.println("Intersection " + name + " status:");
+            System.out.printf("  NS Light: %s | EW Light: %s%n",
+                    nsLight.getState(), ewLight.getState());
+        }
+    }
+
+    static class TrafficController {
+        private final List<Intersection> intersections = new ArrayList<>();
+        private final List<Thread> threads = new ArrayList<>();
+
+        public void addIntersection(Intersection intersection) {
+            intersections.add(intersection);
+        }
+
+        public void startAll() {
+            for (Intersection i : intersections) {
+                Thread t = new Thread(i, "Intersection-" + i.name);
+                threads.add(t);
+                t.start();
+            }
+        }
+
+        public void shutdownAll() {
+            intersections.forEach(Intersection::shutdown);
+            threads.forEach(t -> {
+                try {
+                    t.join();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            });
+        }
+    }
+
+    public static void main(String[] args) throws InterruptedException {
+        TrafficController controller = new TrafficController();
+
+        // Create 3 intersections with different timing configurations
+        controller.addIntersection(new Intersection("A", 5000, 2000)); // 5s green, 2s yellow
+        controller.addIntersection(new Intersection("B", 4000, 1500)); // 4s green, 1.5s yellow
+        controller.addIntersection(new Intersection("C", 6000, 2500)); // 6s green, 2.5s yellow
+
+        controller.startAll();
+
+        // Let the system run for 30 seconds
+        Thread.sleep(30000);
+
+        controller.shutdownAll();
+
+        System.out.println("Traffic system shutdown.");
+    }
+}
+
+
+
+o/p
+
+
+Light North-South is now GREEN
+  Light East-West is now RED
+  Light North-South is now GREEN
+  Light East-West is now RED
+  Light North-South is now GREEN
+  Light East-West is now RED
+Intersection C status:
+  NS Light: GREEN | EW Light: RED
+Intersection A status:
+  NS Light: GREEN | EW Light: RED
+Intersection B status:
+  NS Light: GREEN | EW Light: RED
+  Light North-South is now YELLOW
+  Light East-West is now RED
+Intersection B status:
+  NS Light: YELLOW | EW Light: RED
+  Light North-South is now YELLOW
+  Light East-West is now RED
+Intersection A status:
+  NS Light: YELLOW | EW Light: RED
+  Light North-South is now RED
+
+
+
+
+
+Explanation:
+Each intersection cycles its two lights:
+
+NS green, EW red → NS yellow, EW red → NS red, EW green → NS red, EW yellow → repeat
+
+Thread-safe TrafficLight.setState ensures correct printouts.
+
+TrafficController starts and stops all intersections cleanly.
+
+You can easily add more intersections or customize timing.
+
+
+------------------------------------------------------
+
+
+
+
+If you want, I can help add features like pedestrian signals, sensors, or coordinated timing across intersections!
+
+
+Great! Let’s enhance the traffic light system with:
+
+Pedestrian signals per intersection.
+
+Sensors that detect waiting pedestrians or vehicles, influencing light changes.
+
+Coordinated timing to synchronize multiple intersections for traffic flow optimization.
+
+How this will work conceptually:
+Pedestrian signals will run parallel to vehicle signals with WALK/DON'T WALK states.
+
+Sensors simulate pedestrian button presses and vehicle detection. If a pedestrian is waiting, pedestrian light requests WALK phase at safe time.
+
+Coordinated timing: Intersections receive a timing offset from a central coordinator to align green phases to allow smoother flow on a main road.
+
+
+package org.example;
+
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+class EnhancedTrafficLightSystem {
+
+    enum TrafficLightState {
+        GREEN, YELLOW, RED
+    }
+
+    enum PedestrianSignalState {
+        WALK, DONT_WALK
+    }
+
+    static class TrafficLight {
+        private final String direction;
+        private TrafficLightState state;
+
+        public TrafficLight(String direction) {
+            this.direction = direction;
+            this.state = TrafficLightState.RED;
+        }
+
+        public synchronized TrafficLightState getState() {
+            return state;
+        }
+
+        public synchronized void setState(TrafficLightState state) {
+            this.state = state;
+            System.out.printf("  Vehicle Light %s is now %s%n", direction, state);
+        }
+    }
+
+    static class PedestrianSignal {
+        private final String crossing;
+        private PedestrianSignalState state;
+        private final AtomicBoolean pedestrianWaiting = new AtomicBoolean(false);
+
+        public PedestrianSignal(String crossing) {
+            this.crossing = crossing;
+            this.state = PedestrianSignalState.DONT_WALK;
+        }
+
+        public synchronized PedestrianSignalState getState() {
+            return state;
+        }
+
+        public synchronized void setState(PedestrianSignalState state) {
+            this.state = state;
+            System.out.printf("  Pedestrian Signal %s is now %s%n", crossing, state);
+        }
+
+        public void pedestrianRequest() {
+            pedestrianWaiting.set(true);
+            System.out.printf("  Pedestrian pressed button at %s%n", crossing);
+        }
+
+        public boolean isPedestrianWaiting() {
+            return pedestrianWaiting.get();
+        }
+
+        public void resetWaiting() {
+            pedestrianWaiting.set(false);
+        }
+    }
+
+    static class Intersection implements Runnable {
+        private final String name;
+        private final TrafficLight nsLight; // North-South vehicles
+        private final TrafficLight ewLight; // East-West vehicles
+        private final PedestrianSignal nsPedestrian; // crossing NS road
+        private final PedestrianSignal ewPedestrian; // crossing EW road
+
+        private final int greenDuration;    // ms
+        private final int yellowDuration;   // ms
+        private final AtomicBoolean running = new AtomicBoolean(true);
+
+        // Coordination offset in ms for synchronization
+        private final int coordinationOffset;
+
+        public Intersection(String name, int greenDuration, int yellowDuration, int coordinationOffset) {
+            this.name = name;
+            this.greenDuration = greenDuration;
+            this.yellowDuration = yellowDuration;
+            this.coordinationOffset = coordinationOffset;
+
+            this.nsLight = new TrafficLight("North-South");
+            this.ewLight = new TrafficLight("East-West");
+
+            this.nsPedestrian = new PedestrianSignal("North-South Crossing");
+            this.ewPedestrian = new PedestrianSignal("East-West Crossing");
+
+            nsLight.setState(TrafficLightState.RED);
+            ewLight.setState(TrafficLightState.RED);
+
+            nsPedestrian.setState(PedestrianSignalState.DONT_WALK);
+            ewPedestrian.setState(PedestrianSignalState.DONT_WALK);
+        }
+
+        public void shutdown() {
+            running.set(false);
+        }
+
+        public PedestrianSignal getNsPedestrian() {
+            return nsPedestrian;
+        }
+
+        public PedestrianSignal getEwPedestrian() {
+            return ewPedestrian;
+        }
+
+        @Override
+        public void run() {
+            try {
+                Thread.sleep(coordinationOffset);  // start offset for coordination
+
+                while (running.get()) {
+                    cycleLightsWithPedestrians();
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            System.out.println(name + " stopped.");
+        }
+
+        private void cycleLightsWithPedestrians() throws InterruptedException {
+            // NS green phase (vehicles), EW red
+            nsLight.setState(TrafficLightState.GREEN);
+            ewLight.setState(TrafficLightState.RED);
+
+            // Pedestrian crossing requests allowed on EW crossing (since EW traffic is RED)
+            handlePedestrianPhase(ewPedestrian);
+
+            printStatus();
+            Thread.sleep(greenDuration);
+
+            nsLight.setState(TrafficLightState.YELLOW);
+            ewLight.setState(TrafficLightState.RED);
+
+            nsPedestrian.setState(PedestrianSignalState.DONT_WALK);
+            ewPedestrian.setState(PedestrianSignalState.DONT_WALK);
+
+            printStatus();
+            Thread.sleep(yellowDuration);
+
+            // EW green phase (vehicles), NS red
+            nsLight.setState(TrafficLightState.RED);
+            ewLight.setState(TrafficLightState.GREEN);
+
+            // Pedestrian crossing requests allowed on NS crossing (since NS traffic is RED)
+            handlePedestrianPhase(nsPedestrian);
+
+            printStatus();
+            Thread.sleep(greenDuration);
+
+            nsLight.setState(TrafficLightState.RED);
+            ewLight.setState(TrafficLightState.YELLOW);
+
+            nsPedestrian.setState(PedestrianSignalState.DONT_WALK);
+            ewPedestrian.setState(PedestrianSignalState.DONT_WALK);
+
+            printStatus();
+            Thread.sleep(yellowDuration);
+        }
+
+        private void handlePedestrianPhase(PedestrianSignal pedestrianSignal) throws InterruptedException {
+            if (pedestrianSignal.isPedestrianWaiting()) {
+                pedestrianSignal.setState(PedestrianSignalState.WALK);
+                printStatus();
+                // Pedestrians walk for 1/3 of green duration or at least 3 seconds
+                Thread.sleep(Math.max(greenDuration / 3, 3000));
+                pedestrianSignal.setState(PedestrianSignalState.DONT_WALK);
+                pedestrianSignal.resetWaiting();
+            }
+        }
+
+        private void printStatus() {
+            System.out.println("Intersection " + name + " status:");
+            System.out.printf("  Vehicle Lights: NS=%s, EW=%s%n", nsLight.getState(), ewLight.getState());
+            System.out.printf("  Ped Signals: NS=%s, EW=%s%n", nsPedestrian.getState(), ewPedestrian.getState());
+        }
+    }
+
+    static class TrafficController {
+        private final List<Intersection> intersections = new ArrayList<>();
+        private final List<Thread> threads = new ArrayList<>();
+        private final ScheduledExecutorService sensorSimulator = Executors.newScheduledThreadPool(1);
+
+        public void addIntersection(Intersection intersection) {
+            intersections.add(intersection);
+        }
+
+        public void startAll() {
+            for (Intersection i : intersections) {
+                Thread t = new Thread(i, "Intersection-" + i.name);
+                threads.add(t);
+                t.start();
+            }
+
+            // Start pedestrian sensor simulation every few seconds
+            sensorSimulator.scheduleAtFixedRate(this::simulatePedestrianSensors, 5, 7, TimeUnit.SECONDS);
+        }
+
+        public void shutdownAll() {
+            intersections.forEach(Intersection::shutdown);
+            sensorSimulator.shutdownNow();
+
+            threads.forEach(t -> {
+                try {
+                    t.join();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            });
+        }
+
+        // Simulate pedestrian button presses randomly
+        private void simulatePedestrianSensors() {
+            Random rand = new Random();
+            for (Intersection intersection : intersections) {
+                if (rand.nextBoolean()) {
+                    intersection.getNsPedestrian().pedestrianRequest();
+                }
+                if (rand.nextBoolean()) {
+                    intersection.getEwPedestrian().pedestrianRequest();
+                }
+            }
+        }
+    }
+
+    public static void main(String[] args) throws InterruptedException {
+        TrafficController controller = new TrafficController();
+
+        // Coordination offset helps synchronize lights on a main road (e.g., offsets of 0, 2, 4 seconds)
+        controller.addIntersection(new Intersection("A", 6000, 2000, 0));
+        controller.addIntersection(new Intersection("B", 6000, 2000, 2000));
+        controller.addIntersection(new Intersection("C", 6000, 2000, 4000));
+
+        controller.startAll();
+
+        // Let system run for 45 seconds
+        Thread.sleep(45000);
+
+        controller.shutdownAll();
+
+        System.out.println("Enhanced Traffic system shutdown.");
+    }
+}
+
+
+
+o/p
+
+ Vehicle Light North-South is now RED
+  Vehicle Light East-West is now RED
+  Pedestrian Signal North-South Crossing is now DONT_WALK
+  Pedestrian Signal East-West Crossing is now DONT_WALK
+  Vehicle Light North-South is now RED
+  Vehicle Light East-West is now RED
+  Pedestrian Signal North-South Crossing is now DONT_WALK
+  Pedestrian Signal East-West Crossing is now DONT_WALK
+  Vehicle Light North-South is now RED
+  Vehicle Light East-West is now RED
+  Pedestrian Signal North-South Crossing is now DONT_WALK
+  Pedestrian Signal East-West Crossing is now DONT_WALK
+  Vehicle Light North-South is now GREEN
+  Vehicle Light East-West is now RED
+Intersection A status:
+  Vehicle Lights: NS=GREEN, EW=RED
+  Ped Signals: NS=DONT_WALK, EW=DONT_WALK
+  Vehicle Light North-South is now GREEN
+  Vehicle Light East-West is now RED
+Intersection B status:
+  Vehicle Lights: NS=GREEN, EW=RED
+  Ped Signals: NS=DONT_WALK, EW=DONT_WALK
+  Vehicle Light North-South is now GREEN
+  Vehicle Light East-West is now RED
+Intersection C status:
+  Vehicle Lights: NS=GREEN, EW=RED
+  Ped Signals: NS=DONT_WALK, EW=DONT_WALK
+  Pedestrian pressed button at North-South Crossing
+  Pedestrian pressed button at East-West Crossing
+  Pedestrian pressed button at North-South Crossing
+  Pedestrian pressed button at East-West Crossing
+  Pedestrian pressed button at East-West Crossing
+  Vehicle Light North-South is now YELLOW
+  Vehicle Light East-West is now RED
+  Pedestrian Signal North-South Crossing is now DONT_WALK
+  Pedestrian Signal East-West Crossing is now DONT_WALK
+Intersection A status:
+  Vehicle Lights: NS=YELLOW, EW=RED
+  Ped Signals: NS=DONT_WALK, EW=DONT_WALK
+  Vehicle Light North-South is now YELLOW
+  Vehicle Light East-West is now RED
+  Pedestrian Signal North-South Crossing is now DONT_WALK
+  Pedestrian Signal East-West Crossing is now DONT_WALK
+Intersection B status:
+  Vehicle Lights: NS=YELLOW, EW=RED
+  Ped Signals: NS=DONT_WALK, EW=DONT_WALK
+  Vehicle Light North-South is now RED
+  Vehicle Light East-West is now GREEN
+  Pedestrian Signal North-South Crossing is now WALK
+Intersection A status:
+  Vehicle Lights: NS=RED, EW=GREEN
+  Ped Signals: NS=WALK, EW=DONT_WALK
+  Vehicle Light North-South is now YELLOW
+
+
+
+How it works now:
+Pedestrian signals respond to simulated button presses by pedestrian sensor thread.
+
+When a pedestrian requests crossing, their pedestrian signal turns WALK during the red phase of conflicting vehicle traffic.
+
+Coordination offsets stagger intersection cycles to improve traffic flow along a corridor.
+
+Prints give real-time feedback of all lights and pedestrian signals.
+
+
+
+
+-----------------------------------------------------------------
+
+
+
+
+Awesome! Let’s progressively extend the traffic light system with these features:
+
+1. Vehicle sensors to skip green if no cars waiting
+Simulate vehicle presence sensors per direction.
+
+If no vehicles detected in a green phase direction, skip green and immediately turn yellow/red to save time.
+
+2. Dynamic green time adjustment based on traffic volume
+Vehicle sensors provide a count of waiting cars.
+
+Green light duration adjusts dynamically within min/max bounds based on the number of waiting vehicles.
+
+3. Emergency vehicle override
+A global override can be triggered (simulated by an external thread).
+
+When active, all intersections immediately switch to red except for the emergency corridor direction which gets green.
+
+Override lasts for a fixed period, then system resumes normal operation.
+
+Full enhanced code implementing all three extensions
+
+
+
+package org.example;
+
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+class AdvancedTrafficLightSystem {
+
+    enum TrafficLightState {
+        GREEN, YELLOW, RED
+    }
+
+    enum PedestrianSignalState {
+        WALK, DONT_WALK
+    }
+
+    enum Direction {
+        NS, EW
+    }
+
+    static class TrafficLight {
+        private final String direction;
+        private TrafficLightState state;
+
+        public TrafficLight(String direction) {
+            this.direction = direction;
+            this.state = TrafficLightState.RED;
+        }
+
+        public synchronized TrafficLightState getState() {
+            return state;
+        }
+
+        public synchronized void setState(TrafficLightState state) {
+            this.state = state;
+            System.out.printf("  Vehicle Light %s is now %s%n", direction, state);
+        }
+    }
+
+    static class PedestrianSignal {
+        private final String crossing;
+        private PedestrianSignalState state;
+        private final AtomicBoolean pedestrianWaiting = new AtomicBoolean(false);
+
+        public PedestrianSignal(String crossing) {
+            this.crossing = crossing;
+            this.state = PedestrianSignalState.DONT_WALK;
+        }
+
+        public synchronized PedestrianSignalState getState() {
+            return state;
+        }
+
+        public synchronized void setState(PedestrianSignalState state) {
+            this.state = state;
+            System.out.printf("  Pedestrian Signal %s is now %s%n", crossing, state);
+        }
+
+        public void pedestrianRequest() {
+            pedestrianWaiting.set(true);
+            System.out.printf("  Pedestrian pressed button at %s%n", crossing);
+        }
+
+        public boolean isPedestrianWaiting() {
+            return pedestrianWaiting.get();
+        }
+
+        public void resetWaiting() {
+            pedestrianWaiting.set(false);
+        }
+    }
+
+    static class VehicleSensor {
+        private int vehicleCount = 0;
+
+        public synchronized int getVehicleCount() {
+            return vehicleCount;
+        }
+
+        public synchronized void setVehicleCount(int count) {
+            vehicleCount = count;
+            System.out.println("  Vehicle sensor reports " + count + " waiting vehicles.");
+        }
+    }
+
+    static class Intersection implements Runnable {
+        private final String name;
+        private final TrafficLight nsLight;
+        private final TrafficLight ewLight;
+        private final PedestrianSignal nsPedestrian;
+        private final PedestrianSignal ewPedestrian;
+
+        private final VehicleSensor nsVehicleSensor = new VehicleSensor();
+        private final VehicleSensor ewVehicleSensor = new VehicleSensor();
+
+        private final int minGreenDuration = 3000; // ms
+        private final int maxGreenDuration = 8000; // ms
+        private final int yellowDuration = 2000;   // ms
+        private final AtomicBoolean running = new AtomicBoolean(true);
+        private final int coordinationOffset;
+
+        // Reference to global emergency override flag and corridor direction
+        private final AtomicBoolean emergencyActive;
+        private final Direction emergencyDirection;
+
+        public Intersection(String name, int coordinationOffset,
+                            AtomicBoolean emergencyActive, Direction emergencyDirection) {
+            this.name = name;
+            this.coordinationOffset = coordinationOffset;
+            this.emergencyActive = emergencyActive;
+            this.emergencyDirection = emergencyDirection;
+
+            this.nsLight = new TrafficLight("North-South");
+            this.ewLight = new TrafficLight("East-West");
+            this.nsPedestrian = new PedestrianSignal("North-South Crossing");
+            this.ewPedestrian = new PedestrianSignal("East-West Crossing");
+
+            nsLight.setState(TrafficLightState.RED);
+            ewLight.setState(TrafficLightState.RED);
+            nsPedestrian.setState(PedestrianSignalState.DONT_WALK);
+            ewPedestrian.setState(PedestrianSignalState.DONT_WALK);
+        }
+
+        public void shutdown() {
+            running.set(false);
+        }
+
+        public PedestrianSignal getNsPedestrian() {
+            return nsPedestrian;
+        }
+
+        public PedestrianSignal getEwPedestrian() {
+            return ewPedestrian;
+        }
+
+        public VehicleSensor getNsVehicleSensor() {
+            return nsVehicleSensor;
+        }
+
+        public VehicleSensor getEwVehicleSensor() {
+            return ewVehicleSensor;
+        }
+
+        @Override
+        public void run() {
+            try {
+                Thread.sleep(coordinationOffset);
+
+                while (running.get()) {
+                    if (emergencyActive.get()) {
+                        emergencyOverrideCycle();
+                    } else {
+                        normalCycle();
+                    }
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            System.out.println(name + " stopped.");
+        }
+
+        private void emergencyOverrideCycle() throws InterruptedException {
+            System.out.println(name + " entering EMERGENCY override mode!");
+            nsPedestrian.setState(PedestrianSignalState.DONT_WALK);
+            ewPedestrian.setState(PedestrianSignalState.DONT_WALK);
+
+            // All red by default
+            nsLight.setState(TrafficLightState.RED);
+            ewLight.setState(TrafficLightState.RED);
+
+            // Green only for emergency direction
+            if (emergencyDirection == Direction.NS) {
+                nsLight.setState(TrafficLightState.GREEN);
+            } else {
+                ewLight.setState(TrafficLightState.GREEN);
+            }
+
+            // Keep emergency green for a fixed period (simulate)
+            Thread.sleep(5000);
+
+            System.out.println(name + " exiting EMERGENCY override mode.");
+        }
+
+        private void normalCycle() throws InterruptedException {
+            // North-South green phase with dynamic green time and vehicle presence check
+            if (nsVehicleSensor.getVehicleCount() > 0) {
+                int nsGreenTime = computeGreenTime(nsVehicleSensor.getVehicleCount());
+                nsLight.setState(TrafficLightState.GREEN);
+                ewLight.setState(TrafficLightState.RED);
+                handlePedestrianPhase(ewPedestrian);
+                printStatus();
+                Thread.sleep(nsGreenTime);
+
+                nsLight.setState(TrafficLightState.YELLOW);
+                ewLight.setState(TrafficLightState.RED);
+                resetPedestrians();
+                printStatus();
+                Thread.sleep(yellowDuration);
+            } else {
+                System.out.println(name + " skipping NS green (no vehicles detected)");
+            }
+
+            // East-West green phase with dynamic green time and vehicle presence check
+            if (ewVehicleSensor.getVehicleCount() > 0) {
+                int ewGreenTime = computeGreenTime(ewVehicleSensor.getVehicleCount());
+                nsLight.setState(TrafficLightState.RED);
+                ewLight.setState(TrafficLightState.GREEN);
+                handlePedestrianPhase(nsPedestrian);
+                printStatus();
+                Thread.sleep(ewGreenTime);
+
+                nsLight.setState(TrafficLightState.RED);
+                ewLight.setState(TrafficLightState.YELLOW);
+                resetPedestrians();
+                printStatus();
+                Thread.sleep(yellowDuration);
+            } else {
+                System.out.println(name + " skipping EW green (no vehicles detected)");
+            }
+        }
+
+        private int computeGreenTime(int vehicleCount) {
+            // Simple linear scale capped at maxGreenDuration
+            int greenTime = minGreenDuration + vehicleCount * 1000;
+            greenTime = Math.min(greenTime, maxGreenDuration);
+            System.out.println(name + ": Adjusted green time to " + greenTime + "ms based on vehicle count " + vehicleCount);
+            return greenTime;
+        }
+
+        private void handlePedestrianPhase(PedestrianSignal pedestrianSignal) throws InterruptedException {
+            if (pedestrianSignal.isPedestrianWaiting()) {
+                pedestrianSignal.setState(PedestrianSignalState.WALK);
+                printStatus();
+                Thread.sleep(Math.max(minGreenDuration / 3, 3000));
+                pedestrianSignal.setState(PedestrianSignalState.DONT_WALK);
+                pedestrianSignal.resetWaiting();
+            }
+        }
+
+        private void resetPedestrians() {
+            nsPedestrian.setState(PedestrianSignalState.DONT_WALK);
+            ewPedestrian.setState(PedestrianSignalState.DONT_WALK);
+            nsPedestrian.resetWaiting();
+            ewPedestrian.resetWaiting();
+        }
+
+        private void printStatus() {
+            System.out.println("Intersection " + name + " status:");
+            System.out.printf("  Vehicle Lights: NS=%s, EW=%s%n", nsLight.getState(), ewLight.getState());
+            System.out.printf("  Ped Signals: NS=%s, EW=%s%n", nsPedestrian.getState(), ewPedestrian.getState());
+        }
+    }
+
+    static class TrafficController {
+        private final List<Intersection> intersections = new ArrayList<>();
+        private final List<Thread> threads = new ArrayList<>();
+        private final ScheduledExecutorService sensorSimulator = Executors.newScheduledThreadPool(2);
+        private final ScheduledExecutorService emergencySimulator = Executors.newSingleThreadScheduledExecutor();
+
+        private final AtomicBoolean emergencyActive = new AtomicBoolean(false);
+        private final Direction emergencyDirection = Direction.NS; // Example: NS corridor emergency
+
+        public void addIntersection(Intersection intersection) {
+            intersections.add(intersection);
+        }
+
+        public void startAll() {
+            for (Intersection i : intersections) {
+                Thread t = new Thread(i, "Intersection-" + i.name);
+                threads.add(t);
+                t.start();
+            }
+
+            sensorSimulator.scheduleAtFixedRate(this::simulatePedestrianSensors, 3, 5, TimeUnit.SECONDS);
+            sensorSimulator.scheduleAtFixedRate(this::simulateVehicleSensors, 1, 4, TimeUnit.SECONDS);
+
+            emergencySimulator.schedule(this::simulateEmergencyVehicle, 20, TimeUnit.SECONDS);
+        }
+
+        public void shutdownAll() {
+            intersections.forEach(Intersection::shutdown);
+            sensorSimulator.shutdownNow();
+            emergencySimulator.shutdownNow();
+
+            threads.forEach(t -> {
+                try {
+                    t.join();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            });
+        }
+
+        private void simulatePedestrianSensors() {
+            Random rand = new Random();
+            for (Intersection intersection : intersections) {
+                if (rand.nextBoolean()) intersection.getNsPedestrian().pedestrianRequest();
+                if (rand.nextBoolean()) intersection.getEwPedestrian().pedestrianRequest();
+            }
+        }
+
+        private void simulateVehicleSensors() {
+            Random rand = new Random();
+            for (Intersection intersection : intersections) {
+                int nsCount = rand.nextInt(5);  // Simulate 0-4 vehicles waiting NS
+                int ewCount = rand.nextInt(5);  // Simulate 0-4 vehicles waiting EW
+                intersection.getNsVehicleSensor().setVehicleCount(nsCount);
+                intersection.getEwVehicleSensor().setVehicleCount(ewCount);
+            }
+        }
+
+        private void simulateEmergencyVehicle() {
+            System.out.println("EMERGENCY vehicle detected! Activating override...");
+            emergencyActive.set(true);
+
+            // Emergency active for 10 seconds
+            try {
+                Thread.sleep(10000);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+
+            emergencyActive.set(false);
+            System.out.println("EMERGENCY override cleared. Resuming normal operation.");
+        }
+    }
+
+    public static void main(String[] args) throws InterruptedException {
+        TrafficController controller = new TrafficController();
+
+        // Add intersections with staggered coordination offsets
+        controller.addIntersection(new Intersection("A", 0, controller.emergencyActive, controller.emergencyDirection));
+        controller.addIntersection(new Intersection("B", 2000, controller.emergencyActive, controller.emergencyDirection));
+        controller.addIntersection(new Intersection("C", 4000, controller.emergencyActive, controller.emergencyDirection));
+
+        controller.startAll();
+
+        // Run system for 45 seconds
+        Thread.sleep(45000);
+
+        controller.shutdownAll();
+
+        System.out.println("Advanced Traffic Light system shutdown.");
+    }
+}
+
+
+o/p
+
+ Pedestrian Signal East-West Crossing is now DONT_WALK
+  Vehicle Light North-South is now RED
+  Vehicle Light East-West is now YELLOW
+  Pedestrian Signal North-South Crossing is now DONT_WALK
+  Pedestrian Signal East-West Crossing is now DONT_WALK
+Intersection B status:
+  Vehicle Lights: NS=RED, EW=YELLOW
+  Ped Signals: NS=DONT_WALK, EW=DONT_WALK
+Intersection C status:
+  Vehicle Lights: NS=RED, EW=YELLOW
+  Ped Signals: NS=DONT_WALK, EW=DONT_WALK
+A: Adjusted green time to 4000ms based on vehicle count 1
+  Vehicle Light North-South is now RED
+  Vehicle Light East-West is now GREEN
+Intersection A status:
+  Vehicle Lights: NS=RED, EW=GREEN
+  Ped Signals: NS=DONT_WALK, EW=DONT_WALK
+EMERGENCY vehicle detected! Activating override...
+C entering EMERGENCY override mode!
+  Pedestrian Signal North-South Crossing is now DONT_WALK
+  Pedestrian Signal East-West Crossing is now DONT_WALK
+  Vehicle Light North-South is now RED
+  Vehicle Light East-West is now RED
+  Vehicle Light North-South is now GREEN
+B entering EMERGENCY override mode!
+  Pedestrian Signal North-South Crossing is now DONT_WALK
+  Pedestrian Signal East-West Crossing is now DONT_WALK
+  Vehicle Light North-South is now RED
+  Vehicle Light East-West is now RED
+  Vehicle Light North-South is now GREEN
+  Vehicle sensor reports 0 waiting vehicles.
+  Vehicle sensor reports 3 waiting vehicles.
+  Vehicle sensor reports 3 waiting vehicles.
+  Vehicle sensor reports 4 waiting vehicles.
+  Vehicle sensor reports 3 waiting vehicles.
+  Vehicle sensor reports 0 waiting vehicles.
+  Vehicle Light North-South is now RED
+  Vehicle Light East-West is now YELLOW
+  Pedestrian Signal North-South Crossing is now DONT_WALK
+  Pedestrian Signal East-West Crossing is now DONT_WALK
+Intersection A status:
+  Vehicle Lights: NS=RED, EW=YELLOW
+  Ped Signals: NS=DONT_WALK, EW=DONT_WALK
+  Pedestrian pressed button at North-South Crossing
+  Pedestrian pressed button at North-South Crossing
+  Pedestrian pressed button at East-West Crossing
+  Pedestrian pressed button at East-West Crossing
+A entering EMERGENCY override mode!
+  Pedestrian Signal North-South Crossing is now DONT_WALK
+  Pedestrian Signal East-West Crossing is now DONT_WALK
+  Vehicle Light North-South is now RED
+  Vehicle Light East-West is now RED
+  Vehicle Light North-South is now GREEN
+  Vehicle sensor reports 4 waiting vehicles.
+  Vehicle sensor reports 4 waiting vehicles.
+  Vehicle sensor reports 0 waiting vehicles.
+  Vehicle sensor reports 0 waiting vehicles.
+  Vehicle sensor reports 4 waiting vehicles.
+  Vehicle sensor reports 3 waiting vehicles.
+C exiting EMERGENCY override mode.
+C entering EMERGENCY override mode!
+  Pedestrian Signal North-South Crossing is now DONT_WALK
+  Pedestrian Signal East-West Crossing is now DONT_WALK
+  Vehicle Light North-South is now RED
+  Vehicle Light East-West is now RED
+  Vehicle Light North-South is now GREEN
+B exiting EMERGENCY override mode.
+B entering EMERGENCY override mode!
+  Pedestrian Signal North-South Crossing is now DONT_WALK
+  Pedestrian Signal East-West Crossing is now DONT_WALK
+  Vehicle Light North-South is now RED
+  Vehicle Light East-West is now RED
+  Vehicle Light North-South is now GREEN
+  Pedestrian pressed button at East-West Crossing
+  Pedestrian pressed button at North-South Crossing
+  Pedestrian pressed button at North-South Crossing
+  Vehicle sensor reports 0 waiting vehicles.
+  Vehicle sensor reports 2 waiting vehicles.
+  Vehicle sensor reports 0 waiting vehicles.
+  Vehicle sensor reports 1 waiting vehicles.
+  Vehicle sensor reports 3 waiting vehicles.
+  Vehicle sensor reports 4 waiting vehicles.
+A exiting EMERGENCY override mode.
+A entering EMERGENCY override mode!
+  Pedestrian Signal North-South Crossing is now DONT_WALK
+  Pedestrian Signal East-West Crossing is now DONT_WALK
+  Vehicle Light North-South is now RED
+  Vehicle Light East-West is now RED
+  Vehicle Light North-South is now GREEN
+EMERGENCY override cleared. Resuming normal operation.
+C exiting EMERGENCY override mode.
+C: Adjusted green time to 6000ms based on vehicle count 3
+  Vehicle Light North-South is now GREEN
+  Vehicle Light East-West is now RED
+  Pedestrian Signal East-West Crossing is now WALK
+Intersection C status:
+  Vehicle Lights: NS=GREEN, EW=RED
+  Ped Signals: NS=DONT_WALK, EW=WALK
+B exiting EMERGENCY override mode.
+B skipping NS green (no vehicles detected)
+B: Adjusted green time to 4000ms based on vehicle count 1
+  Vehicle Light North-South is now RED
+  Vehicle Light East-West is now GREEN
+  Pedestrian Signal North-South Crossing is now WALK
+Intersection B status:
+  Vehicle Lights: NS=RED, EW=GREEN
+  Ped Signals: NS=WALK, EW=DONT_WALK
+  Pedestrian pressed button at East-West Crossing
+  Vehicle sensor reports 0 waiting vehicles.
+  Vehicle sensor reports 3 waiting vehicles.
+  Vehicle sensor reports 1 waiting vehicles.
+  Vehicle sensor reports 0 waiting vehicles.
+  Vehicl
+
+
+
