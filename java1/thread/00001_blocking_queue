@@ -1,0 +1,294 @@
+design a  blocking queue
+
+
+Sure! Here's a simple blocking queue implementation in Java from scratch, using built-in synchronization primitives (wait() and notify()), suitable for multiple producers and consumers:
+
+What is a Blocking Queue?
+A thread-safe queue where:
+
+Producers block if the queue is full until space is available.
+
+Consumers block if the queue is empty until an item is available.
+
+
+
+
+package org.example;
+
+import java.util.LinkedList;
+import java.util.Queue;
+
+class BlockingQueue<T> {
+    private final Queue<T> queue = new LinkedList<>();
+    private final int capacity;
+
+    public BlockingQueue(int capacity) {
+        this.capacity = capacity;
+    }
+
+    public synchronized void put(T item) throws InterruptedException {
+        while (queue.size() == capacity) {
+            wait();  // wait if full
+        }
+        queue.offer(item);
+        notifyAll();  // notify consumers waiting for items
+    }
+
+    public synchronized T take() throws InterruptedException {
+        while (queue.isEmpty()) {
+            wait();  // wait if empty
+        }
+        T item = queue.poll();
+        notifyAll();  // notify producers waiting for space
+        return item;
+    }
+
+    public synchronized int size() {
+        return queue.size();
+    }
+
+    public synchronized boolean isEmpty() {
+        return queue.isEmpty();
+    }
+}
+public class Main {
+    public static void main(String[] args) {
+        BlockingQueue<Integer> bq = new BlockingQueue<>(5);
+
+        // Producer thread
+        Thread producer = new Thread(() -> {
+            int count = 0;
+            try {
+                while (true) {
+                    System.out.println("Producing " + count);
+                    bq.put(count++);
+                    Thread.sleep(500);
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        });
+
+        // Consumer thread
+        Thread consumer = new Thread(() -> {
+            try {
+                while (true) {
+                    int val = bq.take();
+                    System.out.println("Consuming " + val);
+                    Thread.sleep(1000);
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        });
+
+        producer.start();
+        consumer.start();
+    }
+}
+
+
+
+
+Explanation
+put() blocks if queue is full, take() blocks if queue is empty.
+
+wait() releases the lock and waits.
+
+notifyAll() wakes up waiting threads when the state changes.
+
+synchronized ensures only one thread accesses queue state at a time.
+
+Would you like me to help you implement a more advanced version with features like timeout, fairness, or multiple queues?
+
+
+Great! Let’s enhance the blocking queue with these features:
+
+Timeout support for both put and take (wait only a limited time)
+
+Fairness (serve threads roughly in FIFO order)
+
+Support for multiple queues via a wrapper manager class
+
+
+
+
+Advanced Blocking Queue in Java
+We will:
+
+Use ReentrantLock with Conditions instead of synchronized for more control and fairness.
+
+Implement put and take with timeout.
+
+Build a MultiQueueManager that manages multiple named blocking queues.
+
+
+
+
+package org.example;
+
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.TimeUnit;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+
+class AdvancedBlockingQueue<T> {
+    private final Queue<T> queue = new LinkedList<>();
+    private final int capacity;
+
+    private final ReentrantLock lock;
+    private final Condition notFull;
+    private final Condition notEmpty;
+
+    public AdvancedBlockingQueue(int capacity, boolean fair) {
+        this.capacity = capacity;
+        this.lock = new ReentrantLock(fair);
+        this.notFull = lock.newCondition();
+        this.notEmpty = lock.newCondition();
+    }
+
+    // Put with timeout
+    public boolean put(T item, long timeout, TimeUnit unit) throws InterruptedException {
+        long nanos = unit.toNanos(timeout);
+        lock.lockInterruptibly();
+        try {
+            while (queue.size() == capacity) {
+                if (nanos <= 0L) return false; // timeout expired
+                nanos = notFull.awaitNanos(nanos);
+            }
+            queue.offer(item);
+            notEmpty.signal(); // signal a waiting consumer
+            return true;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    // Take with timeout
+    public T take(long timeout, TimeUnit unit) throws InterruptedException {
+        long nanos = unit.toNanos(timeout);
+        lock.lockInterruptibly();
+        try {
+            while (queue.isEmpty()) {
+                if (nanos <= 0L) return null; // timeout expired
+                nanos = notEmpty.awaitNanos(nanos);
+            }
+            T item = queue.poll();
+            notFull.signal(); // signal a waiting producer
+            return item;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    // Blocking put (no timeout)
+    public void put(T item) throws InterruptedException {
+        lock.lockInterruptibly();
+        try {
+            while (queue.size() == capacity) {
+                notFull.await();
+            }
+            queue.offer(item);
+            notEmpty.signal();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    // Blocking take (no timeout)
+    public T take() throws InterruptedException {
+        lock.lockInterruptibly();
+        try {
+            while (queue.isEmpty()) {
+                notEmpty.await();
+            }
+            T item = queue.poll();
+            notFull.signal();
+            return item;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public int size() {
+        lock.lock();
+        try {
+            return queue.size();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public boolean isEmpty() {
+        return size() == 0;
+    }
+}
+
+// Manager for multiple queues
+class MultiQueueManager<T> {
+    private final Map<String, AdvancedBlockingQueue<T>> queues = new HashMap<>();
+    private final boolean fair;
+
+    public MultiQueueManager(boolean fair) {
+        this.fair = fair;
+    }
+
+    public synchronized void createQueue(String name, int capacity) {
+        if (!queues.containsKey(name)) {
+            queues.put(name, new AdvancedBlockingQueue<>(capacity, fair));
+        }
+    }
+
+    public AdvancedBlockingQueue<T> getQueue(String name) {
+        return queues.get(name);
+    }
+}
+
+
+public class Main {
+    public static void main(String[] args) throws InterruptedException {
+        MultiQueueManager<String> manager = new MultiQueueManager<>(true);
+
+        manager.createQueue("highPriority", 3);
+        manager.createQueue("lowPriority", 5);
+
+        AdvancedBlockingQueue<String> highQ = manager.getQueue("highPriority");
+        AdvancedBlockingQueue<String> lowQ = manager.getQueue("lowPriority");
+
+        // Producer thread putting with timeout
+        Thread producer = new Thread(() -> {
+            try {
+                System.out.println("Producer putting 'Job1' to highPriority queue");
+                boolean success = highQ.put("Job1", 2, TimeUnit.SECONDS);
+                System.out.println("Put success: " + success);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        });
+
+        // Consumer thread taking with timeout
+        Thread consumer = new Thread(() -> {
+            try {
+                String job = highQ.take(5, TimeUnit.SECONDS);
+                System.out.println("Consumer took: " + job);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        });
+
+        producer.start();
+        consumer.start();
+
+        producer.join();
+        consumer.join();
+    }
+}
+
+
+
+
+
+
+
+
