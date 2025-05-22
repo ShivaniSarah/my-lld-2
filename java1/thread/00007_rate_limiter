@@ -1,0 +1,262 @@
+how many algorithms for rate limiter ?
+
+There are four major algorithms commonly used for implementing rate limiting, each with different trade-offs in terms of precision, burst handling, and complexity.
+
+🔢 1. Fixed Window Counter
+Idea: Count requests in a fixed time window (e.g., 1 second).
+
+✅ Simple to implement.
+
+❌ Allows bursts at window boundaries (e.g., 100 requests at the end of one window + 100 at start of next).
+
+Example:
+Allow 100 requests per 1 second.
+
+🔄 2. Sliding Window Log
+Idea: Track timestamps of each request, and count how many fall within the current window (e.g., past 60 seconds).
+
+✅ Accurate.
+
+❌ Memory intensive (stores all timestamps).
+
+Example:
+Keep a queue of timestamps and remove old ones.
+
+📉 3. Sliding Window Counter
+Idea: A compromise between fixed window and sliding log.
+
+Divide the window into small sub-windows (buckets).
+
+Approximate the count over time.
+
+✅ More memory efficient than log.
+
+✅ Smoother than fixed window.
+
+❌ Slight approximation error.
+
+💧 4. Leaky Bucket
+Idea: Requests enter a bucket. They leak (processed) at a fixed rate.
+
+✅ Enforces steady rate.
+
+❌ Does not allow bursts.
+
+✅ Good for smoothing bursty traffic.
+
+Think of it as a queue with constant draining.
+
+⏳ 5. Token Bucket
+Idea: Tokens are added at a fixed rate. A request needs a token to proceed.
+
+✅ Allows bursts (if tokens are saved).
+
+✅ Smooths over time.
+
+✅ Flexible.
+
+More flexible than leaky bucket. Most widely used in APIs.
+
+🧠 Summary Table
+
+
+| Algorithm              | Allows Burst | Accuracy | Memory Cost | Complexity | Best For       |
+| ---------------------- | ------------ | -------- | ----------- | ---------- | -------------- |
+| Fixed Window           | Yes          | Low      | Low         | Low        | Simple APIs    |
+| Sliding Window Log     | Yes          | High     | High        | Medium     | Precise limits |
+| Sliding Window Counter | Yes (less)   | Medium   | Medium      | Medium     | Balanced       |
+| Leaky Bucket           | No           | High     | Low         | Low        | Smoothing      |
+| Token Bucket           | Yes          | High     | Low         | Medium     | Most flexible  |
+
+
+
+package org.example;
+
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.Queue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+// --- Fixed Window Counter ---
+class FixedWindowRateLimiter {
+    private final int maxRequests;
+    private final long windowSizeMillis;
+    private int requestCount = 0;
+    private long windowStart = System.currentTimeMillis();
+
+    public FixedWindowRateLimiter(int maxRequests, long windowSizeMillis) {
+        this.maxRequests = maxRequests;
+        this.windowSizeMillis = windowSizeMillis;
+    }
+
+    public synchronized boolean allowRequest() {
+        long now = System.currentTimeMillis();
+        if (now - windowStart > windowSizeMillis) {
+            windowStart = now;
+            requestCount = 0;
+        }
+        if (requestCount < maxRequests) {
+            requestCount++;
+            return true;
+        }
+        return false;
+    }
+}
+
+// --- Sliding Window Log ---
+class SlidingWindowLogRateLimiter {
+    private final int maxRequests;
+    private final long windowSizeMillis;
+    private final Queue<Long> timestamps = new LinkedList<>();
+
+    public SlidingWindowLogRateLimiter(int maxRequests, long windowSizeMillis) {
+        this.maxRequests = maxRequests;
+        this.windowSizeMillis = windowSizeMillis;
+    }
+
+    public synchronized boolean allowRequest() {
+        long now = System.currentTimeMillis();
+        while (!timestamps.isEmpty() && now - timestamps.peek() > windowSizeMillis) {
+            timestamps.poll();
+        }
+        if (timestamps.size() < maxRequests) {
+            timestamps.offer(now);
+            return true;
+        }
+        return false;
+    }
+}
+
+// --- Sliding Window Counter ---
+class SlidingWindowCounterRateLimiter {
+    private final int maxRequests;
+    private final int windowSize;
+    private final int numBuckets;
+    private final int[] buckets;
+    private int currentBucket;
+    private long lastTime;
+    private final long bucketDuration;
+
+    public SlidingWindowCounterRateLimiter(int maxRequests, int windowSize, int numBuckets) {
+        this.maxRequests = maxRequests;
+        this.windowSize = windowSize;
+        this.numBuckets = numBuckets;
+        this.buckets = new int[numBuckets];
+        this.bucketDuration = windowSize / numBuckets;
+        this.lastTime = System.currentTimeMillis();
+    }
+
+    public synchronized boolean allowRequest() {
+        long now = System.currentTimeMillis();
+        int bucketsToClear = (int) ((now - lastTime) / bucketDuration);
+        for (int i = 0; i < Math.min(bucketsToClear, numBuckets); i++) {
+            currentBucket = (currentBucket + 1) % numBuckets;
+            buckets[currentBucket] = 0;
+        }
+        lastTime = now;
+
+        int sum = Arrays.stream(buckets).sum();
+        if (sum < maxRequests) {
+            buckets[currentBucket]++;
+            return true;
+        }
+        return false;
+    }
+}
+
+// --- Leaky Bucket ---
+class LeakyBucketRateLimiter {
+    private final int capacity;
+    private final long leakIntervalMillis;
+    private int water = 0;
+    private long lastLeakTime = System.currentTimeMillis();
+
+    public LeakyBucketRateLimiter(int capacity, long leakIntervalMillis) {
+        this.capacity = capacity;
+        this.leakIntervalMillis = leakIntervalMillis;
+    }
+
+    public synchronized boolean allowRequest() {
+        long now = System.currentTimeMillis();
+        long leaks = (now - lastLeakTime) / leakIntervalMillis;
+        if (leaks > 0) {
+            water = Math.max(0, water - (int) leaks);
+            lastLeakTime = now;
+        }
+        if (water < capacity) {
+            water++;
+            return true;
+        }
+        return false;
+    }
+}
+
+// --- Token Bucket ---
+class TokenBucketRateLimiter {
+    private final int capacity;
+    private final int refillRate;
+    private int tokens;
+    private long lastRefillTime;
+
+    public TokenBucketRateLimiter(int capacity, int refillRate) {
+        this.capacity = capacity;
+        this.refillRate = refillRate;
+        this.tokens = capacity;
+        this.lastRefillTime = System.nanoTime();
+    }
+
+    public synchronized boolean allowRequest() {
+        long now = System.nanoTime();
+        long elapsedTime = now - lastRefillTime;
+        int refillTokens = (int) (elapsedTime / 1_000_000_000L) * refillRate;
+        if (refillTokens > 0) {
+            tokens = Math.min(capacity, tokens + refillTokens);
+            lastRefillTime = now;
+        }
+        if (tokens > 0) {
+            tokens--;
+            return true;
+        }
+        return false;
+    }
+}
+
+// --- Testing all rate limiters ---
+public class Main {
+    public static void main(String[] args) {
+        testRateLimiter("Fixed Window", new FixedWindowRateLimiter(5, 1000));
+        testRateLimiter("Sliding Window Log", new SlidingWindowLogRateLimiter(5, 1000));
+        testRateLimiter("Sliding Window Counter", new SlidingWindowCounterRateLimiter(5, 1000, 5));
+        testRateLimiter("Leaky Bucket", new LeakyBucketRateLimiter(5, 200));
+        testRateLimiter("Token Bucket", new TokenBucketRateLimiter(5, 2));
+    }
+
+    private static void testRateLimiter(String name, Object limiter) {
+        System.out.println("\nTesting: " + name);
+        ExecutorService executor = Executors.newFixedThreadPool(3);
+
+        for (int i = 0; i < 20; i++) {
+            executor.submit(() -> {
+                boolean allowed = false;
+                if (limiter instanceof FixedWindowRateLimiter)
+                    allowed = ((FixedWindowRateLimiter) limiter).allowRequest();
+                else if (limiter instanceof SlidingWindowLogRateLimiter)
+                    allowed = ((SlidingWindowLogRateLimiter) limiter).allowRequest();
+                else if (limiter instanceof SlidingWindowCounterRateLimiter)
+                    allowed = ((SlidingWindowCounterRateLimiter) limiter).allowRequest();
+                else if (limiter instanceof LeakyBucketRateLimiter)
+                    allowed = ((LeakyBucketRateLimiter) limiter).allowRequest();
+                else if (limiter instanceof TokenBucketRateLimiter)
+                    allowed = ((TokenBucketRateLimiter) limiter).allowRequest();
+                System.out.println(Thread.currentThread().getName() + ": " + (allowed ? "Allowed" : "Blocked"));
+            });
+            try { Thread.sleep(100); } catch (InterruptedException ignored) {}
+        }
+        executor.shutdown();
+    }
+}
+
+
+
+
