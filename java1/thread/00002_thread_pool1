@@ -1,0 +1,14 @@
+Let's implement a simple thread pool from scratch using Java and BlockingQueue. This demonstrates how frameworks like ExecutorService work internally.
+
+🔧 Custom Thread Pool using BlockingQueue
+✅ Features:
+Accepts Runnable tasks.
+
+Maintains a fixed number of worker threads.
+
+Uses BlockingQueue to hold submitted tasks.
+
+Graceful shutdown support (optional, but added here).
+
+
+
