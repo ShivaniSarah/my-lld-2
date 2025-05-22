@@ -1,0 +1,103 @@
+Parallel Merge Sort / Quick Sort
+
+Implement a parallel version of sorting algorithm using thread pools or fork-join.
+
+
+Parallel Merge Sort / Quick Sort
+
+Implement a parallel version of sorting algorithm using thread pools or fork-join.
+
+
+ChatGPT said:
+Sure! Here’s a parallel merge sort implementation in Java using the Fork/Join framework, which is well-suited for divide-and-conquer parallel algorithms.
+
+Why Fork/Join?
+It recursively splits the problem into subtasks.
+
+Efficiently uses a pool of worker threads.
+
+Automatically balances workload via work-stealing.
+
+Code: Parallel Merge Sort with ForkJoin
+
+import java.util.Arrays;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.RecursiveAction;
+
+public class ParallelMergeSort extends RecursiveAction {
+    private static final int THRESHOLD = 1000; // when to switch to sequential sort
+    private final int[] array;
+    private final int left, right;
+    private final int[] temp;
+
+    public ParallelMergeSort(int[] array, int left, int right, int[] temp) {
+        this.array = array;
+        this.left = left;
+        this.right = right;
+        this.temp = temp;
+    }
+
+    @Override
+    protected void compute() {
+        if (right - left <= THRESHOLD) {
+            // Small enough to sort sequentially
+            Arrays.sort(array, left, right + 1);
+        } else {
+            int mid = (left + right) / 2;
+            ParallelMergeSort leftTask = new ParallelMergeSort(array, left, mid, temp);
+            ParallelMergeSort rightTask = new ParallelMergeSort(array, mid + 1, right, temp);
+
+            invokeAll(leftTask, rightTask);
+
+            merge(left, mid, right);
+        }
+    }
+
+    private void merge(int left, int mid, int right) {
+        System.arraycopy(array, left, temp, left, right - left + 1);
+
+        int i = left, j = mid + 1, k = left;
+
+        while (i <= mid && j <= right) {
+            if (temp[i] <= temp[j]) {
+                array[k++] = temp[i++];
+            } else {
+                array[k++] = temp[j++];
+            }
+        }
+        while (i <= mid) {
+            array[k++] = temp[i++];
+        }
+        while (j <= right) {
+            array[k++] = temp[j++];
+        }
+    }
+
+    public static void parallelMergeSort(int[] array) {
+        int[] temp = new int[array.length];
+        ForkJoinPool pool = ForkJoinPool.commonPool();
+        pool.invoke(new ParallelMergeSort(array, 0, array.length - 1, temp));
+    }
+
+    // Test
+    public static void main(String[] args) {
+        int[] arr = { 9, 5, 1, 4, 3, 7, 8, 6, 2, 0 };
+        System.out.println("Before: " + Arrays.toString(arr));
+
+        parallelMergeSort(arr);
+
+        System.out.println("After:  " + Arrays.toString(arr));
+    }
+}
+
+
+How it works:
+The array is recursively divided until the subarray size is small enough (THRESHOLD).
+
+For small arrays, it uses Arrays.sort() directly.
+
+After sorting left and right halves in parallel, it merges them.
+
+Uses a shared temporary array for merging to avoid extra allocations.
+
+If you want a parallel quicksort implementation or any tuning/extension (e.g., custom thread pools, performance metrics), just ask!
