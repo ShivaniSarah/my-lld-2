@@ -106,6 +106,64 @@ public class ExpiringCache<K, V> {
     }
 }
 
+or
+
+import java.util.concurrent.ConcurrentHashMap;
+
+public class SimpleExpiringCache<K, V> {
+
+    private static class CacheEntry<V> {
+        final V value;
+        final long expiryTime;
+
+        CacheEntry(V value, long expiryTime) {
+            this.value = value;
+            this.expiryTime = expiryTime;
+        }
+
+        boolean isExpired() {
+            return System.currentTimeMillis() > expiryTime;
+        }
+    }
+
+    private final ConcurrentHashMap<K, CacheEntry<V>> map = new ConcurrentHashMap<>();
+    private final long ttlMillis;
+
+    public SimpleExpiringCache(long ttlMillis) {
+        this.ttlMillis = ttlMillis;
+    }
+
+    public void put(K key, V value) {
+        long expiry = System.currentTimeMillis() + ttlMillis;
+        map.put(key, new CacheEntry<>(value, expiry));
+    }
+
+    public V get(K key) {
+        CacheEntry<V> entry = map.get(key);
+        if (entry == null || entry.isExpired()) {
+            map.remove(key);
+            return null;
+        }
+        return entry.value;
+    }
+
+    public void remove(K key) {
+        map.remove(key);
+    }
+
+    public int size() {
+        return map.size();
+    }
+
+    public static void main(String[] args) throws InterruptedException {
+        SimpleExpiringCache<String, String> cache = new SimpleExpiringCache<>(2000);
+        cache.put("a", "foo");
+        System.out.println(cache.get("a")); // foo
+        Thread.sleep(2500);
+        System.out.println(cache.get("a")); // null (expired)
+    }
+}
+
 
 Explanation:
 
