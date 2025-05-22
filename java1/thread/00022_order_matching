@@ -1,0 +1,237 @@
+Design an Order Matching Engine (e.g., for stock trading
+
+Got it! Here’s a design and a Java implementation of a basic Order Matching Engine for stock trading that:
+
+Supports limit buy/sell orders
+
+Maintains order books for buy and sell sides
+
+Matches orders based on price-time priority
+
+Partially fills orders if quantities differ
+
+Thread-safe for concurrent order submissions
+
+Key concepts:
+Order: represents buy/sell with price, quantity, timestamp, and unique ID
+
+OrderBook: holds buy and sell orders, each sorted by price and time
+
+Matching Engine: receives incoming orders and tries to match against the opposite side
+
+Priority Queues:
+
+Buy orders: max-heap by price (highest first), then FIFO by time
+
+Sell orders: min-heap by price (lowest first), then FIFO by time
+
+Simplifications:
+Only limit orders
+
+No market orders or other complex order types
+
+Single stock symbol
+
+Basic concurrency handling with synchronization
+
+
+
+
+package org.example;
+
+import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
+
+class OrderMatchingEngine {
+
+    enum Side { BUY, SELL }
+
+    static class Order {
+        final long id;
+        final Side side;
+        final double price;
+        long quantity;
+        final long timestamp;
+
+        public Order(long id, Side side, double price, long quantity, long timestamp) {
+            this.id = id;
+            this.side = side;
+            this.price = price;
+            this.quantity = quantity;
+            this.timestamp = timestamp;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("Order{id=%d, side=%s, price=%.2f, qty=%d, time=%d}", id, side, price, quantity, timestamp);
+        }
+    }
+
+    static class OrderBook {
+        // Comparator for buy orders: highest price first, then earlier timestamp
+        private final PriorityQueue<Order> buyOrders = new PriorityQueue<>(
+                Comparator.<Order>comparingDouble(o -> -o.price).thenComparingLong(o -> o.timestamp)
+        );
+        // Comparator for sell orders: lowest price first, then earlier timestamp
+        private final PriorityQueue<Order> sellOrders = new PriorityQueue<>(
+                Comparator.<Order>comparingDouble(o -> o.price).thenComparingLong(o -> o.timestamp)
+        );
+
+        public synchronized void addOrder(Order order) {
+            if (order.side == Side.BUY) {
+                buyOrders.offer(order);
+            } else {
+                sellOrders.offer(order);
+            }
+        }
+
+        public synchronized PriorityQueue<Order> getBuyOrders() {
+            return new PriorityQueue<>(buyOrders);
+        }
+
+        public synchronized PriorityQueue<Order> getSellOrders() {
+            return new PriorityQueue<>(sellOrders);
+        }
+
+        public synchronized Order peekBestBuy() {
+            return buyOrders.peek();
+        }
+
+        public synchronized Order peekBestSell() {
+            return sellOrders.peek();
+        }
+
+        public synchronized Order pollBestBuy() {
+            return buyOrders.poll();
+        }
+
+        public synchronized Order pollBestSell() {
+            return sellOrders.poll();
+        }
+    }
+
+    static class MatchingEngine {
+        private final OrderBook orderBook = new OrderBook();
+        private final AtomicLong orderIdGenerator = new AtomicLong(0);
+
+        // synchronized to ensure thread safety
+        public synchronized void submitOrder(Order order) {
+            System.out.println("Submitting order: " + order);
+            if (order.side == Side.BUY) {
+                matchBuyOrder(order);
+            } else {
+                matchSellOrder(order);
+            }
+        }
+
+        private void matchBuyOrder(Order buyOrder) {
+            while (buyOrder.quantity > 0) {
+                Order bestSell = orderBook.peekBestSell();
+                if (bestSell == null || bestSell.price > buyOrder.price) {
+                    // no matching sell order available at desired price
+                    orderBook.addOrder(buyOrder);
+                    System.out.println("Added buy order to book: " + buyOrder);
+                    return;
+                }
+
+                long tradedQty = Math.min(buyOrder.quantity, bestSell.quantity);
+                double tradePrice = bestSell.price;
+                System.out.printf("Trade executed: BUY %d @ %.2f (Order %d with Order %d)%n",
+                        tradedQty, tradePrice, buyOrder.id, bestSell.id);
+
+                buyOrder.quantity -= tradedQty;
+                bestSell.quantity -= tradedQty;
+
+                if (bestSell.quantity == 0) {
+                    orderBook.pollBestSell();
+                }
+            }
+        }
+
+        private void matchSellOrder(Order sellOrder) {
+            while (sellOrder.quantity > 0) {
+                Order bestBuy = orderBook.peekBestBuy();
+                if (bestBuy == null || bestBuy.price < sellOrder.price) {
+                    // no matching buy order available at desired price
+                    orderBook.addOrder(sellOrder);
+                    System.out.println("Added sell order to book: " + sellOrder);
+                    return;
+                }
+
+                long tradedQty = Math.min(sellOrder.quantity, bestBuy.quantity);
+                double tradePrice = bestBuy.price;
+                System.out.printf("Trade executed: SELL %d @ %.2f (Order %d with Order %d)%n",
+                        tradedQty, tradePrice, sellOrder.id, bestBuy.id);
+
+                sellOrder.quantity -= tradedQty;
+                bestBuy.quantity -= tradedQty;
+
+                if (bestBuy.quantity == 0) {
+                    orderBook.pollBestBuy();
+                }
+            }
+        }
+
+        public void printOrderBook() {
+            System.out.println("Order Book Snapshot:");
+            System.out.println("BUY Orders:");
+            for (Order o : orderBook.getBuyOrders()) {
+                System.out.println(o);
+            }
+            System.out.println("SELL Orders:");
+            for (Order o : orderBook.getSellOrders()) {
+                System.out.println(o);
+            }
+        }
+
+        public Order createOrder(Side side, double price, long quantity) {
+            return new Order(orderIdGenerator.incrementAndGet(), side, price, quantity, System.currentTimeMillis());
+        }
+    }
+
+    public static void main(String[] args) throws InterruptedException {
+        MatchingEngine engine = new MatchingEngine();
+
+        // Submit some orders concurrently
+        Thread t1 = new Thread(() -> {
+            engine.submitOrder(engine.createOrder(Side.BUY, 100.0, 10));
+            engine.submitOrder(engine.createOrder(Side.BUY, 101.0, 5));
+        });
+
+        Thread t2 = new Thread(() -> {
+            engine.submitOrder(engine.createOrder(Side.SELL, 102.0, 7));
+            engine.submitOrder(engine.createOrder(Side.SELL, 99.0, 8));
+        });
+
+        t1.start();
+        t2.start();
+        t1.join();
+        t2.join();
+
+        // Print final order book
+        engine.printOrderBook();
+    }
+}
+
+
+
+o/p
+
+
+Submitting order: Order{id=1, side=BUY, price=100.00, qty=10, time=1747938395092}
+Added buy order to book: Order{id=1, side=BUY, price=100.00, qty=10, time=1747938395092}
+Submitting order: Order{id=3, side=BUY, price=101.00, qty=5, time=1747938395118}
+Added buy order to book: Order{id=3, side=BUY, price=101.00, qty=5, time=1747938395118}
+Submitting order: Order{id=2, side=SELL, price=102.00, qty=7, time=1747938395093}
+Added sell order to book: Order{id=2, side=SELL, price=102.00, qty=7, time=1747938395093}
+Submitting order: Order{id=4, side=SELL, price=99.00, qty=8, time=1747938395120}
+Trade executed: SELL 5 @ 101.00 (Order 4 with Order 3)
+Trade executed: SELL 3 @ 100.00 (Order 4 with Order 1)
+Order Book Snapshot:
+BUY Orders:
+Order{id=1, side=BUY, price=100.00, qty=7, time=1747938395092}
+SELL Orders:
+Order{id=2, side=SELL, price=102.00, qty=7, time=1747938395093}
+
+Process finished with exit code 0
+
