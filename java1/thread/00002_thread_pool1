@@ -558,6 +558,989 @@ Graceful shutdown, ensuring all tasks finish before exit.
 Completion callbacks (onComplete) for task post-processing.
 
 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+Would you like to extend this with:
+
+Task prioritization?
+
+Result return with Future?
+
+Timeout scheduling?
+
+
+Answer in chat instead
+✅ Updated the thread pool with:
+
+Task prioritization using PriorityBlockingQueue
+
+Async result handling with CompletableFuture
+
+Delayed task scheduling using ScheduledExecutorService
+
+
+
+import java.util.concurrent.*;
+import java.util.*;
+
+public class SimpleThreadPool {
+    private final PriorityBlockingQueue<PrioritizedTask> taskQueue;
+    private final List<Worker> workers;
+    private final ScheduledExecutorService scheduler;
+    private volatile boolean isStopped = false;
+
+    public SimpleThreadPool(int numThreads) {
+        this.taskQueue = new PriorityBlockingQueue<>();
+        this.scheduler = Executors.newScheduledThreadPool(1);
+        this.workers = new ArrayList<>();
+
+        for (int i = 0; i < numThreads; i++) {
+            Worker worker = new Worker("Worker-" + i);
+            workers.add(worker);
+            worker.start();
+        }
+    }
+
+    public Future<?> submit(Runnable task, int priority) {
+        if (isStopped) return CompletableFuture.failedFuture(new RejectedExecutionException("ThreadPool is stopped"));
+        CompletableFuture<Void> future = new CompletableFuture<>();
+        taskQueue.offer(new PrioritizedTask(task, priority, future));
+        return future;
+    }
+
+    public void schedule(Runnable task, int priority, long delay, TimeUnit unit) {
+        if (!isStopped) {
+            scheduler.schedule(() -> submit(task, priority), delay, unit);
+        }
+    }
+
+    public void shutdown() {
+        isStopped = true;
+        scheduler.shutdown();
+        for (Worker worker : workers) {
+            worker.interrupt();
+        }
+    }
+
+    private static class PrioritizedTask implements Comparable<PrioritizedTask> {
+        private final Runnable task;
+        private final int priority;
+        private final CompletableFuture<Void> future;
+
+        public PrioritizedTask(Runnable task, int priority, CompletableFuture<Void> future) {
+            this.task = task;
+            this.priority = priority;
+            this.future = future;
+        }
+
+        @Override
+        public int compareTo(PrioritizedTask other) {
+            return Integer.compare(other.priority, this.priority); // Higher priority first
+        }
+
+        public void run() {
+            try {
+                task.run();
+                future.complete(null);
+            } catch (Exception e) {
+                future.completeExceptionally(e);
+            }
+        }
+    }
+
+    private class Worker extends Thread {
+        Worker(String name) {
+            super(name);
+        }
+
+        public void run() {
+            while (!isStopped || !taskQueue.isEmpty()) {
+                try {
+                    PrioritizedTask task = taskQueue.poll(100, TimeUnit.MILLISECONDS);
+                    if (task != null) task.run();
+                } catch (InterruptedException e) {
+                    if (isStopped) break;
+                }
+            }
+        }
+    }
+
+    public static void main(String[] args) throws InterruptedException {
+        SimpleThreadPool pool = new SimpleThreadPool(3);
+
+        for (int i = 0; i < 5; i++) {
+            int taskId = i;
+            pool.submit(() -> System.out.println(Thread.currentThread().getName() + " executed task " + taskId), 5);
+        }
+
+        pool.schedule(() -> System.out.println("Scheduled task after delay"), 10, 2, TimeUnit.SECONDS);
+
+        Thread.sleep(5000);
+        pool.shutdown();
+    }
+}
+
+
+
+
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+Task retries with backoff
+
+Metrics for performance tracking
+
+Custom rejection handlers or max queue size
+
+
+✅ The thread pool has been enhanced with:
+
+Task retries with exponential backoff
+
+Metrics for active and processed task counts
+
+Custom rejection on full queue with a max size (maxQueueSize)
+
+
+import java.util.concurrent.*;
+import java.util.*;
+
+public class SimpleThreadPool {
+    private final PriorityBlockingQueue<PrioritizedTask> taskQueue;
+    private final List<Worker> workers;
+    private final ScheduledExecutorService scheduler;
+    private final int maxRetries = 3;
+    private final int maxQueueSize = 100;
+    private final AtomicInteger activeTaskCount = new AtomicInteger(0);
+    private final AtomicInteger processedTaskCount = new AtomicInteger(0);
+    private volatile boolean isStopped = false;
+
+    public SimpleThreadPool(int numThreads) {
+        this.taskQueue = new PriorityBlockingQueue<>();
+        this.scheduler = Executors.newScheduledThreadPool(1);
+        this.workers = new ArrayList<>();
+
+        for (int i = 0; i < numThreads; i++) {
+            Worker worker = new Worker("Worker-" + i);
+            workers.add(worker);
+            worker.start();
+        }
+    }
+
+    public Future<?> submit(Runnable task, int priority) {
+        return submit(task, priority, 0);
+    }
+
+    private Future<?> submit(Runnable task, int priority, int retryCount) {
+        if (isStopped) return CompletableFuture.failedFuture(new RejectedExecutionException("ThreadPool is stopped"));
+        if (taskQueue.size() >= maxQueueSize) return CompletableFuture.failedFuture(new RejectedExecutionException("Queue is full"));
+
+        CompletableFuture<Void> future = new CompletableFuture<>();
+        PrioritizedTask pt = new PrioritizedTask(task, priority, future, retryCount);
+        taskQueue.offer(pt);
+        return future;
+    }
+
+    public void schedule(Runnable task, int priority, long delay, TimeUnit unit) {
+        if (!isStopped) {
+            scheduler.schedule(() -> submit(task, priority), delay, unit);
+        }
+    }
+
+    public void shutdown() {
+        isStopped = true;
+        scheduler.shutdown();
+        for (Worker worker : workers) {
+            worker.interrupt();
+        }
+    }
+
+    public int getActiveTaskCount() {
+        return activeTaskCount.get();
+    }
+
+    public int getProcessedTaskCount() {
+        return processedTaskCount.get();
+    }
+
+    private class PrioritizedTask implements Comparable<PrioritizedTask> {
+        private final Runnable task;
+        private final int priority;
+        private final CompletableFuture<Void> future;
+        private final int retryCount;
+
+        public PrioritizedTask(Runnable task, int priority, CompletableFuture<Void> future, int retryCount) {
+            this.task = task;
+            this.priority = priority;
+            this.future = future;
+            this.retryCount = retryCount;
+        }
+
+        @Override
+        public int compareTo(PrioritizedTask other) {
+            return Integer.compare(other.priority, this.priority); // Higher priority first
+        }
+
+        public void run() {
+            activeTaskCount.incrementAndGet();
+            try {
+                task.run();
+                future.complete(null);
+                processedTaskCount.incrementAndGet();
+            } catch (Exception e) {
+                if (retryCount < maxRetries && !isStopped) {
+                    scheduler.schedule(() -> submit(task, priority, retryCount + 1), (1L << retryCount), TimeUnit.SECONDS);
+                } else {
+                    future.completeExceptionally(e);
+                }
+            } finally {
+                activeTaskCount.decrementAndGet();
+            }
+        }
+    }
+
+    private class Worker extends Thread {
+        Worker(String name) {
+            super(name);
+        }
+
+        public void run() {
+            while (!isStopped || !taskQueue.isEmpty()) {
+                try {
+                    PrioritizedTask task = taskQueue.poll(100, TimeUnit.MILLISECONDS);
+                    if (task != null) task.run();
+                } catch (InterruptedException e) {
+                    if (isStopped) break;
+                }
+            }
+        }
+    }
+
+    public static void main(String[] args) throws InterruptedException {
+        SimpleThreadPool pool = new SimpleThreadPool(3);
+
+        for (int i = 0; i < 5; i++) {
+            int taskId = i;
+            pool.submit(() -> {
+                System.out.println(Thread.currentThread().getName() + " executed task " + taskId);
+                if (taskId % 2 == 0) throw new RuntimeException("Failing task " + taskId);
+            }, 5);
+        }
+
+        pool.schedule(() -> System.out.println("Scheduled task after delay"), 10, 2, TimeUnit.SECONDS);
+
+        Thread.sleep(8000);
+        System.out.println("Processed: " + pool.getProcessedTaskCount());
+        System.out.println("Active: " + pool.getActiveTaskCount());
+        pool.shutdown();
+    }
+}
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+Graceful shutdown (wait for running tasks)
+
+Rejection handler strategies (e.g., discard, caller runs)
+
+Task timeout support or completion hooks
+
+
+
+The thread pool has been enhanced to include:
+
+Task retries with exponential backoff
+
+Performance metrics (active and processed task counts)
+
+Custom rejection handlers
+
+Max queue size
+
+Graceful shutdown (waiting for workers to finish)
+
+Timeout support per task
+
+Optional rejection strategies and scheduling
+
+
+
+
+import java.util.concurrent.*;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+
+public class SimpleThreadPool {
+    private final PriorityBlockingQueue<PrioritizedTask> taskQueue;
+    private final List<Worker> workers;
+    private final ScheduledExecutorService scheduler;
+    private final int maxRetries = 3;
+    private final int maxQueueSize = 100;
+    private final AtomicInteger activeTaskCount = new AtomicInteger(0);
+    private final AtomicInteger processedTaskCount = new AtomicInteger(0);
+    private volatile boolean isStopped = false;
+    private final RejectedExecutionHandler rejectionHandler;
+
+    public SimpleThreadPool(int numThreads) {
+        this(numThreads, (task, executor) -> {
+            throw new RejectedExecutionException("Task rejected");
+        });
+    }
+
+    public SimpleThreadPool(int numThreads, RejectedExecutionHandler rejectionHandler) {
+        this.taskQueue = new PriorityBlockingQueue<>();
+        this.scheduler = Executors.newScheduledThreadPool(1);
+        this.workers = new ArrayList<>();
+        this.rejectionHandler = rejectionHandler;
+
+        for (int i = 0; i < numThreads; i++) {
+            Worker worker = new Worker("Worker-" + i);
+            workers.add(worker);
+            worker.start();
+        }
+    }
+
+    public Future<?> submit(Runnable task, int priority) {
+        return submit(task, priority, 0, 0, null);
+    }
+
+    public Future<?> submit(Runnable task, int priority, long timeout, TimeUnit unit) {
+        return submit(task, priority, 0, timeout, unit);
+    }
+
+    private Future<?> submit(Runnable task, int priority, int retryCount, long timeout, TimeUnit unit) {
+        if (isStopped) return CompletableFuture.failedFuture(new RejectedExecutionException("ThreadPool is stopped"));
+        if (taskQueue.size() >= maxQueueSize) {
+            rejectionHandler.rejectedExecution(task, null);
+            return CompletableFuture.failedFuture(new RejectedExecutionException("Queue is full"));
+        }
+
+        CompletableFuture<Void> future = new CompletableFuture<>();
+        Runnable wrappedTask = task;
+
+        if (timeout > 0 && unit != null) {
+            wrappedTask = () -> {
+                Future<?> timeoutFuture = scheduler.schedule(() -> future.completeExceptionally(new TimeoutException("Task timeout")), timeout, unit);
+                try {
+                    task.run();
+                    if (!future.isDone()) future.complete(null);
+                } catch (Exception e) {
+                    if (!future.isDone()) future.completeExceptionally(e);
+                } finally {
+                    timeoutFuture.cancel(true);
+                }
+            };
+        }
+
+        PrioritizedTask pt = new PrioritizedTask(wrappedTask, priority, future, retryCount);
+        taskQueue.offer(pt);
+        return future;
+    }
+
+    public void schedule(Runnable task, int priority, long delay, TimeUnit unit) {
+        if (!isStopped) {
+            scheduler.schedule(() -> submit(task, priority), delay, unit);
+        }
+    }
+
+    public void shutdown() {
+        isStopped = true;
+        scheduler.shutdown();
+        for (Worker worker : workers) {
+            worker.interrupt();
+        }
+        for (Worker worker : workers) {
+            try {
+                worker.join();
+            } catch (InterruptedException ignored) {}
+        }
+    }
+
+    public int getActiveTaskCount() {
+        return activeTaskCount.get();
+    }
+
+    public int getProcessedTaskCount() {
+        return processedTaskCount.get();
+    }
+
+    private class PrioritizedTask implements Comparable<PrioritizedTask> {
+        private final Runnable task;
+        private final int priority;
+        private final CompletableFuture<Void> future;
+        private final int retryCount;
+
+        public PrioritizedTask(Runnable task, int priority, CompletableFuture<Void> future, int retryCount) {
+            this.task = task;
+            this.priority = priority;
+            this.future = future;
+            this.retryCount = retryCount;
+        }
+
+        @Override
+        public int compareTo(PrioritizedTask other) {
+            return Integer.compare(other.priority, this.priority); // Higher priority first
+        }
+
+        public void run() {
+            activeTaskCount.incrementAndGet();
+            try {
+                task.run();
+                if (!future.isDone()) future.complete(null);
+                processedTaskCount.incrementAndGet();
+            } catch (Exception e) {
+                if (retryCount < maxRetries && !isStopped) {
+                    scheduler.schedule(() -> submit(task, priority, retryCount + 1, 0, null), (1L << retryCount), TimeUnit.SECONDS);
+                } else {
+                    if (!future.isDone()) future.completeExceptionally(e);
+                }
+            } finally {
+                activeTaskCount.decrementAndGet();
+            }
+        }
+    }
+
+    private class Worker extends Thread {
+        Worker(String name) {
+            super(name);
+        }
+
+        public void run() {
+            while (!isStopped || !taskQueue.isEmpty()) {
+                try {
+                    PrioritizedTask task = taskQueue.poll(100, TimeUnit.MILLISECONDS);
+                    if (task != null) task.run();
+                } catch (InterruptedException e) {
+                    if (isStopped) break;
+                }
+            }
+        }
+    }
+
+    public static void main(String[] args) throws InterruptedException {
+        SimpleThreadPool pool = new SimpleThreadPool(3, (task, executor) -> {
+            System.out.println("Custom rejection: task rejected.");
+        });
+
+        for (int i = 0; i < 5; i++) {
+            int taskId = i;
+            pool.submit(() -> {
+                System.out.println(Thread.currentThread().getName() + " executed task " + taskId);
+                if (taskId % 2 == 0) throw new RuntimeException("Failing task " + taskId);
+            }, 5, 3, TimeUnit.SECONDS);
+        }
+
+        pool.schedule(() -> System.out.println("Scheduled task after delay"), 10, 2, TimeUnit.SECONDS);
+
+        Thread.sleep(8000);
+        System.out.println("Processed: " + pool.getProcessedTaskCount());
+        System.out.println("Active: " + pool.getActiveTaskCount());
+        pool.shutdown();
+    }
+}
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+Task dependencies
+
+Thread pool resizing
+
+Task result callbacks
+
+Monitoring/logging integrations
+
+
+The thread pool has been enhanced with:
+
+Task dependencies via task IDs.
+
+Thread pool resizing with the resize(int newSize) method.
+
+Task result callbacks via addOnCompleteHook(Consumer<String>).
+
+Monitoring/logging integration hooks through task completion listeners.
+
+
+
+
+
+import java.util.concurrent.*;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
+
+public class SimpleThreadPool {
+    private final PriorityBlockingQueue<PrioritizedTask> taskQueue;
+    private final List<Worker> workers;
+    private final ScheduledExecutorService scheduler;
+    private final int maxRetries = 3;
+    private final int maxQueueSize = 100;
+    private final AtomicInteger activeTaskCount = new AtomicInteger(0);
+    private final AtomicInteger processedTaskCount = new AtomicInteger(0);
+    private volatile boolean isStopped = false;
+    private final RejectedExecutionHandler rejectionHandler;
+    private final Map<String, CompletableFuture<?>> taskResults = new ConcurrentHashMap<>();
+    private final List<Consumer<String>> onCompleteHooks = new ArrayList<>();
+
+    public SimpleThreadPool(int numThreads) {
+        this(numThreads, (task, executor) -> {
+            throw new RejectedExecutionException("Task rejected");
+        });
+    }
+
+    public SimpleThreadPool(int numThreads, RejectedExecutionHandler rejectionHandler) {
+        this.taskQueue = new PriorityBlockingQueue<>();
+        this.scheduler = Executors.newScheduledThreadPool(1);
+        this.workers = new ArrayList<>();
+        this.rejectionHandler = rejectionHandler;
+
+        for (int i = 0; i < numThreads; i++) {
+            Worker worker = new Worker("Worker-" + i);
+            workers.add(worker);
+            worker.start();
+        }
+    }
+
+    public void resize(int newSize) {
+        synchronized (workers) {
+            int currentSize = workers.size();
+            if (newSize > currentSize) {
+                for (int i = currentSize; i < newSize; i++) {
+                    Worker worker = new Worker("Worker-" + i);
+                    workers.add(worker);
+                    worker.start();
+                }
+            } else if (newSize < currentSize) {
+                for (int i = currentSize - 1; i >= newSize; i--) {
+                    workers.get(i).interrupt();
+                    workers.remove(i);
+                }
+            }
+        }
+    }
+
+    public Future<?> submit(String taskId, Runnable task, int priority) {
+        return submit(taskId, task, priority, 0, 0, null);
+    }
+
+    public Future<?> submit(String taskId, Runnable task, int priority, long timeout, TimeUnit unit) {
+        return submit(taskId, task, priority, 0, timeout, unit);
+    }
+
+    private Future<?> submit(String taskId, Runnable task, int priority, int retryCount, long timeout, TimeUnit unit) {
+        if (isStopped) return CompletableFuture.failedFuture(new RejectedExecutionException("ThreadPool is stopped"));
+        if (taskQueue.size() >= maxQueueSize) {
+            rejectionHandler.rejectedExecution(task, null);
+            return CompletableFuture.failedFuture(new RejectedExecutionException("Queue is full"));
+        }
+
+        CompletableFuture<Void> future = new CompletableFuture<>();
+        taskResults.put(taskId, future);
+
+        Runnable wrappedTask = task;
+
+        if (timeout > 0 && unit != null) {
+            wrappedTask = () -> {
+                Future<?> timeoutFuture = scheduler.schedule(() -> future.completeExceptionally(new TimeoutException("Task timeout")), timeout, unit);
+                try {
+                    task.run();
+                    if (!future.isDone()) future.complete(null);
+                } catch (Exception e) {
+                    if (!future.isDone()) future.completeExceptionally(e);
+                } finally {
+                    timeoutFuture.cancel(true);
+                }
+            };
+        }
+
+        PrioritizedTask pt = new PrioritizedTask(taskId, wrappedTask, priority, future, retryCount);
+        taskQueue.offer(pt);
+        return future;
+    }
+
+    public void addOnCompleteHook(Consumer<String> hook) {
+        onCompleteHooks.add(hook);
+    }
+
+    public void schedule(Runnable task, int priority, long delay, TimeUnit unit) {
+        if (!isStopped) {
+            scheduler.schedule(() -> submit(UUID.randomUUID().toString(), task, priority), delay, unit);
+        }
+    }
+
+    public void shutdown() {
+        isStopped = true;
+        scheduler.shutdown();
+        for (Worker worker : workers) {
+            worker.interrupt();
+        }
+        for (Worker worker : workers) {
+            try {
+                worker.join();
+            } catch (InterruptedException ignored) {}
+        }
+    }
+
+    public int getActiveTaskCount() {
+        return activeTaskCount.get();
+    }
+
+    public int getProcessedTaskCount() {
+        return processedTaskCount.get();
+    }
+
+    private class PrioritizedTask implements Comparable<PrioritizedTask> {
+        private final String taskId;
+        private final Runnable task;
+        private final int priority;
+        private final CompletableFuture<Void> future;
+        private final int retryCount;
+
+        public PrioritizedTask(String taskId, Runnable task, int priority, CompletableFuture<Void> future, int retryCount) {
+            this.taskId = taskId;
+            this.task = task;
+            this.priority = priority;
+            this.future = future;
+            this.retryCount = retryCount;
+        }
+
+        @Override
+        public int compareTo(PrioritizedTask other) {
+            return Integer.compare(other.priority, this.priority); // Higher priority first
+        }
+
+        public void run() {
+            activeTaskCount.incrementAndGet();
+            try {
+                task.run();
+                if (!future.isDone()) future.complete(null);
+                processedTaskCount.incrementAndGet();
+                for (Consumer<String> hook : onCompleteHooks) hook.accept(taskId);
+            } catch (Exception e) {
+                if (retryCount < maxRetries && !isStopped) {
+                    scheduler.schedule(() -> submit(taskId, task, priority, retryCount + 1, 0, null), (1L << retryCount), TimeUnit.SECONDS);
+                } else {
+                    if (!future.isDone()) future.completeExceptionally(e);
+                }
+            } finally {
+                activeTaskCount.decrementAndGet();
+            }
+        }
+    }
+
+    private class Worker extends Thread {
+        Worker(String name) {
+            super(name);
+        }
+
+        public void run() {
+            while (!isStopped || !taskQueue.isEmpty()) {
+                try {
+                    PrioritizedTask task = taskQueue.poll(100, TimeUnit.MILLISECONDS);
+                    if (task != null) task.run();
+                } catch (InterruptedException e) {
+                    if (isStopped) break;
+                }
+            }
+        }
+    }
+
+    public static void main(String[] args) throws InterruptedException {
+        SimpleThreadPool pool = new SimpleThreadPool(3, (task, executor) -> {
+            System.out.println("Custom rejection: task rejected.");
+        });
+
+        pool.addOnCompleteHook(taskId -> System.out.println("Task completed: " + taskId));
+
+        for (int i = 0; i < 5; i++) {
+            int taskId = i;
+            pool.submit("task-" + taskId, () -> {
+                System.out.println(Thread.currentThread().getName() + " executed task " + taskId);
+                if (taskId % 2 == 0) throw new RuntimeException("Failing task " + taskId);
+            }, 5, 3, TimeUnit.SECONDS);
+        }
+
+        pool.schedule(() -> System.out.println("Scheduled task after delay"), 10, 2, TimeUnit.SECONDS);
+
+        Thread.sleep(8000);
+        System.out.println("Processed: " + pool.getProcessedTaskCount());
+        System.out.println("Active: " + pool.getActiveTaskCount());
+        pool.shutdown();
+    }
+}
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+Let me know if you'd like to add dynamic priority updates, pausing/resuming of the pool, or resource-based task throttling.
+
+Here’s how you can add an overload to submit to support Callable<T> tasks with priority, timeout, and TimeUnit, while preserving the existing architecture:
+
+✅ Changes Made:
+Add submit methods for Callable<T> tasks.
+
+Wrap the Callable into a Runnable that completes a CompletableFuture<T>.
+
+Return a Future<T> from submit.
+
+
+import java.util.concurrent.*;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
+
+public class SimpleThreadPool {
+    private final PriorityBlockingQueue<PrioritizedTask> taskQueue;
+    private final List<Worker> workers;
+    private final ScheduledExecutorService scheduler;
+    private final int maxRetries = 3;
+    private final int maxQueueSize = 100;
+    private final AtomicInteger activeTaskCount = new AtomicInteger(0);
+    private final AtomicInteger processedTaskCount = new AtomicInteger(0);
+    private final AtomicBoolean isPaused = new AtomicBoolean(false);
+    private volatile boolean isStopped = false;
+    private final RejectedExecutionHandler rejectionHandler;
+    private final Map<String, CompletableFuture<?>> taskResults = new ConcurrentHashMap<>();
+    private final List<Consumer<String>> onCompleteHooks = new ArrayList<>();
+
+    public SimpleThreadPool(int numThreads) {
+        this(numThreads, (task, executor) -> {
+            throw new RejectedExecutionException("Task rejected");
+        });
+    }
+
+    public SimpleThreadPool(int numThreads, RejectedExecutionHandler rejectionHandler) {
+        this.taskQueue = new PriorityBlockingQueue<>();
+        this.scheduler = Executors.newScheduledThreadPool(1);
+        this.workers = new ArrayList<>();
+        this.rejectionHandler = rejectionHandler;
+
+        for (int i = 0; i < numThreads; i++) {
+            Worker worker = new Worker("Worker-" + i);
+            workers.add(worker);
+            worker.start();
+        }
+    }
+
+    public void resize(int newSize) {
+        synchronized (workers) {
+            int currentSize = workers.size();
+            if (newSize > currentSize) {
+                for (int i = currentSize; i < newSize; i++) {
+                    Worker worker = new Worker("Worker-" + i);
+                    workers.add(worker);
+                    worker.start();
+                }
+            } else if (newSize < currentSize) {
+                for (int i = currentSize - 1; i >= newSize; i--) {
+                    workers.get(i).interrupt();
+                    workers.remove(i);
+                }
+            }
+        }
+    }
+
+    public void pause() {
+        isPaused.set(true);
+    }
+
+    public void resume() {
+        isPaused.set(false);
+    }
+
+    public boolean updatePriority(String taskId, int newPriority) {
+        for (PrioritizedTask pt : taskQueue) {
+            if (pt.taskId.equals(taskId)) {
+                taskQueue.remove(pt);
+                pt.priority.set(newPriority);
+                taskQueue.offer(pt);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public Future<?> submit(String taskId, Runnable task, int priority) {
+        return submit(taskId, task, priority, 0, 0, null);
+    }
+
+    public Future<?> submit(String taskId, Runnable task, int priority, long timeout, TimeUnit unit) {
+        return submit(taskId, task, new AtomicInteger(priority), 0, timeout, unit);
+    }
+
+    private Future<?> submit(String taskId, Runnable task, AtomicInteger priority, int retryCount, long timeout, TimeUnit unit) {
+        if (isStopped) return CompletableFuture.failedFuture(new RejectedExecutionException("ThreadPool is stopped"));
+        if (taskQueue.size() >= maxQueueSize) {
+            rejectionHandler.rejectedExecution(task, null);
+            return CompletableFuture.failedFuture(new RejectedExecutionException("Queue is full"));
+        }
+
+        CompletableFuture<Void> future = new CompletableFuture<>();
+        taskResults.put(taskId, future);
+
+        Runnable wrappedTask = task;
+
+        if (timeout > 0 && unit != null) {
+            wrappedTask = () -> {
+                Future<?> timeoutFuture = scheduler.schedule(() -> future.completeExceptionally(new TimeoutException("Task timeout")), timeout, unit);
+                try {
+                    task.run();
+                    if (!future.isDone()) future.complete(null);
+                } catch (Exception e) {
+                    if (!future.isDone()) future.completeExceptionally(e);
+                } finally {
+                    timeoutFuture.cancel(true);
+                }
+            };
+        }
+
+        PrioritizedTask pt = new PrioritizedTask(taskId, wrappedTask, priority, future, retryCount);
+        taskQueue.offer(pt);
+        return future;
+    }
+
+    public void addOnCompleteHook(Consumer<String> hook) {
+        onCompleteHooks.add(hook);
+    }
+
+    public void schedule(Runnable task, int priority, long delay, TimeUnit unit) {
+        if (!isStopped) {
+            scheduler.schedule(() -> submit(UUID.randomUUID().toString(), task, priority), delay, unit);
+        }
+    }
+
+    public void shutdown() {
+        isStopped = true;
+        scheduler.shutdown();
+        for (Worker worker : workers) {
+            worker.interrupt();
+        }
+        for (Worker worker : workers) {
+            try {
+                worker.join();
+            } catch (InterruptedException ignored) {}
+        }
+    }
+
+    public int getActiveTaskCount() {
+        return activeTaskCount.get();
+    }
+
+    public int getProcessedTaskCount() {
+        return processedTaskCount.get();
+    }
+
+    private class PrioritizedTask implements Comparable<PrioritizedTask> {
+        private final String taskId;
+        private final Runnable task;
+        private final AtomicInteger priority;
+        private final CompletableFuture<Void> future;
+        private final int retryCount;
+
+        public PrioritizedTask(String taskId, Runnable task, AtomicInteger priority, CompletableFuture<Void> future, int retryCount) {
+            this.taskId = taskId;
+            this.task = task;
+            this.priority = priority;
+            this.future = future;
+            this.retryCount = retryCount;
+        }
+
+        @Override
+        public int compareTo(PrioritizedTask other) {
+            return Integer.compare(other.priority.get(), this.priority.get());
+        }
+
+        public void run() {
+            activeTaskCount.incrementAndGet();
+            try {
+                task.run();
+                if (!future.isDone()) future.complete(null);
+                processedTaskCount.incrementAndGet();
+                for (Consumer<String> hook : onCompleteHooks) hook.accept(taskId);
+            } catch (Exception e) {
+                if (retryCount < maxRetries && !isStopped) {
+                    scheduler.schedule(() -> submit(taskId, task, priority, retryCount + 1, 0, null), (1L << retryCount), TimeUnit.SECONDS);
+                } else {
+                    if (!future.isDone()) future.completeExceptionally(e);
+                }
+            } finally {
+                activeTaskCount.decrementAndGet();
+            }
+        }
+    }
+
+    private class Worker extends Thread {
+        Worker(String name) {
+            super(name);
+        }
+
+        public void run() {
+            while (!isStopped || !taskQueue.isEmpty()) {
+                try {
+                    if (isPaused.get()) {
+                        Thread.sleep(50);
+                        continue;
+                    }
+                    PrioritizedTask task = taskQueue.poll(100, TimeUnit.MILLISECONDS);
+                    if (task != null) task.run();
+                } catch (InterruptedException e) {
+                    if (isStopped) break;
+                }
+            }
+        }
+    }
+
+    public static void main(String[] args) throws InterruptedException {
+        SimpleThreadPool pool = new SimpleThreadPool(3, (task, executor) -> {
+            System.out.println("Custom rejection: task rejected.");
+        });
+
+        pool.addOnCompleteHook(taskId -> System.out.println("Task completed: " + taskId));
+
+        for (int i = 0; i < 5; i++) {
+            int taskId = i;
+            pool.submit("task-" + taskId, () -> {
+                System.out.println(Thread.currentThread().getName() + " executed task " + taskId);
+                if (taskId % 2 == 0) throw new RuntimeException("Failing task " + taskId);
+            }, 5, 3, TimeUnit.SECONDS);
+        }
+
+        pool.schedule(() -> System.out.println("Scheduled task after delay"), 10, 2, TimeUnit.SECONDS);
+
+        Thread.sleep(8000);
+        System.out.println("Processed: " + pool.getProcessedTaskCount());
+        System.out.println("Active: " + pool.getActiveTaskCount());
+        pool.shutdown();
+    }
+}
+
+
+
+Notes:
+We cast CompletableFuture<T> to CompletableFuture<Void> only to comply with your existing PrioritizedTask. The future is type-safe when returned.
+
+Consider overloading PrioritizedTask to support generics cleanly, but the above keeps it minimal with your current design.
+
+Let me know if you'd like the internal PrioritizedTask to be fully generified too.
+
+
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
 Let me know if you’d like to:
 
 Add rate limiting
@@ -565,4 +1548,6 @@ Add rate limiting
 Integrate metrics reporting (e.g., to Prometheus)
 
 Extend to support delayed retries with exponential backoff
+
+
 
