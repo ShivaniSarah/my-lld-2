@@ -1,0 +1,516 @@
+Create a concurrent cache with thread-safety. java
+
+
+package org.example;
+
+import java.util.concurrent.ConcurrentHashMap;
+
+class ConcurrentCache<K, V> {
+    private final ConcurrentHashMap<K, V> map = new ConcurrentHashMap<>();
+
+    public V get(K key) {
+        return map.get(key);
+    }
+
+    public void put(K key, V value) {
+        map.put(key, value);
+    }
+
+    public V putIfAbsent(K key, V value) {
+        return map.putIfAbsent(key, value);
+    }
+
+    public V remove(K key) {
+        return map.remove(key);
+    }
+
+    public boolean containsKey(K key) {
+        return map.containsKey(key);
+    }
+
+    public int size() {
+        return map.size();
+    }
+
+    public void printCache() {
+        System.out.println("Cache Contents: " + map);
+    }
+}
+public class Main {
+    public static void main(String[] args) {
+        ConcurrentCache<String, String> cache = new ConcurrentCache<>();
+
+        Runnable writer = () -> {
+            for (int i = 0; i < 5; i++) {
+                String key = "key" + i;
+                String value = "value" + i;
+                cache.put(key, value);
+                System.out.println(Thread.currentThread().getName() + " put " + key);
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        };
+
+        Runnable reader = () -> {
+            for (int i = 0; i < 5; i++) {
+                String key = "key" + i;
+                String value = cache.get(key);
+                System.out.println(Thread.currentThread().getName() + " get " + key + " => " + value);
+                try {
+                    Thread.sleep(150);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        };
+
+        Thread t1 = new Thread(writer, "Writer-1");
+        Thread t2 = new Thread(reader, "Reader-1");
+        Thread t3 = new Thread(writer, "Writer-2");
+        Thread t4 = new Thread(reader, "Reader-2");
+
+        t1.start();
+        t2.start();
+        t3.start();
+        t4.start();
+
+        try {
+            t1.join();
+            t2.join();
+            t3.join();
+            t4.join();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
+        cache.printCache();
+    }
+}
+
+// LRUCache
+// Design a thread-safe LRU Cache
+
+
+package org.example;
+
+import java.util.*;
+
+class SimpleLRUCache<K, V> {
+    private final int capacity;
+    private final Map<K, V> map;
+    private final LinkedList<K> usageOrder;
+
+    public SimpleLRUCache(int capacity) {
+        this.capacity = capacity;
+        this.map = new HashMap<>();
+        this.usageOrder = new LinkedList<>();
+    }
+
+    public synchronized void put(K key, V value) {
+        if (map.containsKey(key)) {
+            usageOrder.remove(key);
+        } else if (map.size() == capacity) {
+            K lruKey = usageOrder.removeFirst();
+            map.remove(lruKey);
+        }
+        usageOrder.addLast(key);
+        map.put(key, value);
+    }
+
+    public synchronized V get(K key) {
+        if (!map.containsKey(key)) return null;
+        usageOrder.remove(key);
+        usageOrder.addLast(key);
+        return map.get(key);
+    }
+
+    public synchronized void display() {
+        System.out.print("Cache State: ");
+        for (K key : usageOrder) {
+            System.out.print(key + "=" + map.get(key) + " ");
+        }
+        System.out.println();
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        SimpleLRUCache<Integer, String> cache = new SimpleLRUCache<>(3);
+
+        Runnable writer = () -> {
+            for (int i = 1; i <= 5; i++) {
+                cache.put(i, "V" + i);
+                System.out.println(Thread.currentThread().getName() + " put " + i);
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        };
+
+        Runnable reader = () -> {
+            for (int i = 1; i <= 5; i++) {
+                String value = cache.get(i);
+                System.out.println(Thread.currentThread().getName() + " get " + i + " => " + value);
+                try {
+                    Thread.sleep(150);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        };
+
+        Thread t1 = new Thread(writer, "Writer");
+        Thread t2 = new Thread(reader, "Reader");
+
+        t1.start();
+        t2.start();
+
+        try {
+            t1.join();
+            t2.join();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
+        cache.display();
+    }
+}
+
+
+
+
+or
+
+
+
+
+package org.example;
+
+import java.util.*;
+
+class LRUCache<K, V> {
+    private final int capacity;
+    private final Map<K, V> cache;
+
+    public LRUCache(int capacity) {
+        this.capacity = capacity;
+        this.cache = new LinkedHashMap<>(capacity, 0.75f, true) {
+            protected boolean removeEldestEntry(Map.Entry<K, V> eldest) {
+                return size() > LRUCache.this.capacity;
+            }
+        };
+    }
+
+    public synchronized V get(K key) {
+        return cache.get(key);
+    }
+
+    public synchronized void put(K key, V value) {
+        cache.put(key, value);
+    }
+
+    public synchronized void display() {
+        System.out.println("Cache Contents: " + cache);
+    }
+}
+public class Main {
+    public static void main(String[] args) {
+        LRUCache<Integer, String> cache = new LRUCache<>(3);
+
+        Runnable writer = () -> {
+            for (int i = 1; i <= 5; i++) {
+                cache.put(i, "Value" + i);
+                System.out.println(Thread.currentThread().getName() + " put: " + i);
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        };
+
+        Runnable reader = () -> {
+            for (int i = 1; i <= 5; i++) {
+                String value = cache.get(i);
+                System.out.println(Thread.currentThread().getName() + " get: " + i + " => " + value);
+                try {
+                    Thread.sleep(150);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        };
+
+        Thread t1 = new Thread(writer, "Writer-1");
+        Thread t2 = new Thread(reader, "Reader-1");
+        Thread t3 = new Thread(writer, "Writer-2");
+
+        t1.start();
+        t2.start();
+        t3.start();
+
+        try {
+            t1.join();
+            t2.join();
+            t3.join();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
+        cache.display();
+    }
+}
+
+o/p
+
+
+Reader-1 get: 1 => null
+Writer-1 put: 1
+Writer-2 put: 1
+Writer-1 put: 2
+Writer-2 put: 2
+Reader-1 get: 2 => Value2
+Writer-2 put: 3
+Writer-1 put: 3
+Writer-2 put: 4
+Reader-1 get: 3 => Value3
+Writer-1 put: 4
+Writer-2 put: 5
+Writer-1 put: 5
+Reader-1 get: 4 => Value4
+Reader-1 get: 5 => Value5
+Cache Contents: {3=Value3, 4=Value4, 5=Value5}
+
+
+
+or
+
+
+
+
+
+
+
+
+
+ChatGPT said:
+Here's a simple, thread-safe concurrent cache implementation in Java using ConcurrentHashMap and optional locking for customization:
+
+
+✅ Approach 1: Basic Thread-Safe Cache using ConcurrentHashMap
+
+import java.util.concurrent.*;
+
+public class ConcurrentCache<K, V> {
+    private final ConcurrentHashMap<K, V> map = new ConcurrentHashMap<>();
+
+    public V get(K key) {
+        return map.get(key);
+    }
+
+    public void put(K key, V value) {
+        map.put(key, value);
+    }
+
+    public V putIfAbsent(K key, V value) {
+        return map.putIfAbsent(key, value);
+    }
+
+    public V remove(K key) {
+        return map.remove(key);
+    }
+
+    public boolean containsKey(K key) {
+        return map.containsKey(key);
+    }
+
+    public int size() {
+        return map.size();
+    }
+}
+🔒 Thread-Safety
+ConcurrentHashMap ensures thread-safe access and updates.
+
+No need to explicitly synchronize for basic get/put/contains operations.
+
+✅ Approach 2: Loading Cache with Synchronization (Optional)
+If you want to lazily load values (e.g., only compute/cache if missing):
+
+import java.util.concurrent.*;
+
+public class LoadingConcurrentCache<K, V> {
+    private final ConcurrentHashMap<K, Future<V>> cache = new ConcurrentHashMap<>();
+
+    public V get(K key, Callable<V> valueLoader) throws ExecutionException, InterruptedException {
+        Future<V> future = cache.get(key);
+        if (future == null) {
+            Callable<V> task = () -> valueLoader.call();
+            FutureTask<V> futureTask = new FutureTask<>(task);
+            future = cache.putIfAbsent(key, futureTask);
+            if (future == null) {
+                future = futureTask;
+                futureTask.run();
+            }
+        }
+        return future.get();
+    }
+
+    public void clear() {
+        cache.clear();
+    }
+
+    public int size() {
+        return cache.size();
+    }
+}
+🔄 Usage:
+
+public class CacheTest {
+    public static void main(String[] args) throws Exception {
+        LoadingConcurrentCache<String, String> cache = new LoadingConcurrentCache<>();
+
+        String value = cache.get("user:1", () -> {
+            // simulate expensive operation
+            Thread.sleep(1000);
+            return "John Doe";
+        });
+
+        System.out.println("Loaded: " + value);
+    }
+}
+✅ Benefits:
+Prevents redundant computation via putIfAbsent.
+
+Thread-safe lazy loading.
+
+Works well in multi-threaded environments.
+
+Let me know if you want it with TTL (Time-to-Live) or size-based eviction.
+
+
+Yes, there are several advanced approaches for implementing a thread-safe concurrent cache in Java, each with
+different trade-offs depending on your needs (e.g., performance, expiration, eviction, lazy loading). Here's a breakdown of common
+approaches beyond basic ConcurrentHashMap:
+
+✅ Approach 3: Read-Write Lock Based Cache
+Useful when reads are very frequent and writes are rare.
+
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.locks.*;
+
+public class ReadWriteLockCache<K, V> {
+    private final Map<K, V> map = new HashMap<>();
+    private final ReadWriteLock lock = new ReentrantReadWriteLock();
+
+    public V get(K key) {
+        lock.readLock().lock();
+        try {
+            return map.get(key);
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    public void put(K key, V value) {
+        lock.writeLock().lock();
+        try {
+            map.put(key, value);
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    public void remove(K key) {
+        lock.writeLock().lock();
+        try {
+            map.remove(key);
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+}
+🔁 Use case: Custom cache where you want tighter control over concurrency strategies.
+
+✅ Approach 4: Cache with Expiration (TTL)
+Simple example using ScheduledExecutorService:
+
+import java.util.concurrent.*;
+
+public class ExpiringCache<K, V> {
+    private final ConcurrentHashMap<K, V> map = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<K, ScheduledFuture<?>> timers = new ConcurrentHashMap<>();
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+
+    public void put(K key, V value, long ttlMillis) {
+        if (map.containsKey(key)) {
+            timers.get(key).cancel(false);
+        }
+
+        map.put(key, value);
+        ScheduledFuture<?> future = scheduler.schedule(() -> {
+            map.remove(key);
+            timers.remove(key);
+        }, ttlMillis, TimeUnit.MILLISECONDS);
+
+        timers.put(key, future);
+    }
+
+    public V get(K key) {
+        return map.get(key);
+    }
+
+    public void shutdown() {
+        scheduler.shutdown();
+    }
+}
+🔁 Use case: Temporary caching of values like tokens, query results, etc.
+
+✅ Approach 5: LRU (Least Recently Used) Cache using LinkedHashMap
+
+import java.util.*;
+
+public class LRUCache<K, V> extends LinkedHashMap<K, V> {
+    private final int capacity;
+
+    public LRUCache(int capacity) {
+        super(capacity, 0.75f, true); // accessOrder = true
+        this.capacity = capacity;
+    }
+
+    @Override
+    protected boolean removeEldestEntry(Map.Entry<K, V> eldest) {
+        return size() > capacity;
+    }
+
+    public synchronized V getValue(K key) {
+        return super.get(key);
+    }
+
+    public synchronized void putValue(K key, V value) {
+        super.put(key, value);
+    }
+}
+🔁 Use case: Caching results with a max size where you want eviction of least-used items.
+
+
+🔚 Summary of Use Cases:
+
+
+| Use Case                   | Approach                                 |
+| -------------------------- | ---------------------------------------- |
+| Simple thread-safe cache   | `ConcurrentHashMap`                      |
+| Read-heavy workloads       | `ReadWriteLockCache`                     |
+| Lazy loading with sync     | `FutureTask` in `LoadingCache` style     |
+| Time-limited caching       | `ExpiringCache` with `ScheduledExecutor` |
+| Size-limited with eviction | LRU with `LinkedHashMap` or `Caffeine`   |
+| Production-grade caching   | Google Guava or Caffeine library         |
+
+
+
