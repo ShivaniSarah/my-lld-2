@@ -1,0 +1,334 @@
+Design a File Downloader with multiple threads in java
+
+
+Sure! Here's a concise Java implementation of a multi-threaded file downloader that downloads a file by splitting it into parts and downloading each part concurrently with multiple threads:
+
+
+How it works:
+It sends a HEAD request to get the file size.
+
+Splits the file into equal parts (except possibly the last part).
+
+Starts multiple threads that each download their part using HTTP Range header.
+
+Uses RandomAccessFile to write parts concurrently at correct offsets.
+
+Waits for all threads to finish.
+
+Note:
+
+The server must support HTTP range requests (206 Partial Content).
+
+Adjust THREAD_COUNT based on your system/network for best performance.
+
+Replace fileURL with your actual file URL.
+
+
+
+package org.example;
+
+import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.concurrent.*;
+
+class MultiThreadedDownloader {
+
+    private static final int THREAD_COUNT = 4;
+
+    public static void downloadFile(String fileURL, String outputFile) throws Exception {
+        // Get file size
+        HttpURLConnection conn = (HttpURLConnection) new URL(fileURL).openConnection();
+        conn.setRequestMethod("HEAD");
+        int contentLength = conn.getContentLength();
+        conn.disconnect();
+
+        if (contentLength <= 0) {
+            throw new RuntimeException("Could not get file size.");
+        }
+
+        System.out.println("File size: " + contentLength + " bytes");
+
+        // Calculate part size
+        int partSize = contentLength / THREAD_COUNT;
+        ExecutorService executor = Executors.newFixedThreadPool(THREAD_COUNT);
+        RandomAccessFile output = new RandomAccessFile(outputFile, "rw");
+        output.setLength(contentLength);
+        output.close();
+
+        CountDownLatch latch = new CountDownLatch(THREAD_COUNT);
+
+        for (int i = 0; i < THREAD_COUNT; i++) {
+            int start = i * partSize;
+            int end = (i == THREAD_COUNT - 1) ? contentLength - 1 : (start + partSize - 1);
+
+            int finalI = i;
+            executor.submit(() -> {
+                try {
+                    downloadPart(fileURL, outputFile, start, end, finalI);
+                } catch (Exception e) {
+                    System.err.println("Error in thread " + finalI + ": " + e.getMessage());
+                } finally {
+                    latch.countDown();
+                }
+            });
+        }
+
+        latch.await();
+        executor.shutdown();
+        System.out.println("Download complete.");
+    }
+
+    private static void downloadPart(String fileURL, String outputFile, int start, int end, int partNumber) throws Exception {
+        HttpURLConnection conn = (HttpURLConnection) new URL(fileURL).openConnection();
+        String rangeHeader = "bytes=" + start + "-" + end;
+        conn.setRequestProperty("Range", rangeHeader);
+        conn.connect();
+
+        if (conn.getResponseCode() != 206) { // 206 = Partial Content
+            throw new RuntimeException("Server does not support partial content.");
+        }
+
+        try (InputStream in = conn.getInputStream();
+             RandomAccessFile raf = new RandomAccessFile(outputFile, "rw")) {
+            raf.seek(start);
+            byte[] buffer = new byte[4096];
+            int bytesRead;
+            while ((bytesRead = in.read(buffer)) != -1) {
+                raf.write(buffer, 0, bytesRead);
+            }
+        }
+
+        System.out.println("Part " + partNumber + " downloaded.");
+    }
+
+    public static void main(String[] args) {
+        try {
+            String fileURL = "https://example.com/path/to/largefile.zip";
+            String outputFile = "largefile.zip";
+            downloadFile(fileURL, outputFile);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+
+
+Want me to help add pause/resume or progress display?
+
+Key additions:
+Pause/resume: We keep track of downloaded bytes per part, save state to a file, and can resume downloading from where left off.
+
+Progress display: Periodically prints overall download progress (%).
+
+
+Explanation:
+Pause: Sets a flag to stop downloading, saves how many bytes downloaded per part.
+
+Resume: Reads saved state, resumes downloading remaining bytes.
+
+Progress: Prints % downloaded every second.
+
+State is saved in download_state.dat to survive restarts.
+
+Supports CLI input commands: pause, resume, exit.
+
+
+
+import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.Arrays;
+import java.util.concurrent.*;
+
+public class MultiThreadedDownloaderWithPause {
+
+    private static final int THREAD_COUNT = 4;
+    private static final String STATE_FILE = "download_state.dat";
+
+    private final String fileURL;
+    private final String outputFile;
+    private final long[] downloadedBytes; // per part tracking
+    private final long[] startPositions;
+    private final long[] endPositions;
+    private volatile boolean paused = false;
+    private long totalSize;
+
+    public MultiThreadedDownloaderWithPause(String fileURL, String outputFile) throws Exception {
+        this.fileURL = fileURL;
+        this.outputFile = outputFile;
+
+        HttpURLConnection conn = (HttpURLConnection) new URL(fileURL).openConnection();
+        conn.setRequestMethod("HEAD");
+        totalSize = conn.getContentLengthLong();
+        conn.disconnect();
+
+        if (totalSize <= 0) {
+            throw new RuntimeException("Could not get file size.");
+        }
+
+        downloadedBytes = new long[THREAD_COUNT];
+        startPositions = new long[THREAD_COUNT];
+        endPositions = new long[THREAD_COUNT];
+
+        long partSize = totalSize / THREAD_COUNT;
+        for (int i = 0; i < THREAD_COUNT; i++) {
+            startPositions[i] = i * partSize;
+            endPositions[i] = (i == THREAD_COUNT - 1) ? totalSize - 1 : (startPositions[i] + partSize - 1);
+        }
+
+        loadState();
+    }
+
+    public void start() throws Exception {
+        RandomAccessFile raf = new RandomAccessFile(outputFile, "rw");
+        raf.setLength(totalSize);
+        raf.close();
+
+        ExecutorService executor = Executors.newFixedThreadPool(THREAD_COUNT);
+        CountDownLatch latch = new CountDownLatch(THREAD_COUNT);
+
+        for (int i = 0; i < THREAD_COUNT; i++) {
+            final int partNum = i;
+            executor.submit(() -> {
+                try {
+                    downloadPart(partNum);
+                } catch (Exception e) {
+                    System.err.println("Part " + partNum + " error: " + e.getMessage());
+                } finally {
+                    latch.countDown();
+                }
+            });
+        }
+
+        // Progress monitor thread
+        new Thread(() -> {
+            while (latch.getCount() > 0) {
+                printProgress();
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException ignored) {}
+                if (paused) break;
+            }
+        }).start();
+
+        latch.await();
+        executor.shutdown();
+        printProgress();
+        System.out.println(paused ? "Download paused." : "Download complete.");
+    }
+
+    public void pause() {
+        paused = true;
+        saveState();
+        System.out.println("Pausing download...");
+    }
+
+    public void resume() throws Exception {
+        if (!paused) {
+            System.out.println("Not paused, cannot resume.");
+            return;
+        }
+        paused = false;
+        System.out.println("Resuming download...");
+        start();
+    }
+
+    private void downloadPart(int partNum) throws Exception {
+        long start = startPositions[partNum] + downloadedBytes[partNum];
+        long end = endPositions[partNum];
+        if (start > end) {
+            System.out.println("Part " + partNum + " already downloaded.");
+            return;
+        }
+
+        HttpURLConnection conn = (HttpURLConnection) new URL(fileURL).openConnection();
+        conn.setRequestProperty("Range", "bytes=" + start + "-" + end);
+        conn.connect();
+
+        if (conn.getResponseCode() != 206) {
+            throw new RuntimeException("Server does not support partial content.");
+        }
+
+        try (InputStream in = conn.getInputStream();
+             RandomAccessFile raf = new RandomAccessFile(outputFile, "rw")) {
+            raf.seek(start);
+            byte[] buffer = new byte[4096];
+            int bytesRead;
+            while (!paused && (bytesRead = in.read(buffer)) != -1) {
+                raf.write(buffer, 0, bytesRead);
+                downloadedBytes[partNum] += bytesRead;
+            }
+        }
+    }
+
+    private void printProgress() {
+        long totalDownloaded = Arrays.stream(downloadedBytes).sum();
+        double percent = totalDownloaded * 100.0 / totalSize;
+        System.out.printf("Downloaded: %.2f%%\r", percent);
+    }
+
+    private void saveState() {
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(STATE_FILE))) {
+            oos.writeObject(downloadedBytes);
+        } catch (IOException e) {
+            System.err.println("Failed to save state: " + e.getMessage());
+        }
+    }
+
+    private void loadState() {
+        File f = new File(STATE_FILE);
+        if (!f.exists()) return;
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(f))) {
+            long[] loaded = (long[]) ois.readObject();
+            System.arraycopy(loaded, 0, downloadedBytes, 0, Math.min(loaded.length, THREAD_COUNT));
+            System.out.println("Resuming from saved state.");
+        } catch (Exception e) {
+            System.err.println("Failed to load state: " + e.getMessage());
+        }
+    }
+
+    // Simple CLI to test pause/resume
+    public static void main(String[] args) throws Exception {
+        String url = "https://speed.hetzner.de/100MB.bin"; // example test file
+        String output = "downloaded_file.bin";
+
+        MultiThreadedDownloaderWithPause downloader = new MultiThreadedDownloaderWithPause(url, output);
+
+        Thread downloadThread = new Thread(() -> {
+            try {
+                downloader.start();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+
+        downloadThread.start();
+
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        while (true) {
+            System.out.println("\nEnter command (pause/resume/exit):");
+            String cmd = br.readLine();
+            if ("pause".equalsIgnoreCase(cmd)) {
+                downloader.pause();
+            } else if ("resume".equalsIgnoreCase(cmd)) {
+                if (!downloadThread.isAlive()) {
+                    downloadThread = new Thread(() -> {
+                        try {
+                            downloader.resume();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    });
+                    downloadThread.start();
+                } else {
+                    System.out.println("Download already running.");
+                }
+            } else if ("exit".equalsIgnoreCase(cmd)) {
+                downloader.pause();
+                break;
+            }
+        }
+    }
+}
