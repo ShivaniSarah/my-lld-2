@@ -1,0 +1,133 @@
+Thread-safe Bank Account Transfer
+
+Multiple threads perform transfers. Prevent overdrafts and deadlocks.
+
+using multithreading in java
+
+
+Here’s a thread-safe bank account transfer implementation in Java that:
+
+Allows multiple threads to transfer concurrently
+
+Prevents overdrafts (no negative balance)
+
+Prevents deadlocks by locking accounts in a consistent order (by account ID)
+
+
+
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
+public class BankAccount {
+    private final int id;
+    private int balance;
+    private final Lock lock = new ReentrantLock();
+
+    public BankAccount(int id, int initialBalance) {
+        this.id = id;
+        this.balance = initialBalance;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public int getBalance() {
+        lock.lock();
+        try {
+            return balance;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    // Withdraw amount if sufficient funds, return true if successful
+    public boolean withdraw(int amount) {
+        lock.lock();
+        try {
+            if (balance >= amount) {
+                balance -= amount;
+                return true;
+            }
+            return false;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public void deposit(int amount) {
+        lock.lock();
+        try {
+            balance += amount;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    // Transfer amount from this account to target account
+    public static boolean transfer(BankAccount from, BankAccount to, int amount) {
+        // Lock ordering by account id to avoid deadlocks
+        BankAccount first = from.id < to.id ? from : to;
+        BankAccount second = from.id < to.id ? to : from;
+
+        first.lock.lock();
+        second.lock.lock();
+
+        try {
+            if (from.balance < amount) {
+                return false; // insufficient funds
+            }
+            from.balance -= amount;
+            to.balance += amount;
+            return true;
+        } finally {
+            second.lock.unlock();
+            first.lock.unlock();
+        }
+    }
+
+    // Simple test with multiple threads transferring
+    public static void main(String[] args) throws InterruptedException {
+        BankAccount acc1 = new BankAccount(1, 1000);
+        BankAccount acc2 = new BankAccount(2, 1000);
+
+        Runnable transfer1 = () -> {
+            for (int i = 0; i < 100; i++) {
+                BankAccount.transfer(acc1, acc2, 10);
+            }
+        };
+        Runnable transfer2 = () -> {
+            for (int i = 0; i < 100; i++) {
+                BankAccount.transfer(acc2, acc1, 10);
+            }
+        };
+
+        Thread t1 = new Thread(transfer1);
+        Thread t2 = new Thread(transfer2);
+
+        t1.start();
+        t2.start();
+
+        t1.join();
+        t2.join();
+
+        System.out.println("Account 1 balance: " + acc1.getBalance());
+        System.out.println("Account 2 balance: " + acc2.getBalance());
+    }
+}
+Explanation:
+Each BankAccount has its own ReentrantLock.
+
+transfer() locks both accounts in ascending order by account ID to avoid deadlocks.
+
+The transfer checks funds, withdraws from source, deposits into target atomically under locks.
+
+Concurrent threads can safely transfer without overdrafts or deadlocks.
+
+If you want, I can help add features like transaction history or retries!
+
+
+
+
+
+
