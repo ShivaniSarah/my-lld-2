@@ -1,0 +1,122 @@
+Dining Philosophers Problem using multi threading java
+
+
+ChatGPT said:
+Sure! Here’s a classic Dining Philosophers Problem implementation in Java using multithreading with ReentrantLock to avoid deadlock by using tryLock with timeout and ordering forks.
+
+Dining Philosophers Problem Overview
+5 philosophers sitting around a table
+
+Each philosopher needs 2 forks (left and right) to eat
+
+Forks are shared between neighbors (modeled by locks)
+
+Avoid deadlock by careful locking strategy (e.g., tryLock with timeout or resource hierarchy)
+
+Code: Dining Philosophers with tryLock and timeout
+
+
+package org.example;
+
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.TimeUnit;
+
+class DiningPhilosophers {
+
+    static class Philosopher implements Runnable {
+        private final int id;
+        private final Lock leftFork;
+        private final Lock rightFork;
+
+        public Philosopher(int id, Lock leftFork, Lock rightFork) {
+            this.id = id;
+            this.leftFork = leftFork;
+            this.rightFork = rightFork;
+        }
+
+        private void think() throws InterruptedException {
+            System.out.println("Philosopher " + id + " is thinking.");
+            Thread.sleep((long) (Math.random() * 1000));
+        }
+
+        private void eat() throws InterruptedException {
+            System.out.println("Philosopher " + id + " is eating.");
+            Thread.sleep((long) (Math.random() * 1000));
+        }
+
+        @Override
+        public void run() {
+            try {
+                while (true) {
+                    think();
+
+                    // Try to pick up left fork
+                    if (leftFork.tryLock(500, TimeUnit.MILLISECONDS)) {
+                        try {
+                            // Try to pick up right fork
+                            if (rightFork.tryLock(500, TimeUnit.MILLISECONDS)) {
+                                try {
+                                    eat();
+                                } finally {
+                                    rightFork.unlock();
+                                }
+                            } else {
+                                System.out.println("Philosopher " + id + " couldn't get right fork, releasing left.");
+                            }
+                        } finally {
+                            leftFork.unlock();
+                        }
+                    } else {
+                        System.out.println("Philosopher " + id + " couldn't get left fork, will try again.");
+                    }
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                System.out.println("Philosopher " + id + " was interrupted.");
+            }
+        }
+    }
+
+    public static void main(String[] args) {
+        final int NUM_PHILOSOPHERS = 5;
+        Lock[] forks = new ReentrantLock[NUM_PHILOSOPHERS];
+        for (int i = 0; i < NUM_PHILOSOPHERS; i++) {
+            forks[i] = new ReentrantLock();
+        }
+
+        Philosopher[] philosophers = new Philosopher[NUM_PHILOSOPHERS];
+        Thread[] threads = new Thread[NUM_PHILOSOPHERS];
+
+        for (int i = 0; i < NUM_PHILOSOPHERS; i++) {
+            Lock leftFork = forks[i];
+            Lock rightFork = forks[(i + 1) % NUM_PHILOSOPHERS];
+            philosophers[i] = new Philosopher(i + 1, leftFork, rightFork);
+            threads[i] = new Thread(philosophers[i], "Philosopher-" + (i + 1));
+            threads[i].start();
+        }
+    }
+}
+
+
+
+How this works:
+Each philosopher tries to pick up left fork with a timeout.
+
+If successful, tries to pick up right fork with a timeout.
+
+If right fork is unavailable, releases left fork and tries again.
+
+This avoids deadlocks since philosophers don’t hold onto forks indefinitely.
+
+Philosophers alternate thinking and eating indefinitely.
+
+Run it, and you will see philosophers thinking, trying forks, eating, or releasing forks if blocked.
+If you want, I can help you extend this with:
+
+Starvation detection and prevention
+
+Different priorities or timed eating/thinking
+
+Visual output or monitoring
+
