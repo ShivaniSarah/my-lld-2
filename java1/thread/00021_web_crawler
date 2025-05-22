@@ -1,0 +1,187 @@
+Sure! Here's a design for a concurrent web crawler in Java using multithreading. This crawler:
+
+
+Starts from one or more seed URLs
+
+Crawls pages concurrently using a thread pool
+
+Avoids visiting the same URL multiple times (using a thread-safe Set)
+
+Extracts URLs from the page (basic HTML href parsing)
+
+Has a limit on max pages or depth to avoid infinite crawling
+
+Is modular and extensible
+
+
+
+Key components:
+Crawler: main controller managing threads and queue
+
+Worker: runnable task fetching and parsing pages
+
+Thread-safe visited set: to avoid revisiting
+
+BlockingQueue: for URLs to crawl
+
+
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+public class ConcurrentWebCrawler {
+
+    private final ExecutorService executor;
+    private final BlockingQueue<String> urlQueue = new LinkedBlockingQueue<>();
+    private final Set<String> visitedUrls = ConcurrentHashMap.newKeySet();
+
+    private final int maxPages;
+    private volatile int pagesCrawled = 0;
+
+    public ConcurrentWebCrawler(int maxThreads, int maxPages, String startUrl) {
+        this.executor = Executors.newFixedThreadPool(maxThreads);
+        this.maxPages = maxPages;
+        urlQueue.add(startUrl);
+        visitedUrls.add(startUrl);
+    }
+
+    public void start() throws InterruptedException {
+        while (pagesCrawled < maxPages && !urlQueue.isEmpty()) {
+            String url = urlQueue.poll(1, TimeUnit.SECONDS);
+            if (url == null) continue;
+
+            executor.submit(() -> {
+                try {
+                    crawl(url);
+                } catch (Exception e) {
+                    System.err.println("Failed to crawl " + url + ": " + e.getMessage());
+                }
+            });
+        }
+
+        shutdownAndAwaitTermination();
+        System.out.println("Crawling finished. Pages crawled: " + pagesCrawled);
+    }
+
+    private void crawl(String urlStr) throws Exception {
+        if (pagesCrawled >= maxPages) return;
+        System.out.println("Crawling: " + urlStr);
+
+        String content = fetchContent(urlStr);
+        if (content == null) return;
+
+        incrementPagesCrawled();
+
+        // Extract URLs and add to queue if not visited
+        Set<String> links = extractLinks(content);
+        for (String link : links) {
+            if (visitedUrls.size() >= maxPages) break;
+            if (visitedUrls.add(link)) { // returns false if already present
+                urlQueue.add(link);
+            }
+        }
+    }
+
+    private synchronized void incrementPagesCrawled() {
+        pagesCrawled++;
+    }
+
+    private String fetchContent(String urlStr) {
+        StringBuilder sb = new StringBuilder();
+        try {
+            URL url = new URL(urlStr);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestProperty("User-Agent", "ConcurrentWebCrawlerBot/1.0");
+            conn.setConnectTimeout(5000);
+            conn.setReadTimeout(5000);
+
+            if (conn.getResponseCode() != 200) {
+                System.err.println("Non-OK response for " + urlStr + ": " + conn.getResponseCode());
+                return null;
+            }
+
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    sb.append(line).append("\n");
+                }
+            }
+            return sb.toString();
+        } catch (Exception e) {
+            System.err.println("Failed to fetch " + urlStr + ": " + e.getMessage());
+            return null;
+        }
+    }
+
+    private Set<String> extractLinks(String content) {
+        Set<String> links = new HashSet<>();
+        Pattern pattern = Pattern.compile("href\\s*=\\s*\"(http[s]?://[^\"]+)\"", Pattern.CASE_INSENSITIVE);
+        Matcher matcher = pattern.matcher(content);
+        while (matcher.find()) {
+            String link = matcher.group(1);
+            links.add(link);
+        }
+        return links;
+    }
+
+    private void shutdownAndAwaitTermination() {
+        executor.shutdown();
+        try {
+            if (!executor.awaitTermination(60, TimeUnit.SECONDS)) {
+                executor.shutdownNow();
+                if (!executor.awaitTermination(60, TimeUnit.SECONDS))
+                    System.err.println("Executor did not terminate");
+            }
+        } catch (InterruptedException ie) {
+            executor.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    public static void main(String[] args) throws InterruptedException {
+        String startUrl = "https://example.com";
+        int maxThreads = 10;
+        int maxPages = 100;
+
+        ConcurrentWebCrawler crawler = new ConcurrentWebCrawler(maxThreads, maxPages, startUrl);
+        crawler.start();
+    }
+}
+
+
+
+
+Explanation:
+The urlQueue is a thread-safe queue holding URLs to crawl.
+
+The visitedUrls is a concurrent set that tracks visited URLs to avoid duplication.
+
+The crawl method fetches content and extracts HTTP(s) links using regex.
+
+Threads pick URLs from the queue and process concurrently.
+
+Limits are enforced on max pages crawled.
+
+Graceful shutdown after crawling completes or reaches limit.
+
+If you want, I can help extend this with:
+
+Domain restriction (only crawl same domain)
+
+Depth limit
+
+Politeness delays / robots.txt respect
+
+Storing results or indexing pages
+
+Advanced HTML parsing with JSoup
+
+Would you like to add any of those?
+
