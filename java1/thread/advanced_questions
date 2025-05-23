@@ -1,7 +1,4 @@
 
-Design a Concurrent Web Server
-Handle HTTP requests using a thread pool.
-Support timeouts, back-pressure, and graceful shutdown.
 
 
 Multithreaded Metrics Aggregator
@@ -13,9 +10,6 @@ Distributed Lock Implementation with Threads
 Simulate a distributed lock mechanism like Zookeeper or Redis Redlock using local threads.
 
 
-Multithreaded Web Scraper with Retry & Throttling
-Ensure you do not violate rate limits.
-Retry failed requests with exponential backoff.
 
 
 
