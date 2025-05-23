@@ -1,0 +1,124 @@
+What are lock-free and wait-free data structures? Design a lock-free queue.
+
+
+🔓 Lock-Free vs ⏳ Wait-Free Data Structures
+Both are types of non-blocking data structures used in multithreaded systems to avoid traditional locking mechanisms like synchronized or ReentrantLock.
+
+✅ Definitions
+
+| Term          | Guarantee                                                                                |
+| ------------- | ---------------------------------------------------------------------------------------- |
+| **Lock-Free** | *Some* thread makes progress in a finite number of steps (no deadlock/livelock).         |
+| **Wait-Free** | *Every* thread completes its operation in a finite number of steps (stronger guarantee). |
+
+
+➕ Wait-free ⇒ Lock-free
+🔁 Lock-free ⇏ Wait-free
+
+🔧 Why Use Lock-Free Data Structures?
+Higher throughput
+
+Lower latency
+
+Better scalability under contention
+
+Avoid deadlocks, priority inversion, and thread starvation
+
+🚀 Design: Lock-Free Queue (Michael–Scott Queue)
+The classic lock-free queue is a FIFO queue using AtomicReference.
+
+🧠 Key Concepts:
+Head and Tail pointers using AtomicReference
+
+Nodes with value and next
+
+CAS (Compare-And-Swap) to atomically update pointers
+
+🧪 Java Implementation
+java
+Copy
+Edit
+import java.util.concurrent.atomic.AtomicReference;
+
+public class LockFreeQueue<T> {
+    static class Node<T> {
+        final T value;
+        final AtomicReference<Node<T>> next;
+
+        Node(T value) {
+            this.value = value;
+            this.next = new AtomicReference<>(null);
+        }
+    }
+
+    private final AtomicReference<Node<T>> head;
+    private final AtomicReference<Node<T>> tail;
+
+    public LockFreeQueue() {
+        Node<T> dummy = new Node<>(null);
+        head = new AtomicReference<>(dummy);
+        tail = new AtomicReference<>(dummy);
+    }
+
+    public void enqueue(T item) {
+        Node<T> newNode = new Node<>(item);
+        while (true) {
+            Node<T> last = tail.get();
+            Node<T> next = last.next.get();
+            if (last == tail.get()) {
+                if (next == null) {
+                    // Try to link new node at the end
+                    if (last.next.compareAndSet(null, newNode)) {
+                        // Try to swing tail to the new node
+                        tail.compareAndSet(last, newNode);
+                        return;
+                    }
+                } else {
+                    // Queue in intermediate state, advance tail
+                    tail.compareAndSet(last, next);
+                }
+            }
+        }
+    }
+
+    public T dequeue() {
+        while (true) {
+            Node<T> first = head.get();
+            Node<T> last = tail.get();
+            Node<T> next = first.next.get();
+            if (first == head.get()) {
+                if (first == last) {
+                    if (next == null) return null; // empty queue
+                    tail.compareAndSet(last, next); // fix tail
+                } else {
+                    T value = next.value;
+                    if (head.compareAndSet(first, next)) {
+                        return value;
+                    }
+                }
+            }
+        }
+    }
+}
+✅ Properties
+
+| Property    | Value |
+| ----------- | ----- |
+| Lock-Free   | ✅     |
+| Wait-Free   | ❌     |
+| Thread-Safe | ✅     |
+| FIFO        | ✅     |
+
+
+🧪 Want More?
+Wait-Free Queue: More complex (typically uses helping mechanisms)
+
+Disruptor RingBuffer: Used in high-performance messaging systems
+
+Lock-Free Stack: Use Treiber's algorithm
+
+Java Built-ins: ConcurrentLinkedQueue is a lock-free queue
+
+Would you like a wait-free version or benchmarking comparison vs BlockingQueue?
+
+
