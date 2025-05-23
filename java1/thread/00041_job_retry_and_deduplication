@@ -1,0 +1,138 @@
+Design a job retry and deduplication service using multiple threads.
+
+
+Let's design a Multithreaded Job Retry and Deduplication Service in Java.
+This system ensures:
+
+Jobs are deduplicated (same job isn’t processed twice).
+
+Failed jobs are retried with backoff.
+
+Processing is done by multiple worker threads concurrently.
+
+✅ Requirements
+Deduplication: Do not process the same job (jobId) twice.
+
+Retry logic: Retry failed jobs with an exponential backoff and a max retry count.
+
+Multithreaded: Jobs are processed concurrently by a thread pool.
+
+Thread-safe: Shared structures must be safe for concurrency.
+
+Job Persistence (optional): Can be extended to persist jobs for recovery.
+
+🧱 Core Components
+1. Job Class
+java
+Copy
+Edit
+public class Job {
+    private final String jobId;
+    private final Runnable task;
+    private int retryCount;
+
+    public Job(String jobId, Runnable task) {
+        this.jobId = jobId;
+        this.task = task;
+        this.retryCount = 0;
+    }
+
+    public String getJobId() { return jobId; }
+    public Runnable getTask() { return task; }
+    public int getRetryCount() { return retryCount; }
+    public void incrementRetry() { retryCount++; }
+}
+2. JobProcessorService
+java
+Copy
+Edit
+import java.util.concurrent.*;
+import java.util.*;
+
+public class JobProcessorService {
+    private final ExecutorService executor;
+    private final ConcurrentHashMap<String, Boolean> jobRegistry;
+    private final ScheduledExecutorService retryScheduler;
+    private final int maxRetries;
+    private final long initialBackoffMillis;
+
+    public JobProcessorService(int threads, int maxRetries, long initialBackoffMillis) {
+        this.executor = Executors.newFixedThreadPool(threads);
+        this.jobRegistry = new ConcurrentHashMap<>();
+        this.retryScheduler = Executors.newScheduledThreadPool(threads);
+        this.maxRetries = maxRetries;
+        this.initialBackoffMillis = initialBackoffMillis;
+    }
+
+    public void submitJob(Job job) {
+        if (jobRegistry.putIfAbsent(job.getJobId(), true) == null) {
+            process(job);
+        } else {
+            System.out.println("Duplicate job skipped: " + job.getJobId());
+        }
+    }
+
+    private void process(Job job) {
+        executor.submit(() -> {
+            try {
+                job.getTask().run();
+                System.out.println("Job successful: " + job.getJobId());
+            } catch (Exception e) {
+                System.out.println("Job failed: " + job.getJobId() + " [Attempt: " + job.getRetryCount() + "]");
+                retry(job);
+            }
+        });
+    }
+
+    private void retry(Job job) {
+        if (job.getRetryCount() >= maxRetries) {
+            System.out.println("Job permanently failed: " + job.getJobId());
+            return;
+        }
+
+        job.incrementRetry();
+        long delay = (long) (initialBackoffMillis * Math.pow(2, job.getRetryCount() - 1));
+        retryScheduler.schedule(() -> process(job), delay, TimeUnit.MILLISECONDS);
+    }
+
+    public void shutdown() {
+        executor.shutdown();
+        retryScheduler.shutdown();
+    }
+}
+3. Example Usage
+java
+Copy
+Edit
+public class Main {
+    public static void main(String[] args) {
+        JobProcessorService service = new JobProcessorService(4, 3, 1000);
+
+        // Job that fails first two times
+        Job flakyJob = new Job("job-1", new Runnable() {
+            int attempts = 0;
+            public void run() {
+                attempts++;
+                if (attempts < 3) throw new RuntimeException("Failed");
+                System.out.println("Succeeded on attempt " + attempts);
+            }
+        });
+
+        service.submitJob(flakyJob);
+        service.submitJob(flakyJob); // Duplicate
+
+        // Always successful job
+        Job stableJob = new Job("job-2", () -> System.out.println("Always succeeds"));
+        service.submitJob(stableJob);
+    }
+}
+🚀 Enhancements
+Persist job statuses to disk/DB.
+
+Add job priorities.
+
+Use Kafka or RabbitMQ for queueing large workloads.
+
+Integrate Prometheus for monitoring retries/successes.
+
+Would you like a version with job priorities, distributed queue integration, or REST API for job submission?
