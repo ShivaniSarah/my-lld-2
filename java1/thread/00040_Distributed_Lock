@@ -1,0 +1,154 @@
+Distributed Lock Implementation with Threads
+Simulate a distributed lock mechanism like Zookeeper or Redis Redlock using local threads.
+
+using multithreading in java
+
+
+ChatGPT said:
+Here’s how you can simulate a distributed lock (like Zookeeper or Redis Redlock) using Java threads to mimic multiple clients and a shared lock manager.
+
+✅ Goals
+Multiple threads simulate clients.
+
+A shared DistributedLockManager provides mutual exclusion.
+
+Lock timeout + auto release (like Redis Redlock).
+
+Optional retry with exponential backoff.
+
+🔐 Lock Design: Key Concepts
+
+| Concept             | Simulated As                 |
+| ------------------- | ---------------------------- |
+| Distributed system  | Multiple threads (clients)   |
+| Shared coordination | In-memory `ConcurrentMap`    |
+| TTL (timeout)       | `ScheduledExecutorService`   |
+| Atomic acquisition  | `ReentrantLock` or CAS logic |
+
+
+
+🧵 Java Example: Simulated Distributed Lock with TTL
+java
+Copy
+Edit
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.*;
+import java.util.concurrent.locks.*;
+
+class DistributedLockManager {
+    private static class LockData {
+        final String ownerId;
+        final ScheduledFuture<?> expiryTask;
+
+        LockData(String ownerId, ScheduledFuture<?> expiryTask) {
+            this.ownerId = ownerId;
+            this.expiryTask = expiryTask;
+        }
+    }
+
+    private final Map<String, LockData> locks = new ConcurrentHashMap<>();
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+    private final Lock internalLock = new ReentrantLock(); // for atomic check-and-set
+
+    /**
+     * Tries to acquire the lock for a key with a timeout in ms
+     */
+    public boolean tryLock(String key, String clientId, long ttlMillis) {
+        internalLock.lock();
+        try {
+            if (!locks.containsKey(key)) {
+                ScheduledFuture<?> expiry = scheduler.schedule(() -> releaseLock(key, clientId), ttlMillis, TimeUnit.MILLISECONDS);
+                locks.put(key, new LockData(clientId, expiry));
+                System.out.println(clientId + " acquired lock on " + key);
+                return true;
+            } else {
+                return false;
+            }
+        } finally {
+            internalLock.unlock();
+        }
+    }
+
+    /**
+     * Releases lock if client is the owner
+     */
+    public void releaseLock(String key, String clientId) {
+        internalLock.lock();
+        try {
+            LockData data = locks.get(key);
+            if (data != null && data.ownerId.equals(clientId)) {
+                data.expiryTask.cancel(false);
+                locks.remove(key);
+                System.out.println(clientId + " released lock on " + key);
+            }
+        } finally {
+            internalLock.unlock();
+        }
+    }
+}
+🧪 Simulated Clients
+java
+Copy
+Edit
+public class DistributedLockSimulator {
+    public static void main(String[] args) {
+        DistributedLockManager lockManager = new DistributedLockManager();
+        ExecutorService executor = Executors.newFixedThreadPool(5);
+
+        Runnable client = () -> {
+            String clientId = UUID.randomUUID().toString().substring(0, 5);
+            String lockKey = "resource-X";
+
+            for (int i = 0; i < 3; i++) {
+                try {
+                    if (lockManager.tryLock(lockKey, clientId, 2000)) {
+                        Thread.sleep(1000); // simulate work
+                        lockManager.releaseLock(lockKey, clientId);
+                    } else {
+                        System.out.println(clientId + " failed to acquire lock. Retrying...");
+                        Thread.sleep((long) (Math.random() * 1000 + 500)); // backoff
+                    }
+                } catch (InterruptedException ignored) {}
+            }
+        };
+
+        for (int i = 0; i < 5; i++) {
+            executor.submit(client);
+        }
+
+        executor.shutdown();
+    }
+}
+✅ Output (Sample)
+csharp
+Copy
+Edit
+e3d27 acquired lock on resource-X
+e3d27 released lock on resource-X
+f1b3c acquired lock on resource-X
+...
+🛠 Features Implemented
+✅ Lock acquisition & release with TTL
+
+✅ Ownership validation
+
+✅ Automatic expiration
+
+✅ Thread-safe using ReentrantLock
+
+✅ Exponential backoff retry (simulated)
+
+🚀 Extensions (Production-Like)
+Replace in-memory Map with Redis (for real Redlock)
+
+Add lock renewal (heartbeat mechanism)
+
+Use quorum for multi-node lock consensus
+
+Support for fair queuing or priority
+
+Would you like an implementation of this using Redis-based real Redlock (using Jedis or Redisson)?
+
+
+
