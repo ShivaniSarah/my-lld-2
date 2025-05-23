@@ -1,0 +1,174 @@
+Design a Concurrent Web Server
+Handle HTTP requests using a thread pool.
+Support timeouts, back-pressure, and graceful shutdown.
+
+
+using multithreading in java
+
+
+ChatGPT said:
+Here's how to design a Concurrent Web Server in Java with:
+
+✅ Thread pool for handling HTTP connections
+✅ Timeouts for hanging clients
+✅ Back-pressure (limit request queue size)
+✅ Graceful shutdown of server and active connections
+
+🧠 Key Components
+
+| Feature           | Tool/Strategy                              |
+| ----------------- | ------------------------------------------ |
+| Concurrency       | `ExecutorService` (fixed thread pool)      |
+| Request timeout   | `Socket.setSoTimeout()`                    |
+| Back-pressure     | `LinkedBlockingQueue` with limit           |
+| Graceful shutdown | Flag + `shutdown()` + `awaitTermination()` |
+
+
+
+🧵 Minimal Concurrent HTTP Server Example (Java SE)
+java
+Copy
+Edit
+import java.io.*;
+import java.net.*;
+import java.util.concurrent.*;
+
+public class ConcurrentWebServer {
+    private static final int PORT = 8080;
+    private static final int MAX_THREADS = 10;
+    private static final int QUEUE_CAPACITY = 50;
+    private static final int SOCKET_TIMEOUT_MS = 5000;
+
+    private final ExecutorService threadPool;
+    private volatile boolean running = true;
+
+    public ConcurrentWebServer() {
+        this.threadPool = new ThreadPoolExecutor(
+                MAX_THREADS,
+                MAX_THREADS,
+                0L,
+                TimeUnit.MILLISECONDS,
+                new LinkedBlockingQueue<>(QUEUE_CAPACITY),
+                new ThreadPoolExecutor.AbortPolicy()  // Back-pressure: reject if queue is full
+        );
+    }
+
+    public void start() throws IOException {
+        try (ServerSocket serverSocket = new ServerSocket(PORT)) {
+            System.out.println("Server started on port " + PORT);
+
+            while (running) {
+                try {
+                    Socket clientSocket = serverSocket.accept();
+                    clientSocket.setSoTimeout(SOCKET_TIMEOUT_MS); // set timeout for socket read
+                    threadPool.submit(new ClientHandler(clientSocket));
+                } catch (RejectedExecutionException e) {
+                    System.err.println("Server busy. Dropping connection.");
+                } catch (SocketTimeoutException | SocketException se) {
+                    System.err.println("Socket error: " + se.getMessage());
+                }
+            }
+        } finally {
+            shutdown();
+        }
+    }
+
+    public void stop() {
+        running = false;
+        shutdown();
+    }
+
+    private void shutdown() {
+        threadPool.shutdown();
+        try {
+            if (!threadPool.awaitTermination(10, TimeUnit.SECONDS)) {
+                threadPool.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            threadPool.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
+        System.out.println("Server shutdown complete.");
+    }
+
+    static class ClientHandler implements Runnable {
+        private final Socket socket;
+
+        ClientHandler(Socket socket) {
+            this.socket = socket;
+        }
+
+        public void run() {
+            try (BufferedReader reader = new BufferedReader(
+                     new InputStreamReader(socket.getInputStream()));
+                 BufferedWriter writer = new BufferedWriter(
+                     new OutputStreamWriter(socket.getOutputStream()))) {
+
+                String line;
+                StringBuilder request = new StringBuilder();
+                while ((line = reader.readLine()) != null && !line.isEmpty()) {
+                    request.append(line).append("\n");
+                }
+
+                System.out.println("Request:\n" + request);
+
+                // Send simple response
+                writer.write("HTTP/1.1 200 OK\r\n");
+                writer.write("Content-Type: text/plain\r\n");
+                writer.write("Connection: close\r\n");
+                writer.write("\r\n");
+                writer.write("Hello from Java Web Server!\n");
+                writer.flush();
+
+            } catch (IOException e) {
+                System.err.println("Error handling client: " + e.getMessage());
+            } finally {
+                try {
+                    socket.close();
+                } catch (IOException ignored) {}
+            }
+        }
+    }
+
+    public static void main(String[] args) throws IOException {
+        ConcurrentWebServer server = new ConcurrentWebServer();
+
+        Runtime.getRuntime().addShutdownHook(new Thread(server::stop));
+
+        server.start();  // press Ctrl+C to shutdown gracefully
+    }
+}
+🔐 Server Features
+
+
+| Feature               | How it Works                                  |
+| --------------------- | --------------------------------------------- |
+| **Concurrency**       | Thread pool handles multiple clients          |
+| **Timeout**           | `Socket.setSoTimeout()`                       |
+| **Back-pressure**     | RejectedExecutionHandler with `AbortPolicy()` |
+| **Graceful shutdown** | Shutdown hook + `awaitTermination()`          |
+
+
+
+🧪 Example Test (via curl or browser):
+
+curl http://localhost:8080
+
+Response:
+Hello from Java Web Server!
+
+
+🛠️ Optional Enhancements
+Use HttpServer from com.sun.net.httpserver for HTTP parsing
+
+Use a bounded semaphore to manually control max connections
+
+Track active connections for shutdown coordination
+
+Add support for GET, POST, or static file serving
+
+Rate limiting via token bucket or leaky bucket
+
+Would you like this extended to serve HTML pages or static files, or integrated with a logging framework like SLF4J?
+
+
