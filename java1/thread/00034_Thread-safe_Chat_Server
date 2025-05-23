@@ -1,0 +1,178 @@
+Thread-safe Chat Server
+
+Support multiple chat rooms and multiple users per room.
+
+Ensure messages are broadcasted correctly and in order.
+
+
+using multithreading in java
+
+
+ChatGPT said:
+Here's a Java implementation of a Thread-safe Multithreaded Chat Server that:
+
+✅ Supports multiple chat rooms
+✅ Handles multiple users per room
+✅ Ensures message broadcast in order per room
+✅ Is thread-safe and scalable using ConcurrentHashMap and synchronized broadcasting
+
+💡 Core Design
+ChatServer: manages rooms
+
+ChatRoom: manages users and message broadcasting
+
+ClientHandler: one thread per client
+
+Messages: broadcasted to all clients in a room in insertion order
+
+🧵 Java Code Example
+
+import java.io.*;
+import java.net.*;
+import java.util.*;
+import java.util.concurrent.*;
+
+class ChatRoom {
+    private final String name;
+    private final Set<ClientHandler> clients = ConcurrentHashMap.newKeySet();
+    private final BlockingQueue<String> messageQueue = new LinkedBlockingQueue<>();
+    private final ExecutorService broadcaster = Executors.newSingleThreadExecutor();
+
+    public ChatRoom(String name) {
+        this.name = name;
+        startBroadcasting();
+    }
+
+    public void addClient(ClientHandler client) {
+        clients.add(client);
+        sendMessage("System: " + client.getUsername() + " joined " + name);
+    }
+
+    public void removeClient(ClientHandler client) {
+        clients.remove(client);
+        sendMessage("System: " + client.getUsername() + " left " + name);
+    }
+
+    public void sendMessage(String message) {
+        messageQueue.offer(message);
+    }
+
+    private void startBroadcasting() {
+        broadcaster.submit(() -> {
+            while (true) {
+                String message = messageQueue.take(); // blocks
+                for (ClientHandler client : clients) {
+                    client.send(message);
+                }
+            }
+        });
+    }
+}
+
+class ChatServer {
+    private final int port;
+    private final Map<String, ChatRoom> rooms = new ConcurrentHashMap<>();
+
+    public ChatServer(int port) {
+        this.port = port;
+    }
+
+    public void start() throws IOException {
+        ServerSocket serverSocket = new ServerSocket(port);
+        System.out.println("Chat server started on port " + port);
+
+        while (true) {
+            Socket socket = serverSocket.accept();
+            new Thread(new ClientHandler(socket, this)).start();
+        }
+    }
+
+    public ChatRoom getOrCreateRoom(String roomName) {
+        return rooms.computeIfAbsent(roomName, ChatRoom::new);
+    }
+}
+
+class ClientHandler implements Runnable {
+    private final Socket socket;
+    private final ChatServer server;
+    private BufferedReader reader;
+    private PrintWriter writer;
+    private String username;
+    private ChatRoom currentRoom;
+
+    public ClientHandler(Socket socket, ChatServer server) {
+        this.socket = socket;
+        this.server = server;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void send(String message) {
+        writer.println(message);
+    }
+
+    @Override
+    public void run() {
+        try (socket) {
+            reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            writer = new PrintWriter(socket.getOutputStream(), true);
+
+            writer.println("Enter your username:");
+            username = reader.readLine();
+
+            writer.println("Enter chat room name to join:");
+            String roomName = reader.readLine();
+
+            currentRoom = server.getOrCreateRoom(roomName);
+            currentRoom.addClient(this);
+
+            String message;
+            while ((message = reader.readLine()) != null) {
+                currentRoom.sendMessage(username + ": " + message);
+            }
+        } catch (IOException e) {
+            System.out.println("Connection lost: " + username);
+        } finally {
+            if (currentRoom != null) currentRoom.removeClient(this);
+        }
+    }
+}
+🧪 To Test:
+Run the ChatServer:
+
+public class Main {
+    public static void main(String[] args) throws IOException {
+        new ChatServer(5000).start();
+    }
+}
+
+Connect via telnet or netcat:
+telnet localhost 5000
+# or
+nc localhost 5000
+
+Enter your username and chat room name.
+
+Open more terminals and repeat. Messages will be synchronized and ordered in each room.
+
+🔒 Thread-Safety Guarantees:
+
+ConcurrentHashMap manages chat rooms safely across threads.
+
+ConcurrentHashMap.newKeySet() keeps user list thread-safe.
+
+BlockingQueue ensures FIFO message delivery.
+
+Single-threaded executor per room ensures ordered broadcasts.
+
+Would you like to:
+
+Add private messaging?
+
+Add chat history?
+
+Store messages in a database?
+
+Add a web interface (Socket.IO or WebSockets)?
