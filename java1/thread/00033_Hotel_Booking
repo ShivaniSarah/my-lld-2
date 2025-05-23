@@ -1,0 +1,131 @@
+Multithreaded Hotel Booking System
+
+Multiple users can try booking the same room concurrently.
+
+Ensure no overbooking happens.
+
+
+using multithreading in java
+
+
+ChatGPT said:
+To implement a Multithreaded Hotel Booking System in Java that avoids overbooking, you must ensure that room availability checks and bookings are atomic operations, even when accessed by multiple threads.
+
+✅ Key Concepts:
+Concurrency-safe data structures
+
+Proper locking mechanisms (e.g. ReentrantLock, synchronized)
+
+Atomic check-and-book operation
+
+🏨 Scenario:
+Each room can be booked by only one user at a time.
+
+Multiple users (threads) might attempt to book the same room concurrently.
+
+The system must prevent overbooking.
+
+🧵 Java Multithreaded Booking System (Using ReentrantLock per Room):
+java
+Copy
+Edit
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.locks.*;
+
+class Room {
+    private final int roomId;
+    private final Lock lock = new ReentrantLock();
+    private boolean isBooked = false;
+
+    Room(int roomId) {
+        this.roomId = roomId;
+    }
+
+    public boolean book(String userId) {
+        lock.lock();
+        try {
+            if (isBooked) {
+                System.out.println("Room " + roomId + " already booked. User: " + userId + " failed.");
+                return false;
+            } else {
+                isBooked = true;
+                System.out.println("Room " + roomId + " successfully booked by " + userId);
+                return true;
+            }
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public int getRoomId() {
+        return roomId;
+    }
+}
+
+class BookingSystem {
+    private final Map<Integer, Room> rooms = new ConcurrentHashMap<>();
+
+    public BookingSystem(int numRooms) {
+        for (int i = 1; i <= numRooms; i++) {
+            rooms.put(i, new Room(i));
+        }
+    }
+
+    public boolean bookRoom(int roomId, String userId) {
+        Room room = rooms.get(roomId);
+        if (room == null) {
+            System.out.println("Room " + roomId + " does not exist. User: " + userId + " failed.");
+            return false;
+        }
+        return room.book(userId);
+    }
+}
+
+public class HotelBookingDemo {
+    public static void main(String[] args) throws InterruptedException {
+        BookingSystem bookingSystem = new BookingSystem(1); // Only one room to demonstrate overbooking
+
+        ExecutorService executor = Executors.newFixedThreadPool(5);
+
+        for (int i = 1; i <= 5; i++) {
+            final String userId = "user" + i;
+            executor.submit(() -> bookingSystem.bookRoom(1, userId));
+        }
+
+        executor.shutdown();
+        executor.awaitTermination(1, TimeUnit.MINUTES);
+    }
+}
+💡 Output Example (non-overlapping):
+pgsql
+Copy
+Edit
+Room 1 successfully booked by user2
+Room 1 already booked. User: user1 failed.
+Room 1 already booked. User: user3 failed.
+Room 1 already booked. User: user4 failed.
+Room 1 already booked. User: user5 failed.
+🔐 Why ReentrantLock?
+It allows fine-grained locking per room (not global).
+
+Prevents race conditions.
+
+Avoids using synchronized globally, which limits concurrency.
+
+🛠️ Alternatives:
+Use StampedLock for advanced read/write locking
+
+Use AtomicBoolean for room status (though you lose blocking wait logic)
+
+Use synchronized on Room object instead of explicit lock
+
+Would you like to extend this to include:
+
+Room availability list
+
+Date range-based booking
+
+Booking cancellation
+
+Persistent storage integration (DB)?
