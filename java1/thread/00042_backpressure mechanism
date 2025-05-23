@@ -1,0 +1,124 @@
+Design a backpressure mechanism for producer-consumer scenarios.
+
+Here’s how to design a backpressure mechanism in a producer-consumer system using Java multithreading:
+
+🎯 Goal:
+Prevent producers from overwhelming consumers.
+
+Block or slow producers when buffer is full (backpressure).
+
+Allow smooth flow with bounded memory usage.
+
+✅ Tools We'll Use:
+
+| Concept           | Java Tool                  |
+| ----------------- | -------------------------- |
+| Shared buffer     | `BlockingQueue<T>`         |
+| Backpressure      | Bounded queue capacity     |
+| Producer throttle | `put()` blocks when full   |
+| Consumer wait     | `take()` blocks when empty |
+
+✅ Java Implementation
+java
+Copy
+Edit
+import java.util.concurrent.*;
+
+// Shared bounded buffer
+class BoundedBuffer<T> {
+    private final BlockingQueue<T> queue;
+
+    public BoundedBuffer(int capacity) {
+        this.queue = new ArrayBlockingQueue<>(capacity); // backpressure via fixed capacity
+    }
+
+    public void produce(T item) throws InterruptedException {
+        queue.put(item); // blocks if full
+        System.out.println("Produced: " + item);
+    }
+
+    public T consume() throws InterruptedException {
+        T item = queue.take(); // blocks if empty
+        System.out.println("Consumed: " + item);
+        return item;
+    }
+}
+
+// Producer thread
+class Producer implements Runnable {
+    private final BoundedBuffer<Integer> buffer;
+    private final int id;
+
+    public Producer(BoundedBuffer<Integer> buffer, int id) {
+        this.buffer = buffer;
+        this.id = id;
+    }
+
+    @Override
+    public void run() {
+        try {
+            int count = 0;
+            while (true) {
+                buffer.produce(id * 1000 + count++);
+                Thread.sleep(100); // simulate work
+            }
+        } catch (InterruptedException ignored) {}
+    }
+}
+
+// Consumer thread
+class Consumer implements Runnable {
+    private final BoundedBuffer<Integer> buffer;
+
+    public Consumer(BoundedBuffer<Integer> buffer) {
+        this.buffer = buffer;
+    }
+
+    @Override
+    public void run() {
+        try {
+            while (true) {
+                buffer.consume();
+                Thread.sleep(300); // simulate slower consumer
+            }
+        } catch (InterruptedException ignored) {}
+    }
+}
+🧪 Driver Class
+java
+Copy
+Edit
+public class BackpressureDemo {
+    public static void main(String[] args) {
+        BoundedBuffer<Integer> buffer = new BoundedBuffer<>(5); // small buffer = visible backpressure
+        ExecutorService executor = Executors.newCachedThreadPool();
+
+        // 3 fast producers
+        for (int i = 1; i <= 3; i++) {
+            executor.submit(new Producer(buffer, i));
+        }
+
+        // 1 slow consumer
+        executor.submit(new Consumer(buffer));
+    }
+}
+📌 Behavior Summary
+Producers block when buffer is full (backpressure).
+
+Consumer blocks when buffer is empty.
+
+Memory is bounded, avoids OOM risk.
+
+No manual locks — safe & clean.
+
+🚀 Extensions
+Add timeout for producers: offer(item, timeout, unit)
+
+Add metrics (e.g. buffer fill rate)
+
+Use LinkedBlockingQueue for larger dynamic capacity
+
+Add priorities or rate-limiting to producers
+
+Would you like this design adapted to real-time streaming (Kafka-style) or custom flow control logic with rejection strategies (e.g. drop oldest/newest)?
+
