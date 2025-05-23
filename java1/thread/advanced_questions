@@ -1,71 +1,21 @@
-Multithreaded Hotel Booking System
-
-Multiple users can try booking the same room concurrently.
-
-Ensure no overbooking happens.
-
-
-
 
 Design a Concurrent Web Server
-
 Handle HTTP requests using a thread pool.
-
 Support timeouts, back-pressure, and graceful shutdown.
 
 
-
-Multithreaded Game Engine Loop
-
-Separate threads for rendering, physics, AI, and sound.
-
-Ensure they are coordinated with minimal lag.
-
-
-
-Thread-safe Chat Server
-
-Support multiple chat rooms and multiple users per room.
-
-Ensure messages are broadcasted correctly and in order.
-
-
-
 Multithreaded Metrics Aggregator
-
 Design a service to collect metrics (CPU, memory, custom events) from multiple sources in parallel.
-
 Ensure correct aggregation and time-window support.
 
 
-
-
 Distributed Lock Implementation with Threads
-
 Simulate a distributed lock mechanism like Zookeeper or Redis Redlock using local threads.
 
 
-
 Multithreaded Web Scraper with Retry & Throttling
-
 Ensure you do not violate rate limits.
-
 Retry failed requests with exponential backoff.
-
-
-
-
-Concurrent Billing Engine
-
-Calculate user bills from millions of usage events.
-
-Ensure each bill is calculated exactly once, even with concurrent threads.
-
-
-
-Asynchronous Workflow Engine
-
-Design a system where tasks are executed in a predefined DAG (directed acyclic graph), and nodes are processed concurrently respecting dependencies.
 
 
 
