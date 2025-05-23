@@ -1,0 +1,151 @@
+Multithreaded Metrics Aggregator
+Design a service to collect metrics (CPU, memory, custom events) from multiple sources in parallel.
+Ensure correct aggregation and time-window support.
+
+
+using multithreading in java
+
+
+ChatGPT said:
+Here’s a design for a Multithreaded Metrics Aggregator in Java with:
+
+✅ Parallel ingestion of metrics (CPU, memory, events)
+✅ Thread-safe aggregation
+✅ Sliding time-window support (e.g. 1-minute rolling stats)
+✅ Scalable thread-safe architecture
+
+✅ Key Design Elements
+
+| Component                                     | Functionality                                 |
+| --------------------------------------------- | --------------------------------------------- |
+| `Metric` class                                | Represents a single metric event              |
+| `BlockingQueue`                               | Ingestion queue for each source               |
+| `ExecutorService`                             | Processes incoming metrics concurrently       |
+| `ConcurrentHashMap` + `ConcurrentLinkedQueue` | Thread-safe storage                           |
+| Sliding window                                | Maintains time-bound data with eviction logic |
+
+
+🧵 Java Code Example
+
+
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicLong;
+
+class Metric {
+    String name;
+    double value;
+    long timestamp; // epoch millis
+
+    Metric(String name, double value, long timestamp) {
+        this.name = name;
+        this.value = value;
+        this.timestamp = timestamp;
+    }
+}
+
+class MetricAggregator {
+    private final ConcurrentMap<String, ConcurrentLinkedQueue<Metric>> metrics = new ConcurrentHashMap<>();
+    private final ScheduledExecutorService cleaner = Executors.newScheduledThreadPool(1);
+    private final long windowSizeMillis;
+
+    public MetricAggregator(long windowSizeMillis) {
+        this.windowSizeMillis = windowSizeMillis;
+        startCleanupTask();
+    }
+
+    public void record(Metric metric) {
+        metrics.computeIfAbsent(metric.name, k -> new ConcurrentLinkedQueue<>()).add(metric);
+    }
+
+    public double average(String metricName) {
+        long now = System.currentTimeMillis();
+        ConcurrentLinkedQueue<Metric> queue = metrics.getOrDefault(metricName, new ConcurrentLinkedQueue<>());
+        return queue.stream()
+                .filter(m -> m.timestamp >= now - windowSizeMillis)
+                .mapToDouble(m -> m.value)
+                .average().orElse(0.0);
+    }
+
+    private void startCleanupTask() {
+        cleaner.scheduleAtFixedRate(() -> {
+            long cutoff = System.currentTimeMillis() - windowSizeMillis;
+            for (ConcurrentLinkedQueue<Metric> queue : metrics.values()) {
+                queue.removeIf(m -> m.timestamp < cutoff);
+            }
+        }, 1, 1, TimeUnit.SECONDS);
+    }
+
+    public void shutdown() {
+        cleaner.shutdown();
+    }
+}
+
+public class MetricsCollector {
+    private static final ExecutorService executor = Executors.newFixedThreadPool(10);
+    private static final MetricAggregator aggregator = new MetricAggregator(60_000); // 60 sec window
+
+    public static void main(String[] args) throws InterruptedException {
+        Runnable sourceSimulator = () -> {
+            Random rand = new Random();
+            String[] metricTypes = {"cpu", "memory", "disk"};
+            while (!Thread.currentThread().isInterrupted()) {
+                String metric = metricTypes[rand.nextInt(metricTypes.length)];
+                double value = 10 + rand.nextDouble() * 90;
+                aggregator.record(new Metric(metric, value, System.currentTimeMillis()));
+                try {
+                    Thread.sleep(200); // simulate event every 200ms
+                } catch (InterruptedException e) {
+                    break;
+                }
+            }
+        };
+
+        // Start 5 simulated sources
+        for (int i = 0; i < 5; i++) {
+            executor.submit(sourceSimulator);
+        }
+
+        // Periodic metric reporting
+        ScheduledExecutorService reporter = Executors.newSingleThreadScheduledExecutor();
+        reporter.scheduleAtFixedRate(() -> {
+            System.out.printf("CPU avg: %.2f, MEM avg: %.2f%n",
+                    aggregator.average("cpu"), aggregator.average("memory"));
+        }, 2, 2, TimeUnit.SECONDS);
+
+        // Run for 20 seconds
+        Thread.sleep(20000);
+        executor.shutdownNow();
+        aggregator.shutdown();
+        reporter.shutdownNow();
+    }
+}
+
+
+🧪 Output (sample)
+
+CPU avg: 65.21, MEM avg: 42.63
+CPU avg: 61.89, MEM avg: 47.92
+...
+
+
+✅ Key Benefits
+Parallel ingestion using a thread pool
+
+Thread-safe aggregation via ConcurrentMap and ConcurrentLinkedQueue
+
+Rolling time-window with cleanup task
+
+Accurate stats (avg) from live streams
+
+🔧 Extensions
+Add sum, count, percentiles
+
+Expose data via REST API (Spring Boot)
+
+Add tags/labels (e.g., host ID, app name)
+
+Store data to time-series DB (like InfluxDB)
+
+Would you like to see this integrated with Spring Boot REST API or streamed to Kafka?
+
