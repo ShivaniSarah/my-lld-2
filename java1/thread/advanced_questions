@@ -1,11 +1,5 @@
 
 
-
-Multithreaded Metrics Aggregator
-Design a service to collect metrics (CPU, memory, custom events) from multiple sources in parallel.
-Ensure correct aggregation and time-window support.
-
-
 Distributed Lock Implementation with Threads
 Simulate a distributed lock mechanism like Zookeeper or Redis Redlock using local threads.
 
