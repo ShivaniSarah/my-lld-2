@@ -1,21 +1,12 @@
 
-
-Distributed Lock Implementation with Threads
-Simulate a distributed lock mechanism like Zookeeper or Redis Redlock using local threads.
-
-
-
-
-
 Concurrency Patterns & Optimizations
 
 Compare Spinlocks vs Blocking Locks
 
 How to minimize context switches in high-throughput systems?
 
-Design a backpressure mechanism for producer-consumer scenarios.
 
 What are lock-free and wait-free data structures? Design a lock-free queue.
 
-Design a job retry and deduplication service using multiple threads.
+
 
