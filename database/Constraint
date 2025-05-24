@@ -1,0 +1,8 @@
+Database constraints are rules applied to tables and columns to ensure data accuracy, consistency, and integrity. They define restrictions on the type and value of data that can be stored, helping to prevent errors and maintain data quality. Common constraints include primary keys, foreign keys, unique constraints, NOT NULL constraints, default constraints, and check constraints. 
+Types of Constraints:
+Primary Key: Uniquely identifies each row in a table, preventing duplicate entries. 
+Foreign Key: Establishes relationships between tables by linking a column in one table to the primary key of another table. 
+Unique Constraint: Ensures that values in a specific column are unique, preventing duplicates within that column. 
+NOT NULL Constraint: Requires a column to always have a value and prevents NULL values. 
+Default Constraint: Assigns a default value to a column if no value is explicitly provided during data insertion. 
+Check Constraint: Defines a condition that must be met for data in a column or columns, ensuring that data conforms to specific criteria. 
