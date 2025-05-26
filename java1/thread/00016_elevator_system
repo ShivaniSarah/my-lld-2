@@ -179,6 +179,150 @@ Elevator moving... Floor 8
 Elevator arrived at floor 8
 
 
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+elevator system with each user telling source and destination and elevator waits at each floor whichever floor comes on the way , drop the people and board on the new people and chooses direction according to what request came first   ...... implement in java using multithreading
+
+
+package org.example;
+
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
+
+class UserRequest {
+    final int source;
+    final int destination;
+
+    UserRequest(int source, int destination) {
+        this.source = source;
+        this.destination = destination;
+    }
+
+    Direction getDirection() {
+        return destination > source ? Direction.UP : Direction.DOWN;
+    }
+}
+
+enum Direction {
+    UP, DOWN, IDLE
+}
+
+class Elevator implements Runnable {
+    private final int id;
+    private final PriorityBlockingQueue<UserRequest> requests =
+            new PriorityBlockingQueue<>(10, Comparator.comparingInt(r -> r.source));
+    private final Set<Integer> stops = new ConcurrentSkipListSet<>();
+    private final AtomicInteger currentFloor = new AtomicInteger(0);
+    private final AtomicReference<Direction> direction = new AtomicReference<>(Direction.IDLE);
+    private final Object lock = new Object();
+
+    Elevator(int id) {
+        this.id = id;
+    }
+
+    public int getCurrentFloor() {
+        return currentFloor.get();
+    }
+
+    void addRequest(UserRequest req) {
+        requests.offer(req);
+        synchronized (lock) {
+            lock.notifyAll();
+        }
+    }
+
+    @Override
+    public void run() {
+        while (true) {
+            try {
+                UserRequest request;
+                synchronized (lock) {
+                    while (requests.isEmpty()) lock.wait();
+                }
+
+                request = requests.peek();
+                if (request == null) continue;
+
+                direction.set(request.getDirection());
+
+                moveToFloor(request.source);
+                System.out.printf("Elevator %d picked up from floor %d%n", id, request.source);
+                stops.add(request.destination);
+                requests.poll();
+
+                while (!stops.isEmpty()) {
+                    int target = getNextStop();
+                    moveToFloor(target);
+                    System.out.printf("Elevator %d dropped at floor %d%n", id, target);
+                    stops.remove(target);
+                }
+
+                direction.set(Direction.IDLE);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+        }
+    }
+
+    private void moveToFloor(int floor) throws InterruptedException {
+        while (currentFloor.get() != floor) {
+            int step = Integer.compare(floor, currentFloor.get());
+            currentFloor.addAndGet(step);
+            System.out.printf("Elevator %d at floor %d%n", id, currentFloor.get());
+            Thread.sleep(500); // simulate travel time
+        }
+    }
+
+    private int getNextStop() {
+        if (direction.get() == Direction.UP) {
+            return stops.stream().filter(f -> f > currentFloor.get()).findFirst().orElse(stops.iterator().next());
+        } else {
+            return stops.stream().filter(f -> f < currentFloor.get()).findFirst().orElse(stops.iterator().next());
+        }
+    }
+}
+
+class ElevatorSystem {
+    private final List<Elevator> elevators = new ArrayList<>();
+    private final ExecutorService elevatorThreads = Executors.newCachedThreadPool();
+
+    ElevatorSystem(int numElevators) {
+        for (int i = 0; i < numElevators; i++) {
+            Elevator e = new Elevator(i + 1);
+            elevators.add(e);
+            elevatorThreads.execute(e);
+        }
+    }
+
+    void requestElevator(int source, int destination) {
+        UserRequest request = new UserRequest(source, destination);
+        System.out.printf("New request: From floor %d to floor %d%n", source, destination);
+
+        Elevator elevator = elevators.stream()
+                .min(Comparator.comparingInt(e -> Math.abs(source - e.getCurrentFloor())))
+                .orElse(elevators.get(0));
+        elevator.addRequest(request);
+    }
+
+    void shutdown() {
+        elevatorThreads.shutdownNow();
+    }
+}
+
+public class Main {
+    public static void main(String[] args) throws InterruptedException {
+        ElevatorSystem system = new ElevatorSystem(2);
+
+        system.requestElevator(0, 5);
+        system.requestElevator(3, 1);
+        system.requestElevator(2, 7);
+        system.requestElevator(6, 0);
+
+        Thread.sleep(15000);
+        system.shutdown();
+    }
+}
 
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------
 or
