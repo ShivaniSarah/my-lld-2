@@ -1,1 +1,11 @@
 base properties of no sql
+
+
+The BASE model is a set of properties often associated with NoSQL databases, particularly in contrast to the ACID properties of relational databases. BASE stands for:
+Basically Available:
+The system guarantees the availability of data, even in the event of partial failures or network partitions. This means the system will always respond to requests, though it may not always return the most up-to-date information.
+Soft state:
+The state of the database can change over time, even without explicit input. This implies that consistency is not immediately enforced and can fluctuate as data propagates through the system. 
+Eventually consistent:
+While immediate consistency is not guaranteed, the system will eventually reach a consistent state once all updates have propagated and settled. In the interim, different replicas or nodes might hold slightly different versions of the data.
+The BASE model prioritizes availability and partition tolerance over strict immediate consistency, which makes it suitable for distributed systems that require high availability and scalability, such as those handling large volumes of data or high concurrency, where some degree of temporary inconsistency is acceptable.
