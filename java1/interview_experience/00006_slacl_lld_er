@@ -1,0 +1,214 @@
+Slack:
+
+Requirements Gathering
+
+Design schema
+
+sending/ receiving Messages to user
+sending/ receiving Messages to channel
+All the recent messages when login => no of unread messages=> count
+
+
+Models
+
+User:
+userId => primaryKey
+displayUserName
+actualUserName 
+userEmailId
+
+UserChannelRelationship:
+id=> primaryKey , autoincrement
+channelId => foreignKey
+userId => foreignKey
+
+Channel
+channelId
+channelName
+
+messages
+
+messageId =>primaryKey autoincremented
+messageDescription
+senderId
+creadtedAt
+
+DirectMessages
+Id => primaryKey autoincremented
+messageId => foreignkey
+messageDescription
+receiverId  => foreignkey
+creadtedAt
+
+
+
+
+
+
+
+ChannelMessages
+Id => primaryKey autoincremented
+messageId => foreignkey
+messageDescription
+channelId => foreignkey
+creadtedAt
+
+Message_read
+id=>primaryKey autoincremented
+messageId => foreignKey
+readBy
+readAt
+
+
+
+(Select   m.sender_Id   AS otherUserId,
+count(*) AS unreadCount from
+direct_message dm JOIN messages m on m.message_id = dm.message_id
+LEFT JOIN  message_read mr on mr.readBy = dm.receiverId
+Where dm.receiver = loggenInUser
+senderId !=  logedInUser
+AND mr.id iS NULL
+Group By m.senderID
+ORDER by unreadCount;)
+
+UNIONALL
+
+(Select   m.sender_Id   AS otherUserId,
+count(*) AS unreadCount from
+channel_message cm JOIN messages m on m.message_id = cm.message_id
+LEFT JOIN  message_read mr on mr.readBy = cm.channelId
+LEFT JOIN UserChannelRelationship ucr on ucr.userId = loggedInUser
+Where cm.channelId = loggedIinUser
+senderId !=  logedInUser
+AND mr.id iS NULL
+Group By m.senderID
+ORDER by unreadCount;)
+
+
+--------
+
+In java give folder structure and code structure for low level design . Give me all classes, methods, interfaces and all places where changes is required in the form of models, repository, service, controllers, dto etc. in this order bottom up approach
+Design lld system : slack like system. it has channels, individual messages, group messages etc, considering only text messages
+For the requirement : sending and receiving messages to user or channel
+
+give me database tables only
+ChatGPT said:
+Got it — you want only the database tables for the Slack-like system (channels, DMs, group messages) for the send & receive messages requirement.
+
+Here’s the database schema (tables only, without other LLD layers):
+
+1. users
+
+| Column Name  | Data Type    | Constraints                | Description        |
+| ------------ | ------------ | -------------------------- | ------------------ |
+| `id`         | BIGINT       | PK, AUTO\_INCREMENT        | Unique user ID     |
+| `username`   | VARCHAR(50)  | UNIQUE, NOT NULL           | Display username   |
+| `email`      | VARCHAR(100) | UNIQUE, NOT NULL           | User’s email       |
+| `created_at` | TIMESTAMP    | DEFAULT CURRENT\_TIMESTAMP | Creation timestamp |
+
+
+2. channels
+
+| Column Name  | Data Type    | Constraints                | Description               |
+| ------------ | ------------ | -------------------------- | ------------------------- |
+| `id`         | BIGINT       | PK, AUTO\_INCREMENT        | Channel ID                |
+| `name`       | VARCHAR(100) | UNIQUE, NOT NULL           | Channel name              |
+| `is_private` | BOOLEAN      | DEFAULT FALSE              | Private or public channel |
+| `created_by` | BIGINT       | FK → users(id)             | Creator of channel        |
+| `created_at` | TIMESTAMP    | DEFAULT CURRENT\_TIMESTAMP | Creation timestamp        |
+
+
+3. channel_members
+
+| Column Name  | Data Type | Constraints                | Description       |
+| ------------ | --------- | -------------------------- | ----------------- |
+| `id`         | BIGINT    | PK, AUTO\_INCREMENT        | Row ID            |
+| `channel_id` | BIGINT    | FK → channels(id)          | Channel reference |
+| `user_id`    | BIGINT    | FK → users(id)             | User reference    |
+| `joined_at`  | TIMESTAMP | DEFAULT CURRENT\_TIMESTAMP | Join timestamp    |
+
+
+4. messages
+
+| Column Name  | Data Type | Constraints                | Description    |
+| ------------ | --------- | -------------------------- | -------------- |
+| `id`         | BIGINT    | PK, AUTO\_INCREMENT        | Message ID     |
+| `sender_id`  | BIGINT    | FK → users(id)             | Message sender |
+| `content`    | TEXT      | NOT NULL                   | Message text   |
+| `created_at` | TIMESTAMP | DEFAULT CURRENT\_TIMESTAMP | Sent time      |
+| `is_edited`  | BOOLEAN   | DEFAULT FALSE              | Edited flag    |
+
+
+5. direct_messages (for 1:1 chat)
+| Column Name   | Data Type | Constraints         | Description       |
+| ------------- | --------- | ------------------- | ----------------- |
+| `id`          | BIGINT    | PK, AUTO\_INCREMENT | DM ID             |
+| `message_id`  | BIGINT    | FK → messages(id)   | Message reference |
+| `receiver_id` | BIGINT    | FK → users(id)      | Recipient user    |
+
+
+6. channel_messages (for channel/group chat)
+
+| Column Name  | Data Type | Constraints         | Description        |
+| ------------ | --------- | ------------------- | ------------------ |
+| `id`         | BIGINT    | PK, AUTO\_INCREMENT | Channel message ID |
+| `message_id` | BIGINT    | FK → messages(id)   | Message reference  |
+| `channel_id` | BIGINT    | FK → channels(id)   | Channel reference  |
+
+
+7. message_reads (to track read receipts)
+| Column Name  | Data Type | Constraints                | Description       |
+| ------------ | --------- | -------------------------- | ----------------- |
+| `id`         | BIGINT    | PK, AUTO\_INCREMENT        | Row ID            |
+| `message_id` | BIGINT    | FK → messages(id)          | Message reference |
+| `user_id`    | BIGINT    | FK → users(id)             | User who read     |
+| `read_at`    | TIMESTAMP | DEFAULT CURRENT\_TIMESTAMP | Read time         |
+
+
+
+
+SELECT 'CHANNEL' AS message_type,
+       cm.channel_id AS target_id,
+       COUNT(*) AS unread_count
+FROM channel_members chm
+JOIN channel_messages cm 
+    ON cm.channel_id = chm.channel_id
+JOIN messages m 
+    ON m.id = cm.message_id
+LEFT JOIN message_reads mr
+    ON mr.message_id = m.id
+    AND mr.user_id = :current_user_id
+WHERE chm.user_id = :current_user_id
+  AND m.sender_id <> :current_user_id
+  AND mr.id IS NULL
+GROUP BY cm.channel_id
+
+UNION ALL
+
+SELECT 'DIRECT' AS message_type,
+       m.sender_id AS target_id,
+       COUNT(*) AS unread_count
+FROM direct_messages dm
+JOIN messages m 
+    ON m.id = dm.message_id
+LEFT JOIN message_reads mr
+    ON mr.message_id = m.id
+    AND mr.user_id = :current_user_id
+WHERE dm.receiver_id = :current_user_id
+  AND m.sender_id <> :current_user_id
+  AND mr.id IS NULL
+GROUP BY m.sender_id;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
