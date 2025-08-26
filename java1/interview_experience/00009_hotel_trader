@@ -1671,3 +1671,233 @@ The specific steps will vary based on the chosen deployment method, but these ge
 
 
 
+
+
+
+If we deploy spring boot jar file, it has its own embedded tomcat server, we don't need server setup, just need to run jar file in EC2 container and give command java -jar filename.
+
+war files contain web pages and not tomcat server , we need to do our own server setup and load balancing https configuration
+
+Deploying a WAR file to AWS, particularly with your own server setup, typically involves these steps:
+Provision an EC2 Instance:
+Launch an Amazon EC2 instance (e.g., a Linux AMI). Choose an instance type and size appropriate for your application's needs.
+
+
+Configure security groups to allow necessary inbound traffic (e.g., HTTP/HTTPS on port 80/443, SSH on port 22 for management).
+
+
+Install and Configure Java and Application Server:
+Connect to your EC2 instance via SSH.
+
+
+Install Java Development Kit (JDK) on the instance.
+
+
+Install an application server, such as Apache Tomcat, WildFly, or Jetty, which is compatible with your WAR file.
+
+
+Configure the application server, including setting up environment variables, memory allocation, and user permissions.
+
+
+Transfer the WAR File:
+Securely transfer your compiled WAR file from your local machine to the EC2 instance. This can be done using tools like SCP or SFTP. 
+
+
+Place the WAR file in the appropriate deployment directory of your application server (e.g., webapps directory for Tomcat).
+
+
+Deploy the WAR File:
+Manual Deployment: If using Tomcat, simply placing the WAR file in the webapps directory often triggers automatic deployment.
+
+
+Application Server Management Console: Access the management console of your application server (e.g., Tomcat Manager) and use its interface to upload and deploy the WAR file.
+
+
+Scripted Deployment: Create a shell script on the EC2 instance to automate the deployment process, including stopping the application server, replacing the old WAR file, and restarting the server.
+
+
+Configure DNS and Load Balancing (Optional but Recommended):
+Route 53: If you have a custom domain, configure Amazon Route 53 to point your domain to the EC2 instance's public IP address or an Elastic Load Balancer.
+
+
+Elastic Load Balancing (ELB): For high availability and scalability, place your EC2 instance behind an Application Load Balancer (ALB) or Network Load Balancer (NLB). This distributes traffic and allows for easy scaling.
+
+
+Monitoring and Maintenance:
+Set up Amazon CloudWatch to monitor your EC2 instance and application server logs for performance and errors.
+
+
+Regularly update your application server and operating system for security and performance improvements.
+
+
+
+steps in a cicd pipeline:
+when PR is raised , a pipeline is triggered in jenkins ( automation of steps )
+environment setup 
+dependency installed
+build a jar
+run tests
+if tests passed, build image
+auto provision the servers /machines and deploy  in 1 hour the latest image built(usually it is done ourselves )
+
+
+Deploying a Java application packaged as a JAR file on AWS, when you are responsible for the server setup, typically involves using Amazon EC2 (Elastic Compute Cloud). The process can be summarized as follows:
+Launch an EC2 Instance:
+Navigate to the AWS Management Console and launch a new EC2 instance.
+Choose an appropriate Amazon Machine Image (AMI), such as Amazon Linux 2 or Ubuntu, that is suitable for running Java applications.
+Select an instance type based on your application's resource requirements (CPU, memory).
+Configure security groups to allow inbound traffic on the necessary ports (e.g., 80 for HTTP, 443 for HTTPS, and the port your application listens on).
+Create or select a key pair for secure SSH access to the instance.
+Connect to the EC2 Instance:
+Once the instance is running, connect to it using SSH and the key pair you configured.
+Install Java:
+Update the package manager and install the Java Runtime Environment (JRE) or Java Development Kit (JDK) on the EC2 instance. For example, on Ubuntu:
+Code
+       sudo apt update
+       sudo apt install default-jre # or default-jdk
+Upload the JAR File:
+Transfer your application's JAR file from your local machine to the EC2 instance. You can use tools like SCP (Secure Copy Protocol) or SFTP clients (e.g., FileZilla). 
+
+
+Code
+       scp -i /path/to/your-key.pem /path/to/your-app.jar ec2-user@your-ec2-ip:/home/ec2-user/
+Run the JAR File:
+Navigate to the directory where you uploaded the JAR file on the EC2 instance.
+
+
+Execute the JAR file using the java -jar command. To keep the application running even after you close your SSH session, consider using a process manager like screen or systemd.
+
+
+Code
+       # Using screen
+       screen -S myapp
+       java -jar your-app.jar
+       # Detach from screen session by pressing Ctrl+A, then D
+
+       # Using systemd (for background service)
+       # Create a .service file in /etc/systemd/system/
+Configure Access (if necessary):
+If your application serves web content, ensure your security groups allow traffic on the relevant ports and that any web server (e.g., Apache, Nginx) is configured to proxy requests to your Java application if needed.
+
+
+Monitoring and Maintenance:
+Monitor your application's health and performance using AWS CloudWatch.
+
+
+Regularly update the operating system and Java environment on the EC2 instance.
+
+
+Kubernetes, often abbreviated as K8s, is an open-source system designed for automating the deployment, scaling, and management of containerized applications. It acts as an orchestration platform for managing clusters of computing nodes (physical or virtual machines) that run containerized workloads.
+Key aspects of Kubernetes include:
+Container Orchestration:
+Kubernetes automates the deployment, scaling, and operational management of application containers, such as Docker containers.
+Declarative Configuration:
+Users define the desired state of their applications and infrastructure using declarative configuration files, and Kubernetes continuously works to maintain that state.
+Self-healing Capabilities:
+It can automatically restart failed containers, replace unhealthy nodes, and ensure the availability of applications.
+Service Discovery and Load Balancing:
+Kubernetes provides mechanisms for services to discover each other and distributes network traffic across multiple instances of an application.
+Automated Rollouts and Rollbacks:
+It facilitates controlled updates to applications, allowing for gradual rollouts and easy rollbacks in case of issues.
+Resource Management:
+Kubernetes efficiently manages resources like CPU, memory, and storage, ensuring optimal utilization across the cluster.
+In essence, Kubernetes provides a robust and scalable platform for managing modern, distributed applications built using microservices architectures and containerization.
+
+
+
+
+
+
+
+
+
+
+
+
+Terraform is an open-source Infrastructure as Code (IaC) tool developed by HashiCorp. It allows users to define and provision data center infrastructure using a declarative configuration language, HashiCorp Configuration Language (HCL), or JSON. 
+Key aspects of Terraform:
+Infrastructure as Code (IaC):
+Instead of manually configuring infrastructure components (like virtual machines, networks, or databases) through cloud provider consoles or command-line interfaces, Terraform enables you to define your infrastructure in human-readable configuration files. This codification allows for version control, collaboration, and automated deployment.
+Declarative Approach:
+With Terraform, you describe the desired state of your infrastructure, and Terraform automatically figures out the necessary steps to achieve that state. This contrasts with imperative approaches where you specify a series of commands to execute.
+Cloud-Agnostic and Multi-Cloud Support:
+Terraform supports a wide range of cloud providers (e.g., AWS, Azure, Google Cloud, Oracle Cloud Infrastructure) and other services through its plugin-based architecture, known as "providers." This allows you to manage infrastructure across various environments from a single tool.
+Resource Management:
+Terraform can provision, update, and destroy a wide array of infrastructure components, from low-level resources like compute instances and storage to higher-level elements like DNS entries and SaaS features.
+State Management:
+Terraform maintains a "state file" that tracks the real-world infrastructure it manages and its configuration. This state file helps Terraform understand what resources it needs to create, modify, or destroy to match the desired configuration.
+Modules:
+Terraform allows you to package and reuse configurations as "modules," promoting consistency and reducing redundancy in your infrastructure definitions.
+
+
+Java deployment refers to the process of packaging and distributing Java applications so users can run them. The basic steps and considerations involve:
+Choosing the Execution Environment:
+Desktop Applications: Delivered directly to users or through app stores.
+Web Applications: Deployed on application servers (e.g., Apache Tomcat, Oracle WebLogic, JBoss/WildFly) and accessed via web browsers. These are typically packaged as WAR (Web Application Archive) or EAR (Enterprise Application Archive) files.
+Serverless/Cloud Applications: Deployed to cloud platforms (e.g., AWS Lambda, Azure Functions, Google Cloud Run) often using containerization technologies like Docker and orchestration tools like Kubernetes.
+Java Web Start (Legacy): Allows launching full-featured applications from a web browser with a single click, automatically downloading and caching necessary files. This technology is largely deprecated in newer Java versions.
+Creating the Application Package:
+JAR Files: For standard Java applications, the compiled code and resources are packaged into a Java Archive (JAR) file.
+WAR/EAR Files: For web applications, these specialized archives contain JARs, web resources (HTML, CSS, JavaScript), and deployment descriptors.
+Self-Contained Applications: Packages that include the necessary Java Runtime Environment (JRE) alongside the application, ensuring compatibility and ease of distribution.
+Container Images: For containerized deployments (Docker), a Dockerfile defines how to build an image containing the application and its dependencies.
+Setting up the Deployment Environment:
+Application Servers: For web applications, configuring and managing the application server where the WAR/EAR file will be deployed.
+Cloud Platforms: Configuring cloud services, creating deployment pipelines (CI/CD), and managing resources for serverless or containerized deployments.
+User Desktops: Ensuring the target machine has a compatible JRE installed, or distributing a self-contained application.
+Distribution and Launch:
+Copying Packages: Placing the compiled application package (JAR, WAR, EAR, or container image) in the designated location for access by users or servers.
+Web Server/Application Server Deployment: Using administrative consoles or deployment tools to install and run web applications.
+Launching from Web Pages: For browser-launched applications (e.g., legacy Java Web Start), creating HTML pages with links or JavaScript to trigger the application launch.
+Container Orchestration: Deploying and managing containerized applications using tools like Kubernetes.
+
+JAR and WAR files are both archive formats used in Java, but they serve different purposes:
+JAR (Java ARchive) Files:
+Purpose: Primarily used for packaging general-purpose Java applications, libraries, and resources. They can contain Java classes, compiled code, metadata, and other assets required for a standalone application or a library to be included in another project.
+Deployment: JAR files can be executed directly if they contain a main method (for standalone applications) or included as dependencies in other projects. They do not require a web server or application server for deployment unless they are part of a larger web or enterprise application.
+Structure: While a JAR file is essentially a ZIP file with a .jar extension, it doesn't enforce a specific internal directory structure beyond the standard Java package hierarchy.
+WAR (Web Application ARchive) Files:
+Purpose: Specifically designed for packaging Java web applications. They contain all the components necessary for a web application, including servlets, JavaServer Pages (JSPs), HTML files, CSS, JavaScript, images, and configuration files like web.xml.
+Deployment: WAR files are deployed to a web server or servlet container (e.g., Tomcat, Jetty) that provides the runtime environment for the web application. They cannot be executed directly.
+Structure: WAR files have a predefined directory structure that web servers expect, including a WEB-INF directory containing web.xml and other configuration files, and classes and lib subdirectories for compiled classes and libraries, respectively. The root of the WAR file serves as the document root of the web application.
+In summary:
+JAR files: are for general Java applications and libraries.
+WAR files: are specifically for packaging and deploying Java web applications on a web server.
+
+JAR and WAR are two different file formats used in Java Spring Boot for packaging and deploying applications.
+The main difference between the two is their purpose and the way they function.
+A JAR (Java ARchive) 🗄️ is a package file format used to distribute Java class files, associated metadata, and resources. It is commonly used to distribute standalone Java applications or libraries.
+In general, JAR files are preferable for deploying Spring Boot applications because they are lightweight and can be run as standalone applications without requiring an application server. However, if you want multiple applications running under the same application server, you should choose WAR.
+A WAR (Web ARchive) 🗃️, on the other hand, is a specific type of JAR file used to package and distribute web applications. It contains the web application’s resources, such as servlets, JSPs, and HTML files, as well as a WEB-INF directory that contains additional metadata, such as the web.xml deployment descriptor.
+In summary, the main difference between a JAR and a WAR file is their intended use: JAR files are used for packaging and distributing standalone Java applications or libraries, while WAR files are used for packaging and distributing web applications.
+I hope this helps you understand the differences between JAR and WAR in deploy in Java Spring Boot!
+
+WAR files are deployed on Tomcat. A WAR (Web Application Archive) file is a specific type of JAR file designed to package web applications, containing all necessary components like servlets, JSPs, HTML files, and libraries. Tomcat, being a web server and servlet container, is designed to deploy and run these web applications packaged as WAR files.
+While JAR files themselves are not directly deployed to Tomcat in the same way WAR files are, they can be included within a WAR file (typically in the WEB-INF/lib directory) to provide necessary libraries or components for the web application. Additionally, standalone executable JAR files, especially those from frameworks like Spring Boot with embedded servers, can be run independently using java -jar, but this does not involve deploying them to an external Tomcat instance.
+
+Deploying a JAR file versus a WAR file differs primarily due to their intended uses and the environments they are designed for.
+Deploying a JAR File:
+A JAR (Java Archive) file is typically used for packaging standalone Java applications or libraries. 
+Preparation:
+Ensure the JAR file is built correctly, including all necessary classes, resources, and a META-INF/MANIFEST.MF file specifying the main class for executable JARs.
+Environment:
+Requires a Java Runtime Environment (JRE) or Java Development Kit (JDK) installed on the target system.
+Execution:
+Executable JAR: Run directly from the command line using java -jar your_application.jar.
+Library JAR: Place the JAR file in the classpath of another Java application that uses it as a dependency.
+Verification:
+Monitor the console output or logs for any errors during execution.
+Deploying a WAR File:
+A WAR (Web Application Archive) file is specifically designed for packaging web applications and requires a web server or application server (e.g., Apache Tomcat, Jetty, WildFly).
+Preparation:
+Ensure the WAR file is built correctly, containing all web components (servlets, JSPs, HTML, CSS, JavaScript), libraries, and the WEB-INF directory with web.xml (if applicable) and lib subdirectories.
+Environment:
+Requires a compatible web server or application server installed and running.
+Deployment:
+Manual Deployment: Copy the WAR file to the designated deployment directory of the server (e.g., webapps for Tomcat). The server will typically unpack and deploy it automatically.
+Server Console/Management Tool: Use the server's administrative console or management tool to upload and deploy the WAR file. This often provides more control and monitoring capabilities.
+Verification:
+Access the deployed web application through a web browser using the appropriate URL (e.g., http://localhost:8080/your_application_context). Check server logs for deployment status and any errors.
+
+
+
