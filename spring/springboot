@@ -22,7 +22,7 @@ https://github.com/utk25/infraclould
 @ResponseBody 
 @Profile
 
-Dependency Injection
+Dependency Injection => helps in loose coupling and high cohesion
 Inversion Of Control
 Spring IOC container
 
