@@ -1,0 +1,35 @@
+In Java, the equals() and hashCode() methods are fundamental for defining object equality and ensuring proper functionality in hash-based collections like HashMap and HashSet. Both methods are defined in the Object class, the root of all Java classes, and can be overridden in custom classes. 
+equals() Method
+Purpose:
+Compares two objects for equality based on their content or state, rather than just their memory addresses.
+Default Behavior:
+The default equals() implementation in Object behaves like the == operator, comparing object references.
+Overriding:
+When overriding equals(), it is crucial to adhere to the equals() contract:
+Reflexivity: x.equals(x) must be true.
+Symmetry: If x.equals(y) is true, then y.equals(x) must also be true.
+Transitivity: If x.equals(y) is true and y.equals(z) is true, then x.equals(z) must also be true.
+Consistency: Multiple invocations of x.equals(y) must consistently return the same result, provided the objects' states remain unchanged.
+Nullity: x.equals(null) must always return false.
+hashCode() Method
+Purpose:
+Returns an integer hash code value for an object, primarily used for efficient storage and retrieval in hash-based collections.
+Contract with equals():
+The most critical rule is: if two objects are considered equal by the equals() method, their hashCode() methods must produce the same integer value. The converse is not true; two unequal objects can have the same hash code (a "collision"). 
+Consistency:
+Multiple invocations of hashCode() on the same object must consistently return the same integer value, provided the object's state remains unchanged.
+Why Override Both?
+Hash-Based Collections:
+Collections like HashMap and HashSet rely on hashCode() to determine the initial bucket for an object and equals() to find the specific object within that bucket. If only equals() is overridden but hashCode() is not, equal objects might be placed in different buckets, leading to incorrect behavior (e.g., HashSet allowing duplicate "equal" objects).
+Correct Object Comparison:
+Overriding both ensures that object equality is consistently defined and correctly handled by both direct comparisons and hash-based operations.
+
+
+In Java, when working with hash-based collections like HashMap or HashSet, the hashCode() and equals() methods are called in a specific order:
+hashCode() is called first.
+When you attempt to add or retrieve an object from a hash-based collection, the hashCode() method of that object is invoked first. This method calculates an integer hash value, which is then used to determine the initial "bucket" or storage location where the object might be found or placed within the collection.
+equals() is called second (conditionally).
+After the hashCode() method identifies a potential bucket, the equals() method is then used to perform a more precise comparison.
+Adding an object: If the calculated hash code points to a bucket that already contains other objects, the equals() method is called to compare the new object with each existing object in that bucket. This determines if the new object is truly a duplicate of an existing one. If equals() returns true, the object might be replaced (in HashMap) or not added (in HashSet). If equals() returns false, the new object is added to the bucket. 
+Retrieving an object: When retrieving an object, after hashCode() identifies the correct bucket, equals() is used to iterate through the objects in that bucket and find the specific object that matches the one being sought.
+In summary: hashCode() is used for initial bucket placement and quick filtering, while equals() is used for definitive object comparison within that bucket. This two-step process optimizes performance in hash-based collections by minimizing the number of equals() comparisons needed.
