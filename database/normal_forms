@@ -1,0 +1,161 @@
+SQL Normal Forms (Normalization)
+
+Normalization is the process of organizing data to reduce redundancy and improve integrity.
+
+1NF (First Normal Form)
+
+Rule:
+
+Each column must hold atomic (indivisible) values.
+
+No repeating groups or arrays.
+
+Example (Not in 1NF):
+
+Student(ID, Name, Subjects)
+1, Alice, {Math, Physics}
+
+
+In 1NF:
+
+Student(ID, Name, Subject)
+1, Alice, Math
+1, Alice, Physics
+
+2NF (Second Normal Form)
+
+Rule:
+
+Must be in 1NF.
+
+No partial dependency (no non-key attribute depends on part of a composite primary key).
+
+Example (Not in 2NF):
+
+Enrollment(StudentID, CourseID, StudentName)
+
+
+Primary Key = (StudentID, CourseID)
+
+StudentName depends only on StudentID → Partial dependency.
+
+In 2NF:
+
+Student(StudentID, StudentName)
+Enrollment(StudentID, CourseID)
+
+3NF (Third Normal Form)
+
+Rule:
+
+Must be in 2NF.
+
+No transitive dependency (non-key attribute depends on another non-key attribute).
+
+Example (Not in 3NF):
+
+Employee(EmpID, EmpName, DeptID, DeptName)
+
+
+DeptName depends on DeptID (not directly on EmpID).
+
+In 3NF:
+
+Employee(EmpID, EmpName, DeptID)
+Department(DeptID, DeptName)
+
+BCNF (Boyce–Codd Normal Form)
+
+Rule:
+
+Stronger than 3NF.
+
+For every functional dependency X → Y, X must be a super key.
+
+Example (Not in BCNF):
+
+Professor(ProfID, Subject, Dept)
+
+
+Suppose each Subject is taught by only one Dept, but a professor can teach multiple subjects.
+
+Functional dependencies:
+
+ProfID → Subject
+
+Subject → Dept
+
+Here, Subject is not a candidate key → violation.
+
+In BCNF:
+
+Professor(ProfID, Subject)
+SubjectDept(Subject, Dept)
+
+4NF (Fourth Normal Form)
+
+Rule:
+
+Must be in BCNF.
+
+No multi-valued dependencies (MVDs).
+
+Example (Not in 4NF):
+
+StudentHobby(StudentID, Hobby, Language)
+
+
+A student can have multiple hobbies and multiple languages independently → MVD problem.
+
+In 4NF:
+
+StudentHobby(StudentID, Hobby)
+StudentLanguage(StudentID, Language)
+
+5NF (Fifth Normal Form / PJ/NF)
+
+Rule:
+
+Must be in 4NF.
+
+No join dependency issues.
+
+Table should not be decomposable into smaller tables without losing information.
+
+Example (Not in 5NF):
+
+Supplier(SupplierID, ProductID, CustomerID)
+
+
+One supplier supplies many products.
+
+One product goes to many customers.
+
+One supplier serves many customers.
+
+This can be broken into three independent relations:
+
+SupplierProduct(SupplierID, ProductID)
+ProductCustomer(ProductID, CustomerID)
+SupplierCustomer(SupplierID, CustomerID)
+
+
+✅ Summary Table
+
+
+| Normal Form | Main Rule                          | Fixes Problem                  |
+| ----------- | ---------------------------------- | ------------------------------ |
+| 1NF         | Atomic values, no repeating groups | Repeating fields               |
+| 2NF         | No partial dependency              | Redundancy from composite keys |
+| 3NF         | No transitive dependency           | Indirect dependencies          |
+| BCNF        | Every determinant is a super key   | Stronger than 3NF              |
+| 4NF         | No multi-valued dependencies       | Independent attributes         |
+| 5NF         | No join dependencies               | Lossless decomposition         |
+
+
+
+DDL (Data Definition Language): CREATE, ALTER, DROP, TRUNCATE.
+DML (Data Manipulation Language): SELECT, INSERT, UPDATE, DELETE.
+DCL (Data Control Language): GRANT, REVOKE.
+TCL (Transaction Control Language): COMMIT, ROLLBACK, SAVEPOINT.
+
