@@ -1,0 +1,175 @@
+A JAR (Java ARchive) file is a package file format in Java that bundles together multiple Java classes, metadata, and resources (like text files or images) into a single compressed file. It is essentially a ZIP file with a .jar extension, designed specifically for distributing and deploying Java applications or libraries.
+
+Key Features of a JAR File:
+Packaging: A JAR file packages together all the Java .class files (compiled bytecode), libraries, and other resources needed by a Java application. This makes it easier to distribute and deploy Java applications.
+
+Execution: A JAR file can be executable if it contains a Main-Class entry in its MANIFEST.MF file (metadata for the JAR). This allows you to run the application from the command line directly using:
+
+java -jar myapp.jar
+
+Random Access Interface
+
+----------
+
+Marker Interface
+
+✅ Marker Interface in Java
+A Marker Interface is an interface without any methods or fields. It is used to mark or tag a class to indicate some metadata to the JVM or frameworks at runtime.
+
+🔧 Examples in Java:
+Serializable – Marks a class as serializable
+
+Cloneable – Allows object cloning using clone()
+
+Remote – Indicates remote method invocation (RMI)
+
+RandomAccess – Marks fast random access in List implementations like ArrayList
+
+🧠 Purpose:
+Instead of functionality, it’s used for:
+
+Type identification
+
+Special treatment by Java runtime or frameworks
+
+
+----------
+
+
+Iterable
+
+----------
+
+
+Load Factor of hashmap
+Load Factor is a measure of how full the HashMap can get before it needs to resize (rehash). It is defined as:
+loadFactor = numberOfEntries / capacity
+
+----------
+
+✅ Functional Interface in Java
+A functional interface is an interface that contains only one abstract method. It can have default or static methods, but only one method must be abstract.
+
+🧠 Why it matters:
+Functional interfaces are the foundation of lambda expressions and method references in Java (from Java 8 onward).
+
+✅ Example:
+
+@FunctionalInterface
+interface MyFunctionalInterface {
+    void execute();
+}
+You can use it like this:
+
+MyFunctionalInterface obj = () -> System.out.println("Running");
+obj.execute();
+🔧 Built-in Functional Interfaces (from java.util.function):
+Runnable – no arguments, no return
+
+Supplier<T> – returns a result, takes no input
+
+Consumer<T> – takes input, returns nothing
+
+Function<T, R> – takes input, returns output
+
+Predicate<T> – takes input, returns boolean
+
+
+----------
+
+
+Generic methods
+
+checked and unchecked exceptions
+
+memories of young and old generation java wht is it?
+
+◯ Java Basics
+   ◦ Data types and variables
+   ◦ Operators
+   ◦ Control statements (if-else, switch, loops)
+◯ Classes and Objects
+   ◦ "this" keyword
+   ◦ access control
+   ◦ "static" keyword
+   ◦ "final" keyword
+   ◦ Inner Class
+◯ Object-Oriented Programming (OOP)
+   ◦ Classes and objects
+   ◦ Constructors
+   ◦ Inheritance
+   ◦ Polymorphism (method overloading and overriding)
+   ◦ Abstraction
+   ◦ Encapsulation
+   ◦ Interfaces and abstract classes
+◯ Collections Framework
+   ◦ List, Set, and Map interfaces
+   ◦ ArrayList, LinkedList, HashSet, TreeSet, HashMap, LinkedHashMap, TreeMap
+   ◦ Iterators and enhanced for loop
+   ◦ Comparable and Comparator
+◯ String Handling
+   ◦ Theory
+   ◦ String Constructors
+   ◦ String Length
+   ◦ String Operations
+   ◦ Character Extraction
+   ◦ String Comparision
+   ◦ Searching Strings
+   ◦ Modifying Strings
+   ◦ Data Conversion using valueOf()
+   ◦ StringBuffer
+   ◦ StringBuilder
+◯ Multithreading and Concurrency
+   ◦ Thread lifecycle
+   ◦ Creating and managing threads
+   ◦ Synchronization
+   ◦ Concurrency utilities (Executor framework, CountDownLatch, CyclicBarrier)
+◯ Core Java Concepts
+   ◦ JVM vs JRE vs JDK
+   ◦ Memory Management
+   ◦ Garbage Management
+◯ Exception Handling
+   ◦ try, catch, finally
+   ◦ throw and throws
+   ◦ Custom exceptions
+◯ Enums, Autoboxing and Annotations
+   ◦ Enumerations
+   ◦ values() and valueOf()
+   ◦ Wrappers
+   ◦ Autoboxing
+   ◦ Unboxing
+   ◦ Annotations (Metadata)
+   ◦ Built-In Annotations
+◯ Generics
+   ◦ What are Generics
+   ◦ Bounded Types
+◯ Java 8 Features
+   ◦ Functional interfaces and Lambda expressions
+   ◦ Streams API
+   ◦ Optional class
+   ◦ Default and static methods in interfaces
+   ◦ Date and Time API (java.time package)
+◯ JVM Internals
+   ◦ JVM architecture
+   ◦ Class loading mechanism
+   ◦ Memory management (heap, stack)
+   ◦ Garbage collection
+◯ Java Memory Model
+   ◦ Understanding volatile and atomic variables
+   ◦ Thread safety
+   ◦ Happens-before relationship
+◯ Java I/O
+   ◦ File handling (File class)
+   ◦ Byte streams (InputStream, OutputStream)
+   ◦ Character streams (Reader, Writer)
+   ◦ Serialization and Deserialization
+◯ Design Patterns
+   ◦ Creational patterns (Singleton, Factory, Builder)
+   ◦ Structural patterns (Adapter, Composite, Decorator)
+   ◦ Behavioral patterns (Strategy, Observer, Command)
+
+
+
+
+
+JDK stream
