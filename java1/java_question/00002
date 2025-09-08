@@ -226,11 +226,21 @@ Callable: Returns a result (Future<T>).
 
 17. synchronized vs Lock vs ReentrantLock
 
-synchronized: implicit lock, automatic release.
+synchronized: implicit lock, automatic release, not fair ( can assign to any next waiting thread when released or fifo )
+it takes exclusive lock not shared lock where no thread can acquire a shared or exclusive lock.
+it means no thread can read or write on the synchronized block.
+A thread that holds a synchronized lock can re-enter any other synchronized block or method 
+protected by the same monitor object without causing a deadlock.
 
 Lock: explicit lock/unlock, tryLock possible.
 
 ReentrantLock: supports fairness, interruptible lock waiting.
+Can be configured to be fair, granting the lock to the longest-waiting thread.
+
+ReadWriteLock : supports shared and exclusive lock 
+This lock is designed for situations where multiple threads can read a shared resource concurrently, 
+but only one thread can write to it at a time.
+
 
 18. Deadlock & prevention
 
