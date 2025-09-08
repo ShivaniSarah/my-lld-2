@@ -1,0 +1,247 @@
+give interview questions asked on design patterns
+Software Design Patterns Guide said:
+
+Got it 👍 — design pattern interview questions usually test two things:
+
+Do you know the common patterns? (like Singleton, Factory, Observer, Strategy, etc.)
+
+Can you apply them to real-world problems?
+
+Here’s a list of common interview questions on design patterns, grouped by type:
+
+🔹 General Questions
+
+What are design patterns, and why are they useful?
+
+What is the difference between a design pattern, an architecture style, and an algorithm?
+
+Explain the difference between creational, structural, and behavioral design patterns.
+
+How do design patterns improve code maintainability and flexibility?
+
+🔹 Creational Patterns
+
+Can you explain the Singleton pattern and its drawbacks?
+
+How is a Factory Method different from an Abstract Factory?
+
+When would you use the Builder pattern instead of a simple constructor?
+
+How does the Prototype pattern handle object creation differently?
+
+🔹 Structural Patterns
+
+What is the difference between Adapter and Facade?
+
+When would you use the Decorator pattern instead of subclassing?
+
+Can you explain the Composite pattern with a real-world example?
+
+How does the Proxy pattern help with lazy loading or security?
+
+🔹 Behavioral Patterns
+
+What is the difference between Strategy and State patterns?
+
+How does the Observer pattern compare to Publish-Subscribe?
+
+Can you explain the Command pattern and its use in undo/redo functionality?
+
+When would you use the Template Method pattern over Strategy?
+
+🔹 Scenario-Based Questions
+
+You’re building a logging system where different modules need to listen to log events. Which pattern would you use? (→ Observer)
+
+You need to switch between different payment gateways at runtime. Which pattern fits best? (→ Strategy / Factory)
+
+You want to provide a simplified API to a complex subsystem. Which pattern would you use? (→ Facade)
+
+You’re implementing a shopping cart where discounts can be applied dynamically. Which pattern is suitable? (→ Decorator or Strategy)
+
+In a microservices system, how would you handle a long-running transaction across services? (→ Saga Pattern)
+
+🔹 Tricky / Deep-Dive Questions
+
+Can the Singleton pattern break in multi-threaded environments? How would you fix it?
+
+Compare Factory Method vs. Dependency Injection.
+
+What is the difference between Adapter vs. Bridge?
+
+How does the Mediator pattern reduce coupling, and what are the trade-offs?
+
+Why might the Visitor pattern be considered complex or controversial?
+
+👉 Do you want me to prepare answers with examples for the most commonly asked 8–10 questions, so you’d be interview-ready?
+
+You said:
+answer them
+Software Design Patterns Guide said:
+
+Perfect 👍 Let’s go through the top 10 most common design pattern interview questions with clear answers and examples.
+
+🔹 1. What are design patterns, and why are they useful?
+
+Answer:
+Design patterns are proven solutions to common software design problems.
+
+They aren’t code, but templates you adapt to your situation.
+
+They help make code reusable, maintainable, and flexible.
+
+They give developers a shared vocabulary ("use a Singleton here" is faster than explaining a full design).
+
+📌 Example: Instead of reinventing the wheel every time you need a single database connection, you can use the Singleton pattern.
+
+🔹 2. Can you explain the Singleton pattern and its drawbacks?
+
+Answer:
+The Singleton ensures only one instance of a class exists and provides global access to it.
+
+✅ Use cases: Database connections, logging, configuration manager.
+
+📌 Python sketch:
+
+class Singleton:
+    _instance = None
+    
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
+
+
+⚠️ Drawbacks:
+
+Hard to test (acts like a hidden global variable).
+
+Can lead to tight coupling.
+
+Not thread-safe unless handled carefully.
+
+🔹 3. Factory Method vs. Abstract Factory
+
+Answer:
+
+Factory Method: Creates one kind of product by deferring creation to subclasses.
+
+Abstract Factory: Creates families of related products without specifying their concrete classes.
+
+📌 Example:
+
+Factory Method → ShapeFactory returns a Circle or Square.
+
+Abstract Factory → GUIFactory can create a family of products (Button, Checkbox) for Windows or Mac.
+
+🔹 4. When would you use the Builder pattern instead of a constructor?
+
+Answer:
+Use Builder when:
+
+The object has many optional parameters.
+
+You want to build it step by step.
+
+📌 Example:
+Instead of a constructor like
+
+Pizza(size="Large", cheese=True, pepperoni=True, olives=False, mushrooms=True)
+
+
+Builder lets you do:
+
+pizza = PizzaBuilder().set_size("Large").add_cheese().add_pepperoni().build()
+
+
+✅ Improves readability, avoids constructor overloads.
+
+🔹 5. What is the difference between Adapter and Facade?
+
+Answer:
+
+Adapter: Converts one interface to another so classes can work together. (Focus: compatibility)
+
+Facade: Provides a simplified interface to a complex subsystem. (Focus: simplicity)
+
+📌 Example:
+
+Adapter → You have a European plug but need to fit it into a US socket.
+
+Facade → You press a single button "Turn on home theater," and it turns on the TV, speakers, and DVD player behind the scenes.
+
+🔹 6. When would you use the Decorator pattern instead of subclassing?
+
+Answer:
+
+Use Decorator when you want to add behavior dynamically without creating many subclasses.
+
+📌 Example:
+
+A Coffee object can be wrapped with MilkDecorator, then with SugarDecorator, instead of creating MilkAndSugarCoffee.
+
+More flexible than inheritance because you can combine decorators at runtime.
+
+🔹 7. Strategy vs. State Pattern
+
+Answer:
+
+Strategy: Encapsulates interchangeable algorithms. (Focus: choosing different behaviors)
+
+State: Allows an object to change behavior based on its internal state. (Focus: transitioning behaviors)
+
+📌 Example:
+
+Strategy → Different payment methods (CreditCardPayment, PayPalPayment).
+
+State → A TCP connection changes behavior when it’s Open, Closed, or Listening.
+
+🔹 8. Explain the Observer pattern with a real-world example
+
+Answer:
+Observer defines a one-to-many relationship where when one object changes, all its dependents get notified.
+
+📌 Example:
+
+Stock price updates: If the price changes, all subscribed apps/clients get notified.
+
+UI event listeners in GUI frameworks.
+
+✅ Promotes loose coupling.
+
+🔹 9. What is the Command pattern, and where would you use it?
+
+Answer:
+Command encapsulates a request as an object, allowing undo/redo and queuing.
+
+📌 Example:
+
+In a text editor:
+
+InsertTextCommand
+
+DeleteTextCommand
+Each command can be executed or undone.
+
+✅ Use it when you need undo functionality or logging actions.
+
+🔹 10. How does the Saga pattern handle distributed transactions?
+
+Answer:
+Saga is used in microservices to manage long-running transactions without a central DB transaction.
+
+Breaks a big transaction into smaller steps.
+
+Each step has a compensating action if something fails.
+
+📌 Example:
+Booking a trip:
+
+Book flight ✈️
+
+Reserve hotel 🏨
+
+Rent car 🚗
+If car rental fails → cancel hotel + cancel flight.
+
+✅ Ensures eventual consistency.
