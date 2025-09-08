@@ -1,0 +1,375 @@
+🔹 Core Java
+
+Difference between JDK, JRE, and JVM?
+
+Explain HashMap internal working in Java 8 and Java 11.
+
+Difference between equals() and ==.
+
+Why is String immutable in Java?
+
+Explain volatile keyword and happens-before relationship.
+
+What are checked vs unchecked exceptions?
+
+What is the difference between final, finally, and finalize()?
+
+Explain Java memory model (Heap, Stack, PermGen/Metaspace, GC).
+
+Difference between ArrayList and LinkedList, and when to use each.
+
+Explain fail-fast vs fail-safe iterators.
+
+🔹 OOP & Design
+
+Difference between abstract class and interface.
+
+What is polymorphism with real-world example?
+
+Explain SOLID principles in Java.
+
+What are design patterns you’ve used (Singleton, Factory, Builder, Strategy)?
+
+What is dependency injection, and how does Spring manage it?
+
+🔹 Multithreading & Concurrency
+
+Difference between Thread, Runnable, and Callable.
+
+Explain synchronized, Lock, and ReentrantLock.
+
+What is a deadlock? How do you prevent it?
+
+Difference between ConcurrentHashMap and Collections.synchronizedMap().
+
+How does ThreadPoolExecutor work internally?
+
+🔹 Java 8+ Features
+
+Difference between Stream API and Collections API.
+
+How do lambdas and functional interfaces work?
+
+What is the difference between map() and flatMap()?
+
+Explain Optional class and best practices.
+
+Difference between parallelStream() and stream().
+
+🔹 JVM & Performance
+
+How does Garbage Collection (GC) work?
+
+What are different GC algorithms (Serial, Parallel, G1, ZGC)?
+
+How do you find memory leaks in Java applications?
+
+Explain class loading mechanism (Bootstrap, Extension, Application classloaders).
+
+Difference between stack memory and heap memory.
+
+🔹 Advanced / Real-World
+
+How do you handle high concurrency in a web application?
+
+Explain immutability and why it’s important in multithreading.
+
+How do you implement caching in Java?
+
+How would you design a thread-safe Singleton?
+
+What are best practices for writing clean, reusable Java code?
+
+✅ Tip for interviews: Don’t just memorize definitions. For each question, be ready with:
+
+Concept explanation
+
+Small code example
+
+Real-world use case (this sets you apart).
+
+👉 Do you want me to create a detailed Q&A guide (with answers + code examples) for these 35, or should I first give you the most commonly repeated 10 questions with answers to focus on?
+
+You said:
+answer them
+Java Interview Pro said:
+
+Alright, let’s tackle this systematically. Since you asked for answers to all 35 questions, I’ll give you concise but job-ready answers — not bookish, but the way interviewers expect:
+
+🔹 Core Java
+1. Difference between JDK, JRE, JVM
+
+JDK = Development kit (compiler javac, debugger, tools + JRE).
+
+JRE = Runtime environment (JVM + libraries needed to run).
+
+JVM = Abstract machine that runs bytecode, platform-independent.
+
+👉 JDK = JRE + development tools.
+
+2. HashMap internal working (Java 8 vs 11)
+
+Pre-Java 8: HashMap used array + linked list for collisions.
+
+Java 8+: If a bucket has >8 entries, the list is converted into a balanced tree (Red-Black Tree) for O(log n) lookup.
+
+Hash function spreads keys to reduce collisions.
+
+3. equals() vs ==
+
+== → compares references (are they same object?).
+
+equals() → compares content (if overridden properly, e.g., in String).
+
+4. Why is String immutable?
+
+Caching: String literals stored in String pool.
+
+Security: Prevents changes in sensitive data like DB URLs, class names.
+
+Thread-safety: Immutable objects are naturally thread-safe.
+
+5. Volatile + Happens-Before
+
+volatile ensures visibility (changes to a variable are seen by all threads immediately).
+
+It does not guarantee atomicity.
+
+Happens-before rule: If one action happens-before another, the first is visible and ordered before the second.
+
+6. Checked vs Unchecked exceptions
+
+Checked: must be handled/declared (IOException, SQLException).
+
+Unchecked: runtime errors (NullPointerException, ArithmeticException).
+
+7. final, finally, finalize()
+
+final → keyword (constant, method overriding restriction, class inheritance restriction).
+
+finally → block in try-catch (guaranteed execution).
+
+finalize() → GC hook (deprecated in Java 9).
+
+8. Java memory model
+
+Heap: Objects + GC-managed.
+
+Stack: Local variables, method calls.
+
+Metaspace (Java 8+) → stores class metadata (replaces PermGen).
+
+9. ArrayList vs LinkedList
+
+ArrayList: backed by array → fast random access (O(1)) but slow insert/delete in middle.
+
+LinkedList: nodes with prev/next pointers → fast insert/delete (O(1)) but slow random access (O(n)).
+
+10. Fail-fast vs Fail-safe
+
+Fail-fast: Throws ConcurrentModificationException (e.g., ArrayList, HashMap iterators).
+
+Fail-safe: Iterates over a copy (e.g., ConcurrentHashMap, CopyOnWriteArrayList).
+
+🔹 OOP & Design
+11. Abstract class vs Interface
+
+Abstract class: can have fields + constructors + partial implementation.
+
+Interface: pure contract, Java 8+ allows default/static methods.
+
+Prefer interface for multiple inheritance of behavior.
+
+12. Polymorphism
+
+Compile-time (method overloading).
+
+Runtime (method overriding).
+👉 Example: Animal.speak() overridden by Dog and Cat.
+
+13. SOLID principles
+
+S: Single responsibility
+
+O: Open-closed
+
+L: Liskov substitution
+
+I: Interface segregation
+
+D: Dependency inversion
+
+14. Design patterns you’ve used
+
+Singleton (Logger, Config).
+
+Factory (object creation).
+
+Builder (complex object creation).
+
+Strategy (replaceable algorithms).
+
+15. Dependency Injection
+
+Instead of creating objects with new, objects are injected (via Spring, Guice, etc).
+
+Promotes loose coupling + easier testing.
+
+🔹 Multithreading & Concurrency
+16. Thread vs Runnable vs Callable
+
+Thread: Extends Thread class.
+
+Runnable: Functional interface, run() returns void.
+
+Callable: Returns a result (Future<T>).
+
+17. synchronized vs Lock vs ReentrantLock
+
+synchronized: implicit lock, automatic release.
+
+Lock: explicit lock/unlock, tryLock possible.
+
+ReentrantLock: supports fairness, interruptible lock waiting.
+
+18. Deadlock & prevention
+
+Deadlock → circular waiting on locks.
+Prevention strategies:
+
+Acquire locks in a fixed order.
+
+Use tryLock() with timeout.
+
+19. ConcurrentHashMap vs synchronizedMap
+
+synchronizedMap: whole map locked (blocking).
+
+ConcurrentHashMap: bucket-level locks, allows concurrent reads and partial writes.
+
+20. ThreadPoolExecutor
+
+Manages worker threads.
+
+Uses core pool, max pool, queue, rejection policy.
+
+Reduces thread creation overhead.
+
+🔹 Java 8+ Features
+21. Stream API vs Collections API
+
+Collections: store + manipulate data.
+
+Streams: process data in a functional style (map, filter, reduce).
+
+22. Lambdas + Functional interfaces
+
+Lambda → compact syntax for anonymous function.
+
+Functional interface → exactly 1 abstract method (Runnable, Comparator).
+
+23. map() vs flatMap()
+
+map() → transforms elements 1-to-1.
+
+flatMap() → flattens nested structures (e.g., List<List<T>> → List<T>).
+
+24. Optional class
+
+Wrapper for values that may/may not exist.
+
+Avoids NullPointerException.
+
+Methods: orElse(), ifPresent(), map().
+
+25. parallelStream() vs stream()
+
+stream() → sequential execution.
+
+parallelStream() → parallel processing using ForkJoinPool.
+
+Use only when tasks are independent and CPU-bound.
+
+🔹 JVM & Performance
+26. Garbage Collection
+
+JVM automatically reclaims memory of unused objects.
+
+GC roots → determine reachability.
+
+27. GC Algorithms
+
+Serial GC → single-threaded.
+
+Parallel GC → multi-threaded.
+
+G1 GC → region-based, low pause.
+
+ZGC/Shenandoah → ultra-low pause, scalable.
+
+28. Finding memory leaks
+
+Tools: VisualVM, JProfiler, Eclipse MAT.
+
+Symptoms: OutOfMemoryError, GC thrashing.
+
+29. Class loading mechanism
+
+Bootstrap → loads core Java classes.
+
+Extension → loads extension libs.
+
+Application → loads app classes.
+
+Parent delegation model.
+
+30. Stack vs Heap memory
+
+Stack: method calls, local vars, thread-private.
+
+Heap: objects, shared across threads.
+
+🔹 Advanced / Real-World
+31. Handling high concurrency
+
+Use ConcurrentHashMap, ThreadPoolExecutor, non-blocking algorithms.
+
+Apply caching, async processing, load balancing.
+
+32. Immutability & multithreading
+
+Immutable objects are thread-safe by default.
+
+Example: String, Integer.
+
+33. Caching in Java
+
+In-memory (ConcurrentHashMap, Guava).
+
+Distributed (Redis, Hazelcast, Ehcache).
+
+34. Thread-safe Singleton
+public class Singleton {
+    private static volatile Singleton instance;
+    private Singleton() {}
+    public static Singleton getInstance() {
+        if (instance == null) {
+            synchronized (Singleton.class) {
+                if (instance == null) instance = new Singleton();
+            }
+        }
+        return instance;
+    }
+}
+
+35. Clean, reusable code practices
+
+Follow SOLID principles.
+
+Use design patterns when appropriate.
+
+Write unit tests.
+
+Avoid God classes.
+
+Prefer composition over inheritance.
