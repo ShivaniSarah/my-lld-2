@@ -1,1 +1,112 @@
-..
+✅ Common Interview Questions: Which Design Pattern to Use When?
+⚙️ Behavioral Patterns
+Which pattern would you use for a chain of operations that can stop mid-way based on conditions?
+
+Expected: Chain of Responsibility
+
+If multiple systems need to react to a change in a shared object, what pattern would you use?
+
+Expected: Observer
+
+You want to allow undo/redo functionality in your app. What pattern helps manage that?
+
+Expected: Command
+
+You want to traverse a complex data structure without exposing its internal structure. Which pattern?
+
+Expected: Iterator
+
+How would you encapsulate a request as an object so that it can be queued, logged, or undone?
+
+Expected: Command
+
+🏗️ Structural Patterns
+Your app uses multiple APIs with different interfaces. How would you standardize access to them?
+
+Expected: Adapter
+
+If you want to represent part-whole hierarchies like menus or file systems, which pattern would you use?
+
+Expected: Composite
+
+You want to provide a simplified interface to a complex subsystem. Which pattern suits best?
+
+Expected: Facade
+
+To reduce object creation overhead in a system with lots of similar objects, which pattern helps?
+
+Expected: Flyweight
+
+🏭 Creational Patterns
+Which pattern would you use when object creation logic is complex and should be separated from usage?
+
+Expected: Factory Method or Abstract Factory
+
+If your system must create only one instance of a class and provide a global access point, which pattern?
+
+Expected: Singleton
+
+If you want to construct complex objects step-by-step, which pattern would you use?
+
+Expected: Builder
+
+If object creation involves copying an existing object, which pattern would you use?
+
+Expected: Prototype
+
+📌 Scenario-Based Questions
+Which pattern would you use to decouple business logic from UI updates in a GUI application?
+
+Expected: Observer or MVC/MVVM (higher-level architectural)
+
+How would you implement plugin architecture where new behaviors can be added dynamically at runtime?
+
+Expected: Strategy or Decorator
+
+You want to restrict object instantiation but also make it thread-safe. Which pattern and what approach?
+
+Expected: Singleton with double-checked locking
+
+How do you design a workflow where each step may or may not process the input?
+
+Expected: Chain of Responsibility
+
+Which pattern allows you to change the algorithm of a class at runtime?
+
+Expected: Strategy
+
+🧠 Advanced Design Pattern Reasoning
+How would you refactor a set of conditional logic (if-else or switch-case) into a design pattern?
+
+Expected: Strategy, State, or Command
+
+What pattern would you use to decouple a client from complex object creation logic in a large system?
+
+Expected: Abstract Factory or Builder
+
+When should you use Strategy vs State pattern?
+
+Expected: Explain that:
+
+Strategy → interchangeable behavior algorithms
+
+State → object behavior changes based on internal state
+
+Decorator vs Proxy vs Adapter — when to use each?
+
+Expected: Know distinctions:
+
+Decorator → adds behavior
+
+Proxy → controls access
+
+Adapter → converts interfaces
+
+📚 Bonus: Knowledge of Anti-Patterns
+Can you describe any anti-patterns that arise from misuse of Singleton?
+
+Expected: Global state, tight coupling, difficult testing
+
+When might using the Observer pattern introduce memory leaks?
+
+Expected: Unmanaged listener references not removed
