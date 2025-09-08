@@ -1,0 +1,53 @@
+Functional testing
+
+This category verifies that the system functions exactly as it is supposed to, based on the specified requirements. 
+Unit testing: Performed by developers to test individual units or components of the source code in isolation.
+Integration testing: Combines and tests individual units as a group to identify any issues in their interactions.
+Big-bang: All components are integrated at once.
+Incremental: Modules are integrated and tested one by one, using either a top-down or bottom-up approach.
+System testing: Tests the entire, fully integrated software to verify that it meets all specified requirements.
+Acceptance testing: Ensures the software satisfies the end-user or business requirements, often performed by the client or end-users.
+User Acceptance Testing (UAT): Performed by end-users in a production-like environment.
+Alpha testing: In-house testing by a small, internal team before the product is released to the public.
+Beta testing: External testing by a limited group of real users in a real environment to gather feedback.
+Sanity testing: A quick test to ensure that new code changes or bug fixes are working and haven't introduced any major issues.
+Smoke testing: Performed after a new software build to ensure basic, critical functions are working before more in-depth testing.
+Regression testing: Confirms that a recent code change has not negatively affected existing features. 
+
+
+Non-functional testing
+This type of testing evaluates non-functional aspects of the software, such as its performance, usability, and reliability, to determine how well it works. 
+Performance testing: Evaluates a system's speed, stability, and responsiveness under various workloads.
+Load testing: Tests the system's behavior under an expected user load.
+Stress testing: Pushes the system beyond its normal operational capacity to see how it handles extreme conditions.
+Endurance testing: Tests system performance under a sustained load over a long period.
+Security testing: Aims to identify vulnerabilities and weaknesses that could lead to threats or data loss.
+Penetration testing: Simulates an attack to find and exploit potential security flaws.
+Usability testing: Evaluates how user-friendly and intuitive the software is for its end-users.
+Compatibility testing: Checks if the software works correctly across different hardware, operating systems, browsers, and devices.
+Accessibility testing: Ensures that the software can be used effectively by people with disabilities.
+Recovery testing: Confirms that the system can recover from crashes, failures, or other disruptions. 
+Specialized testing
+This group includes other specific types of tests focused on particular behaviors or environments. 
+API testing: Verifies the functionality, performance, and security of an application's APIs.
+Cross-browser testing: Checks that web applications work correctly across different browsers and browser versions.
+Installation testing: Ensures that the software installs and uninstalls correctly on different systems.
+Localization testing: Verifies that a localized version of a product works correctly for a specific language or region.
+Mobile app testing: Evaluates mobile applications across different screen sizes, operating systems, and network conditions.
+Exploratory testing: A hands-on, unscripted testing style where the tester explores the application to find defects. 
+
+
+Testing methodologies
+These define the approach and strategy for how testing is conducted. 
+Manual testing: Test cases are executed by a human tester who provides feedback on functionality, usability, and user experience.
+Automated testing: Uses test scripts and specialized software tools to execute tests automatically.
+Continuous testing: Testing is integrated into the continuous integration/continuous delivery (CI/CD) pipeline, where automated tests run constantly. 
+Testing techniques based on knowledge
+
+
+This classification is based on the tester's knowledge of the system's internal workings. 
+Black-box testing: The tester has no knowledge of the internal code structure. They focus on the software's functionality based on requirements.
+White-box testing: The tester has access to the internal code and structure. This is used to test the internal logic and design.
+Gray-box testing: The tester has partial knowledge of the internal structure, combining elements of both black-box and white-box testing. 
+AI responses may include mistakes. Learn more
+
