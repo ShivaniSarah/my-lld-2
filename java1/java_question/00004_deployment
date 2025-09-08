@@ -1,0 +1,56 @@
+tell benchmarking (jmeter ) and how you do stress testing in javs (gatling )
+
+If we deploy spring boot jar file, it has its own embedded tomcat server, we don't need server setup, just need to run jar file in EC2 container and give command java -jar filename.
+
+war files contain web pages and not tomcat server , we need to do our own server setup and load balancing https configuration
+
+Deploying a WAR file to AWS, particularly with your own server setup, typically involves these steps:
+Provision an EC2 Instance:
+Launch an Amazon EC2 instance (e.g., a Linux AMI). Choose an instance type and size appropriate for your application's needs.
+
+
+Configure security groups to allow necessary inbound traffic (e.g., HTTP/HTTPS on port 80/443, SSH on port 22 for management).
+
+
+Install and Configure Java and Application Server:
+Connect to your EC2 instance via SSH.
+
+
+Install Java Development Kit (JDK) on the instance.
+
+
+Install an application server, such as Apache Tomcat, WildFly, or Jetty, which is compatible with your WAR file.
+
+
+Configure the application server, including setting up environment variables, memory allocation, and user permissions.
+
+
+Transfer the WAR File:
+Securely transfer your compiled WAR file from your local machine to the EC2 instance. This can be done using tools like SCP or SFTP. 
+
+
+Place the WAR file in the appropriate deployment directory of your application server (e.g., webapps directory for Tomcat).
+
+
+Deploy the WAR File:
+Manual Deployment: If using Tomcat, simply placing the WAR file in the webapps directory often triggers automatic deployment.
+
+
+Application Server Management Console: Access the management console of your application server (e.g., Tomcat Manager) and use its interface to upload and deploy the WAR file.
+
+
+Scripted Deployment: Create a shell script on the EC2 instance to automate the deployment process, including stopping the application server, replacing the old WAR file, and restarting the server.
+
+
+Configure DNS and Load Balancing (Optional but Recommended):
+Route 53: If you have a custom domain, configure Amazon Route 53 to point your domain to the EC2 instance's public IP address or an Elastic Load Balancer.
+
+
+Elastic Load Balancing (ELB): For high availability and scalability, place your EC2 instance behind an Application Load Balancer (ALB) or Network Load Balancer (NLB). This distributes traffic and allows for easy scaling.
+
+
+Monitoring and Maintenance:
+Set up Amazon CloudWatch to monitor your EC2 instance and application server logs for performance and errors.
+
+
+Regularly update your application server and operating system for security and performance improvements.
