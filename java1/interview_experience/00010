@@ -1,0 +1,58 @@
+Food - name, cuisine, rating
+1. Find the food with the highest rating in a cuisine. => rating/ food name: rating
+2. Update the rating of the food for a particular food name. => 
+
+
+
+Api1 -> api2 
+
+Randomly any api is called
+
+Data structure hashmap => key is foodname, value is rating
+
+{ a: 4,   }
+
+
+Class Food{
+Name,
+Rating
+cuisine;
+}
+
+
+HashMap<String, Food> foodMap;// name, food object
+HashMap<String, Double>  ratingMap;// name, rating
+
+Map<String, PriorityQueue< Food>> // cuisine, maxpriority => O(1) to fetch,  update is O(nlogn)
+
+TreeSet => O(logn) updation , fetching O(1)
+
+
+
+
+Class  Foodsome name{
+
+HashMap<String, Double> foodMap;
+
+Public Food(){
+
+foodMap = new HashMap<>();
+
+}
+addFoodName(){
+
+food.put();
+
+}
+}
+
+New PriorityQueue<>((x,y) ->{
+
+if(x.rating == y.rating )
+if(x.food.compareTo(y.food))
+Return 
+ );
+
+
+
+
