@@ -1,4 +1,22 @@
+LockService => A->B transaction is being done, no other transaction should do dirty read/ dirty write
+public class InMemoryLockService implements LockService {
 
+    private final ConcurrentHashMap<String, ReentrantLock> lockMap = new ConcurrentHashMap<>();
+
+    @Override
+    public boolean tryLockUser(String userId) {
+        ReentrantLock lock = lockMap.computeIfAbsent(userId, id -> new ReentrantLock());
+        return lock.tryLock();  // non-blocking
+    }
+
+    @Override
+    public void unlockUser(String userId) {
+        ReentrantLock lock = lockMap.get(userId);
+        if (lock != null && lock.isHeldByCurrentThread()) {
+            lock.unlock();
+        }
+    }
+}
 
 
 
